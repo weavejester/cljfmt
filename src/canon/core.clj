@@ -2,17 +2,17 @@
   (:require [rewrite-clj.parser :as p]
             [rewrite-clj.printer :as prn]))
 
-(defn- form? [type? form]
-  (boolean (and (vector? form) (type? (first form)))))
+(defn- tag [form]
+  (if (vector? form) (first form)))
 
 (defn- lines [form]
-  (partition-by (partial form? #{:newline}) form))
+  (partition-by (comp #{:newline} tag) form))
 
 (defn- unlines [lines]
   (vec (apply concat lines)))
 
 (defn- indentation [line]
-  (->> (take-while (partial form? #{:whitespace}) line)
+  (->> (take-while (comp #{:whitespace} tag) line)
        (map (comp count second))
        (apply +)))
 
@@ -23,11 +23,11 @@
   (vec (cons (make-whitespace n) line)))
 
 (defn- unindent-line [line]
-  (drop-while (partial form? #{:whitespace}) line))
+  (drop-while (comp #{:whitespace} tag) line))
 
 (defn remove-trailing-newlines [form]
   (->> (reverse form)
-       (drop-while (partial form? #{:whitespace :newline}))
+       (drop-while (comp #{:whitespace :newline} tag))
        (reverse)
        (vec)))
 
