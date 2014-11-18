@@ -39,6 +39,8 @@
        (map (comp count part->string))
        (apply +)))
 
+(declare indent)
+
 (defn- indent-line-forms [margin line]
   (map-indexed (fn [i x] (indent x (+ margin (position line i)))) line))
 
