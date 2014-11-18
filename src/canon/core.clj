@@ -26,14 +26,17 @@
        (reverse)
        (vec)))
 
-(defn- element-width [elem]
+(def ^:private open-bracket
+  {:list "(", :vector "[", :map "{", :set "#{"})
+
+(defn- part->string [elem]
   (if (vector? elem)
-    (-> elem prn/->string count)
-    (-> [elem] prn/->string count dec)))
+    (prn/->string elem)
+    (open-bracket elem)))
 
 (defn- position [line index]
   (->> (take index line)
-       (map element-width)
+       (map (comp count part->string))
        (apply +)))
 
 (defn- indent-line-forms [margin line]
