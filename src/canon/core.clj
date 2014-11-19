@@ -1,9 +1,23 @@
 (ns canon.core
   (:require [rewrite-clj.parser :as p]
-            [rewrite-clj.printer :as prn]))
+            [rewrite-clj.printer :as prn]
+            [rewrite-clj.zip :as z]))
 
 (defn- tag [form]
   (if (vector? form) (first form)))
+
+(def ^:private start-element
+  {:meta "^", :meta* "#^", :deref "@", :var "#'", :fn "#("
+   :list "(", :vector "[", :map "{", :set "#{", :eval "#="
+   :uneval "#_", :reader-macro "#", :quote "'", :syntax-quote "`"
+   :unquote "~", :unquote-splicing "~@"})
+
+(defn- prior-string [zip]
+  (if-let [p (z/left* zip)]
+    (str (prior-string p) (prn/->string (z/node p)))
+    (if-let [p (z/up* zip)]
+      (str (prior-string p) (start-element (first (z/node p))))
+      "")))
 
 (defn- lines [form]
   (partition-by (comp #{:newline} tag) form))
@@ -26,13 +40,10 @@
        (reverse)
        (vec)))
 
-(def ^:private open-bracket
-  {:list "(", :vector "[", :map "{", :set "#{"})
-
 (defn- part->string [elem]
   (if (vector? elem)
     (prn/->string elem)
-    (open-bracket elem)))
+    (start-element elem)))
 
 (defn- position [line index]
   (->> (take index line)
