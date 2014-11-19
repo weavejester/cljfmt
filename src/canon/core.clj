@@ -19,6 +19,12 @@
       (str (prior-string p) (start-element (first (z/node p))))
       "")))
 
+(defn- last-line [^String s]
+  (subs s (inc (.lastIndexOf s "\n"))))
+
+(defn- margin [zip]
+  (-> zip prior-string last-line count))
+
 (defn- lines [form]
   (partition-by (comp #{:newline} tag) form))
 
