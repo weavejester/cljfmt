@@ -26,17 +26,9 @@
 (defn- make-whitespace [width]
   [:whitespace (apply str (repeat width " "))])
 
-(defn- find-next [zloc p?]
-  (->> (fz/next zloc)
-       (iterate fz/next)
-       (take-while identity)
-       (take-while (complement fz/end?))
-       (drop-while (complement p?))
-       (first)))
-
 (defn- edit-all [zloc p? f]
   (loop [zloc zloc]
-    (if-let [zloc (find-next zloc p?)]
+    (if-let [zloc (z/find-next zloc fz/next p?)]
       (recur (f zloc))
       zloc)))
 
