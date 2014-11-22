@@ -47,8 +47,27 @@
 (defn- whitespace [width]
   [:whitespace (apply str (repeat width " "))])
 
+;; z/leftmost currently broken
+(defn- leftmost [zloc]
+  (if-let [zloc (fz/left zloc)]
+    (recur zloc)
+    zloc))
+
+(defn- indent-coll-amount [zloc]
+  (-> zloc leftmost margin))
+
+(defn- indent-list-amount [zloc]
+  (let [elem1 (leftmost zloc)
+        elem2 (z/next elem1)]
+    (margin (if (not= zloc elem2) elem2 elem1))))
+
+(defn- indent-amount [zloc]
+  (if (-> zloc z/up z/tag #{:list})
+    (indent-list-amount zloc)
+    (indent-coll-amount zloc)))
+
 (defn- indent-line [zloc]
-  (fz/insert-left zloc (whitespace (-> zloc fz/leftmost margin))))
+  (fz/insert-left zloc (whitespace (indent-amount zloc))))
 
 (defn indent [form]
   (transform form edit-all line-start? indent-line))
