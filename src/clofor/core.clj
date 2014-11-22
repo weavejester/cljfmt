@@ -13,11 +13,11 @@
 (defn- transform [form zf & args]
   (z/root (apply zf (z/edn form) args)))
 
-(defn- trailing-newline? [zloc]
-  (and (z/linebreak? zloc) (z/rightmost? zloc)))
+(defn- surrounding? [zloc p?]
+  (and (p? zloc) (or (z/leftmost? zloc) (z/rightmost? zloc))))
 
-(defn remove-trailing-newlines [form]
-  (transform form edit-all trailing-newline? fz/remove))
+(defn remove-surrounding-whitespace [form]
+  (transform form edit-all #(surrounding? % z/whitespace?) fz/remove))
 
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
