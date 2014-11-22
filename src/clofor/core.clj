@@ -13,6 +13,12 @@
 (defn- transform [form zf & args]
   (z/root (apply zf (z/edn form) args)))
 
+(defn- trailing-newline? [zloc]
+  (and (z/linebreak? zloc) (z/rightmost? zloc)))
+
+(defn remove-trailing-newlines [form]
+  (transform form edit-all trailing-newline? fz/remove))
+
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
 
@@ -95,9 +101,3 @@
 
 (defn indent [form]
   (transform form edit-all line-start? indent-line))
-
-(defn- trailing-newline? [zloc]
-  (and (z/linebreak? zloc) (z/rightmost? zloc)))
-
-(defn remove-trailing-newlines [form]
-  (transform form edit-all trailing-newline? fz/remove))
