@@ -59,7 +59,7 @@
     (recur zloc)
     zloc))
 
-(defn- indent-coll-amount [zloc]
+(defn coll-indent [zloc]
   (-> zloc leftmost margin))
 
 (defn- index-of [zloc]
@@ -68,30 +68,39 @@
        (count)
        (dec)))
 
-(def fixed-indent 2)
-
-(def indent-rules
-  {'let [:indent-after 1]
-   'def [:indent-after 1]})
-
-(defmulti indent-list-amount
-  (fn [zloc [rule & args]] rule))
-
-(defmethod indent-list-amount :indent-after [zloc [_ index]]
-  (if (> (index-of zloc) index)
-    (-> zloc z/up margin (+ fixed-indent))
-    (indent-coll-amount zloc)))
-
-(defmethod indent-list-amount :default [zloc _]
+(defn list-indent [zloc]
   (if (> (index-of zloc) 1)
     (-> zloc leftmost z/next margin)
-    (indent-coll-amount zloc)))
+    (coll-indent zloc)))
+
+(def basic-indent-size 2)
+
+(defn basic-indent [zloc sym idx]
+  (if (and (= (-> zloc leftmost z/value) sym)
+           (> (index-of zloc) idx))
+    (-> zloc z/up margin (+ basic-indent-size))))
+
+(def basic-indent-defaults
+  '{go   0, case   1, if-let   1, when-not        1
+    do   0, while  1, thread   0, defstruct       1
+    if   1, doseq  1, testing  1, with-open       1
+    ns   1, alt!!  0, finally  0, defrecord       2
+    are  1, letfn  1, deftype  2, when-some       1
+    try  0, condp  2, if-some  1, when-first      1
+    let  1, proxy  2, go-loop  1, struct-map      1
+    for  1, catch  2, dotimes  1, extend-type     1
+    doto 1, assoc  1, binding  1, defprotocol     1
+    alt! 0, if-not 1, locking  1, with-precision  1
+    when 1, future 0, comment  0, extend-protocol 1
+    loop 1, extend 1, when-let 1, with-local-vars 1})
+
+(def default-indents
+  (for [[s i] basic-indent-defaults] #(basic-indent % s i)))
 
 (defn- indent-amount [zloc]
   (if (-> zloc z/up z/tag #{:list})
-    (let [rule (-> zloc leftmost z/value indent-rules)]
-      (indent-list-amount zloc rule))
-    (indent-coll-amount zloc)))
+    (or ((apply some-fn default-indents) zloc) (list-indent zloc))
+    (coll-indent zloc)))
 
 (defn- indent-line [zloc]
   (fz/insert-left zloc (whitespace (indent-amount zloc))))
