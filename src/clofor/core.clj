@@ -56,10 +56,22 @@
 (defn- indent-coll-amount [zloc]
   (-> zloc leftmost margin))
 
-(defn- indent-list-amount [zloc]
-  (let [elem1 (leftmost zloc)
-        elem2 (z/next elem1)]
-    (margin (if (not= zloc elem2) elem2 elem1))))
+(defn- index-of [zloc]
+  (->> (iterate z/left zloc)
+       (take-while identity)
+       (count)
+       (dec)))
+
+(defmulti indent-list-amount
+  (comp z/value leftmost))
+
+(defmethod indent-list-amount 'let [zloc]
+  (let [head (leftmost zloc)]
+    (if (> (index-of zloc) 1) 2 (margin head))))
+
+(defmethod indent-list-amount :default [zloc]
+  (let [head (leftmost zloc)]
+    (margin (if (> (index-of zloc) 1) (z/next head) head))))
 
 (defn- indent-amount [zloc]
   (if (-> zloc z/up z/tag #{:list})
