@@ -4,28 +4,6 @@
             [rewrite-clj.printer :as prn]
             [rewrite-clj.zip :as z]))
 
-(def ^:private start-element
-  {:meta "^", :meta* "#^", :deref "@", :var "#'", :fn "#("
-   :list "(", :vector "[", :map "{", :set "#{", :eval "#="
-   :uneval "#_", :reader-macro "#", :quote "'", :syntax-quote "`"
-   :unquote "~", :unquote-splicing "~@"})
-
-(defn- prior-string [zloc]
-  (if-let [p (z/left* zloc)]
-    (str (prior-string p) (prn/->string (z/node p)))
-    (if-let [p (z/up* zloc)]
-      (str (prior-string p) (start-element (first (z/node p))))
-      "")))
-
-(defn- last-line-in-string [^String s]
-  (subs s (inc (.lastIndexOf s "\n"))))
-
-(defn- margin [zloc]
-  (-> zloc prior-string last-line-in-string count))
-
-(defn- make-whitespace [width]
-  [:whitespace (apply str (repeat width " "))])
-
 (defn- edit-all [zloc p? f]
   (loop [zloc zloc]
     (if-let [zloc (z/find-next zloc fz/next p?)]
@@ -47,8 +25,30 @@
 (defn unindent [form]
   (transform form edit-all indentation? fz/remove))
 
+(def ^:private start-element
+  {:meta "^", :meta* "#^", :deref "@", :var "#'", :fn "#("
+   :list "(", :vector "[", :map "{", :set "#{", :eval "#="
+   :uneval "#_", :reader-macro "#", :quote "'", :syntax-quote "`"
+   :unquote "~", :unquote-splicing "~@"})
+
+(defn- prior-string [zloc]
+  (if-let [p (z/left* zloc)]
+    (str (prior-string p) (prn/->string (z/node p)))
+    (if-let [p (z/up* zloc)]
+      (str (prior-string p) (start-element (first (z/node p))))
+      "")))
+
+(defn- last-line-in-string [^String s]
+  (subs s (inc (.lastIndexOf s "\n"))))
+
+(defn- margin [zloc]
+  (-> zloc prior-string last-line-in-string count))
+
+(defn- whitespace [width]
+  [:whitespace (apply str (repeat width " "))])
+
 (defn- indent-line [zloc]
-  (fz/insert-left zloc (make-whitespace (-> zloc fz/leftmost margin))))
+  (fz/insert-left zloc (whitespace (-> zloc fz/leftmost margin))))
 
 (defn indent [form]
   (transform form edit-all line-start? indent-line))
