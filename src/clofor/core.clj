@@ -1,4 +1,4 @@
-(ns canon.core
+(ns clofor.core
   (:require [fast-zip.core :as fz]
             [rewrite-clj.parser :as p]
             [rewrite-clj.printer :as prn]

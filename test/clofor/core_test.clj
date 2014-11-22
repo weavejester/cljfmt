@@ -1,6 +1,6 @@
-(ns canon.core-test
+(ns clofor.core-test
   (:require [clojure.test :refer :all]
-            [canon.core :refer :all]))
+            [clofor.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
