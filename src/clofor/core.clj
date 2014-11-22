@@ -87,9 +87,6 @@
     (-> zloc leftmost z/next margin)
     (indent-coll-amount zloc)))
 
-(defn- head [zloc]
-  (comp z/value leftmost))
-
 (defn- indent-amount [zloc]
   (if (-> zloc z/up z/tag #{:list})
     (let [rule (-> zloc leftmost z/value indent-rules)]
