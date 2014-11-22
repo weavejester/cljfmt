@@ -26,10 +26,10 @@
   (transform form edit-all indentation? fz/remove))
 
 (def ^:private start-element
-  {:meta "^", :meta* "#^", :deref "@", :var "#'", :fn "#("
-   :list "(", :vector "[", :map "{", :set "#{", :eval "#="
-   :uneval "#_", :reader-macro "#", :quote "'", :syntax-quote "`"
-   :unquote "~", :unquote-splicing "~@"})
+  {:meta "^", :meta* "#^", :vector "[",       :map "{"
+   :list "(", :eval "#=",  :uneval "#_",      :fn "#("
+   :set "#{", :deref "@",  :reader-macro "#", :unquote "~"
+   :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"})
 
 (defn- prior-string [zloc]
   (if-let [p (z/left* zloc)]
