@@ -101,3 +101,6 @@
 
 (defn indent [form]
   (transform form edit-all line-start? indent-line))
+
+(def reindent
+  (comp indent unindent))
