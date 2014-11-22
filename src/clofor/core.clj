@@ -62,22 +62,32 @@
        (count)
        (dec)))
 
-(defmulti indent-list-amount
-  (comp z/value leftmost))
+(def fixed-indent 2)
 
-(defmethod indent-list-amount 'let [zloc]
-  (if (> (index-of zloc) 1)
-    (-> zloc z/up margin (+ 2))
+(def indent-rules
+  {'let [:indent-after 1]
+   'def [:indent-after 1]})
+
+(defmulti indent-list-amount
+  (fn [zloc [rule & args]] rule))
+
+(defmethod indent-list-amount :indent-after [zloc [_ index]]
+  (if (> (index-of zloc) index)
+    (-> zloc z/up margin (+ fixed-indent))
     (indent-coll-amount zloc)))
 
-(defmethod indent-list-amount :default [zloc]
+(defmethod indent-list-amount :default [zloc _]
   (if (> (index-of zloc) 1)
     (-> zloc leftmost z/next margin)
     (indent-coll-amount zloc)))
 
+(defn- head [zloc]
+  (comp z/value leftmost))
+
 (defn- indent-amount [zloc]
   (if (-> zloc z/up z/tag #{:list})
-    (indent-list-amount zloc)
+    (let [rule (-> zloc leftmost z/value indent-rules)]
+      (indent-list-amount zloc rule))
     (indent-coll-amount zloc)))
 
 (defn- indent-line [zloc]
