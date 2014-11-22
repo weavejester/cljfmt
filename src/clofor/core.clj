@@ -38,16 +38,20 @@
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
 
-(defn- indentation? [zloc]
-  (and (whitespace? zloc) (z/linebreak? (fz/prev zloc))))
+(defn- line-start? [zloc]
+  (z/linebreak? (fz/prev zloc)))
 
-(defn- unindent-line [zloc]
-  (if (whitespace? zloc) (z/remove* zloc) zloc))
+(defn- indentation? [zloc]
+  (and (line-start? zloc) (whitespace? zloc)))
 
 (defn unindent [form]
   (transform form edit-all indentation? fz/remove))
 
-(defn indent [form])
+(defn- indent-line [zloc]
+  (fz/insert-left zloc (make-whitespace (-> zloc fz/leftmost margin))))
+
+(defn indent [form]
+  (transform form edit-all line-start? indent-line))
 
 (defn- trailing-newline? [zloc]
   (and (z/linebreak? zloc) (z/rightmost? zloc)))
