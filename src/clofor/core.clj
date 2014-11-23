@@ -53,14 +53,8 @@
 (defn- whitespace [width]
   [:whitespace (apply str (repeat width " "))])
 
-;; z/leftmost currently broken
-(defn- leftmost [zloc]
-  (if-let [zloc (fz/left zloc)]
-    (recur zloc)
-    zloc))
-
 (defn coll-indent [zloc]
-  (-> zloc leftmost margin))
+  (-> zloc fz/leftmost margin))
 
 (defn- index-of [zloc]
   (->> (iterate z/left zloc)
@@ -70,13 +64,13 @@
 
 (defn list-indent [zloc]
   (if (> (index-of zloc) 1)
-    (-> zloc leftmost z/next margin)
+    (-> zloc fz/leftmost z/next margin)
     (coll-indent zloc)))
 
 (def basic-indent-size 2)
 
 (defn basic-indent [zloc sym idx]
-  (if (and (= (-> zloc leftmost z/value) sym)
+  (if (and (= (-> zloc fz/leftmost z/value) sym)
            (> (index-of zloc) idx))
     (-> zloc z/up margin (+ basic-indent-size))))
 
