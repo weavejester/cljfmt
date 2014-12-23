@@ -67,10 +67,23 @@
     (-> zloc fz/leftmost z/next margin)
     (coll-indent zloc)))
 
+(defn- nth-form [zloc n]
+  (reduce (fn [z f] (if z (f z)))
+          (z/leftmost zloc)
+          (repeat n z/right)))
+
+(defn- first-form-in-line? [zloc]
+  (if-let [zloc (fz/left zloc)]
+    (if (whitespace? zloc)
+      (recur zloc)
+      (z/linebreak? zloc))
+    true))
+
 (def basic-indent-size 2)
 
 (defn basic-indent [zloc sym idx]
   (if (and (= (-> zloc fz/leftmost z/value) sym)
+           (first-form-in-line? (nth-form zloc (inc idx)))
            (> (index-of zloc) idx))
     (-> zloc z/up margin (+ basic-indent-size))))
 
