@@ -117,3 +117,12 @@
 
 (def reindent
   (comp indent unindent))
+
+(def reformat-form
+  (comp remove-surrounding-whitespace
+        reindent))
+
+(def reformat-string
+  (comp prn/->string
+        reformat-form
+        p/parse-string-all))
