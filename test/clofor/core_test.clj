@@ -15,7 +15,17 @@
     (is (= (reformat-string "(do\n(foo)\n(bar))")
            "(do\n  (foo)\n  (bar))"))
     (is (= (reformat-string "(do (foo)\n(bar))")
-           "(do (foo)\n    (bar))"))))
+           "(do (foo)\n    (bar))")))
+
+  (testing "data structure indentation"
+    (is (= (reformat-string "[:foo\n:bar\n:baz]")
+           "[:foo\n :bar\n :baz]"))
+    (is (= (reformat-string "{:foo 1\n:bar 2}")
+           "{:foo 1\n :bar 2}"))
+    (is (= (reformat-string "#{:foo\n:bar\n:baz}")
+           "#{:foo\n  :bar\n  :baz}"))
+    (is (= (reformat-string "{:foo [:bar\n:baz]}")
+           "{:foo [:bar\n       :baz]}"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
