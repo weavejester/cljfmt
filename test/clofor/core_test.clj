@@ -25,7 +25,13 @@
     (is (= (reformat-string "#{:foo\n:bar\n:baz}")
            "#{:foo\n  :bar\n  :baz}"))
     (is (= (reformat-string "{:foo [:bar\n:baz]}")
-           "{:foo [:bar\n       :baz]}"))))
+           "{:foo [:bar\n       :baz]}")))
+
+  (testing "embedded structures"
+    (is (= (reformat-string "(let [foo {:x 1\n:y 2}]\n(:x foo))")
+           "(let [foo {:x 1\n           :y 2}]\n  (:x foo))"))
+    (is (= (reformat-string "(if foo\n(do bar\nbaz)\nquz)")
+           "(if foo\n  (do bar\n      baz)\n  quz)"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
