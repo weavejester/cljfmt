@@ -3,7 +3,7 @@
             [clofor.core :refer :all]))
 
 (deftest test-indent
-  (testing "function indentation"
+  (testing "list indentation"
     (is (= (reformat-string "(foo bar\nbaz\nquz)")
            "(foo bar\n     baz\n     quz)"))
     (is (= (reformat-string "(foo\nbar\nbaz)")
@@ -16,6 +16,20 @@
            "(do\n  (foo)\n  (bar))"))
     (is (= (reformat-string "(do (foo)\n(bar))")
            "(do (foo)\n    (bar))")))
+
+  (testing "constant indentation"
+    (is (= (reformat-string "(def foo\n\"Hello World\")")
+           "(def foo\n  \"Hello World\")"))
+    (is (= (reformat-string "(defn foo [x]\n(+ x 1))")
+           "(defn foo [x]\n  (+ x 1))"))
+    (is (= (reformat-string "(defn foo\n[x]\n(+ x 1))")
+           "(defn foo\n  [x]\n  (+ x 1))"))
+    (is (= (reformat-string "(defn foo\n([] 0)\n([x]\n(+ x 1)))")
+           "(defn foo\n  ([] 0)\n  ([x]\n   (+ x 1)))"))
+    (is (= (reformat-string "(fn [x]\n(foo bar\nbaz))")
+           "(fn [x]\n  (foo bar\n       baz))"))
+    (is (= (reformat-string "(fn [x] (foo bar\nbaz))")
+           "(fn [x] (foo bar\n             baz))")))
 
   (testing "data structure indentation"
     (is (= (reformat-string "[:foo\n:bar\n:baz]")

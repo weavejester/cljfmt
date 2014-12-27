@@ -92,25 +92,31 @@
 
 (def indent-size 2)
 
-(defn block-indent [zloc sym idx]
-  (if (and (= (-> zloc fz/leftmost z/value) sym)
-           (first-form-in-line? (nth-form zloc (inc idx)))
-           (> (index-of zloc) idx))
+(defn const-indent [zloc sym]
+  (if (= (-> zloc fz/leftmost z/value) sym)
     (-> zloc z/up margin (+ indent-size))))
+
+(defn block-indent [zloc sym idx]
+  (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
+           (> (index-of zloc) idx))
+    (const-indent zloc sym)))
 
 (def default-indents
   (edn/read-string (slurp (io/resource "clofor/indents.edn"))))
 
-(defmulti indent-fn
+(defmulti make-indenter
   (fn [[sym [type & args]]] type))
 
-(defmethod indent-fn :block [[sym [_ idx]]]
+(defmethod make-indenter :block [[sym [_ idx]]]
   (fn [zloc] (block-indent zloc sym idx)))
 
+(defmethod make-indenter :const [[sym _]]
+  (fn [zloc] (const-indent zloc sym)))
+
 (defn- indent-amount [zloc indents]
-  (let [indent-fn (apply some-fn (map indent-fn indents))]
+  (let [indenter (apply some-fn (map make-indenter indents))]
     (if (-> zloc z/up z/tag #{:list})
-      (or (indent-fn zloc) (list-indent zloc))
+      (or (indenter zloc) (list-indent zloc))
       (coll-indent zloc))))
 
 (defn- indent-line [zloc indents]
