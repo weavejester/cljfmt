@@ -113,26 +113,28 @@
 (def default-indents
   (for [[s i] block-indent-defaults] #(block-indent % s i)))
 
-(defn- indent-amount [zloc]
+(defn- indent-amount [zloc indents]
   (if (-> zloc z/up z/tag #{:list})
-    (or ((apply some-fn default-indents) zloc) (list-indent zloc))
+    (or ((apply some-fn indents) zloc) (list-indent zloc))
     (coll-indent zloc)))
 
-(defn- indent-line [zloc]
-  (fz/insert-left zloc (whitespace (indent-amount zloc))))
+(defn- indent-line [zloc indents]
+  (fz/insert-left zloc (whitespace (indent-amount zloc indents))))
 
-(defn indent [form]
-  (transform form edit-all line-start? indent-line))
+(defn indent [form indents]
+  (let [indents (into default-indents indents)]
+    (transform form edit-all line-start? #(indent-line % indents))))
 
-(def reindent
-  (comp indent unindent))
+(defn reindent [form indents]
+  (indent (unindent form) indents))
 
-(def reformat-form
-  (comp remove-surrounding-whitespace
-        insert-missing-whitespace
-        reindent))
+(defn reformat-form [form & [{:keys [indents]}]]
+  (-> form
+      remove-surrounding-whitespace
+      insert-missing-whitespace
+      (reindent indents)))
 
-(def reformat-string
-  (comp prn/->string
-        reformat-form
-        p/parse-string-all))
+(defn reformat-string [form-string & [options]]
+  (-> (p/parse-string-all form-string)
+      (reformat-form options)
+      (prn/->string)))
