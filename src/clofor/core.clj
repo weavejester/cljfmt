@@ -88,15 +88,15 @@
       (z/linebreak? zloc))
     true))
 
-(def basic-indent-size 2)
+(def block-indent-size 2)
 
-(defn basic-indent [zloc sym idx]
+(defn block-indent [zloc sym idx]
   (if (and (= (-> zloc fz/leftmost z/value) sym)
            (first-form-in-line? (nth-form zloc (inc idx)))
            (> (index-of zloc) idx))
-    (-> zloc z/up margin (+ basic-indent-size))))
+    (-> zloc z/up margin (+ block-indent-size))))
 
-(def basic-indent-defaults
+(def block-indent-defaults
   '{go   0, case   1, if-let   1, when-not        1
     do   0, while  1, thread   0, defstruct       1
     if   1, doseq  1, testing  1, with-open       1
@@ -111,7 +111,7 @@
     loop 1, extend 1, when-let 1, with-local-vars 1})
 
 (def default-indents
-  (for [[s i] basic-indent-defaults] #(basic-indent % s i)))
+  (for [[s i] block-indent-defaults] #(block-indent % s i)))
 
 (defn- indent-amount [zloc]
   (if (-> zloc z/up z/tag #{:list})
