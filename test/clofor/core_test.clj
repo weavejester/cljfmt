@@ -49,3 +49,11 @@
            "[1 2 3]"))
     (is (= (reformat-string "{\n:foo \"bar\"\n}")
            "{:foo \"bar\"}"))))
+
+(deftest test-missing-whitespace
+  (is (= (reformat-string "(foo(bar baz)qux)")
+         "(foo (bar baz) qux)"))
+  (is (= (reformat-string "(foo)bar(baz)")
+         "(foo) bar (baz)"))
+  (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
+         "(foo [bar] #{baz} {quz bang})")))

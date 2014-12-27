@@ -5,7 +5,7 @@
             [rewrite-clj.zip :as z]))
 
 (defn- edit-all [zloc p? f]
-  (loop [zloc zloc]
+  (loop [zloc (if (p? zloc) (f zloc) zloc)]
     (if-let [zloc (z/find-next zloc fz/next p?)]
       (recur (f zloc))
       zloc)))
@@ -18,6 +18,15 @@
 
 (defn remove-surrounding-whitespace [form]
   (transform form edit-all #(surrounding? % z/whitespace?) fz/remove))
+
+(defn- element? [zloc]
+  (if zloc (not (z/whitespace? zloc))))
+
+(defn missing-whitespace? [zloc]
+  (and (element? zloc) (element? (fz/right zloc))))
+
+(defn insert-missing-whitespace [form]
+  (transform form edit-all missing-whitespace? z/append-space))
 
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
@@ -120,6 +129,7 @@
 
 (def reformat-form
   (comp remove-surrounding-whitespace
+        insert-missing-whitespace
         reindent))
 
 (def reformat-string
