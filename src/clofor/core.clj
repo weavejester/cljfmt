@@ -101,17 +101,28 @@
            (> (index-of zloc) idx))
     (const-indent zloc sym)))
 
+(defn backtrack-indent [zloc sym depth]
+  (let [top (nth (iterate z/up zloc) (dec depth))]
+    (if (= (-> top fz/leftmost z/value) sym)
+      (-> zloc z/up margin (+ indent-size)))))
+
 (def default-indents
   (edn/read-string (slurp (io/resource "clofor/indents.edn"))))
 
-(defmulti make-indenter
-  (fn [[sym [type & args]]] type))
+(defmulti indenter-fn
+  (fn [sym [type & args]] type))
 
-(defmethod make-indenter :block [[sym [_ idx]]]
+(defmethod indenter-fn :block [sym [_ idx]]
   (fn [zloc] (block-indent zloc sym idx)))
 
-(defmethod make-indenter :const [[sym _]]
+(defmethod indenter-fn :const [sym _]
   (fn [zloc] (const-indent zloc sym)))
+
+(defmethod indenter-fn :backtrack [sym [_ depth]]
+  (fn [zloc] (backtrack-indent zloc sym depth)))
+
+(defn- make-indenter [[sym opts]]
+  (apply some-fn (map (partial indenter-fn sym) opts)))
 
 (defn- indent-amount [zloc indents]
   (let [indenter (apply some-fn (map make-indenter indents))]
