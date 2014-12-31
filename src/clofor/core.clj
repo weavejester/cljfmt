@@ -78,6 +78,13 @@
     (-> zloc fz/leftmost z/next margin)
     (coll-indent zloc)))
 
+(def indent-size 2)
+
+(defn inner-indent [zloc sym depth]
+  (let [top (nth (iterate z/up zloc) depth)]
+    (if (= (-> top fz/leftmost z/value) sym)
+      (-> zloc z/up margin (+ indent-size)))))
+
 (defn- nth-form [zloc n]
   (reduce (fn [z f] (if z (f z)))
           (z/leftmost zloc)
@@ -90,21 +97,10 @@
       (z/linebreak? zloc))
     true))
 
-(def indent-size 2)
-
-(defn const-indent [zloc sym]
-  (if (= (-> zloc fz/leftmost z/value) sym)
-    (-> zloc z/up margin (+ indent-size))))
-
 (defn block-indent [zloc sym idx]
   (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
            (> (index-of zloc) idx))
-    (const-indent zloc sym)))
-
-(defn backtrack-indent [zloc sym depth]
-  (let [top (nth (iterate z/up zloc) (dec depth))]
-    (if (= (-> top fz/leftmost z/value) sym)
-      (-> zloc z/up margin (+ indent-size)))))
+    (inner-indent zloc sym 0)))
 
 (def default-indents
   (edn/read-string (slurp (io/resource "clofor/indents.edn"))))
@@ -112,14 +108,11 @@
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
 
+(defmethod indenter-fn :inner [sym [_ depth]]
+  (fn [zloc] (inner-indent zloc sym depth)))
+
 (defmethod indenter-fn :block [sym [_ idx]]
   (fn [zloc] (block-indent zloc sym idx)))
-
-(defmethod indenter-fn :const [sym _]
-  (fn [zloc] (const-indent zloc sym)))
-
-(defmethod indenter-fn :backtrack [sym [_ depth]]
-  (fn [zloc] (backtrack-indent zloc sym depth)))
 
 (defn- make-indenter [[sym opts]]
   (apply some-fn (map (partial indenter-fn sym) opts)))
