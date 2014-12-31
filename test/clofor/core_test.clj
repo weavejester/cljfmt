@@ -31,6 +31,14 @@
     (is (= (reformat-string "(fn [x] (foo bar\nbaz))")
            "(fn [x] (foo bar\n             baz))")))
 
+  (testing "inner indentation"
+    (is (= (reformat-string "(letfn [(foo [x]\n(* x x))]\n(foo 5))")
+           "(letfn [(foo [x]\n          (* x x))]\n  (foo 5))"))
+    (is (= (reformat-string "(reify Closeable\n(close [_]\n(prn :closed)))")
+           "(reify Closeable\n  (close [_]\n    (prn :closed)))"))
+    (is (= (reformat-string "(defrecord Foo [x]\nCloseable\n(close [_]\n(prn x)))")
+           "(defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))")))
+
   (testing "data structure indentation"
     (is (= (reformat-string "[:foo\n:bar\n:baz]")
            "[:foo\n :bar\n :baz]"))
