@@ -106,7 +106,7 @@
   (comp edn/read-string slurp io/resource))
 
 (def default-indents
-  (read-resource "cljfmt/indents.edn"))
+  (read-resource "cljfmt/default/indents.edn"))
 
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
