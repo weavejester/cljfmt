@@ -1,6 +1,6 @@
-(ns clofor.core-test
+(ns cljfmt.core-test
   (:require [clojure.test :refer :all]
-            [clofor.core :refer :all]))
+            [cljfmt.core :refer :all]))
 
 (deftest test-indent
   (testing "list indentation"

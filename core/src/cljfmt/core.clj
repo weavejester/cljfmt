@@ -1,4 +1,4 @@
-(ns clofor.core
+(ns cljfmt.core
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [fast-zip.core :as fz]
@@ -103,7 +103,7 @@
     (inner-indent zloc sym 0)))
 
 (def default-indents
-  (edn/read-string (slurp (io/resource "clofor/indents.edn"))))
+  (edn/read-string (slurp (io/resource "cljfmt/indents.edn"))))
 
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
