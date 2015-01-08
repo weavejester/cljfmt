@@ -102,8 +102,11 @@
            (> (index-of zloc) idx))
     (inner-indent zloc sym 0)))
 
+(def read-resource
+  (comp edn/read-string slurp io/resource))
+
 (def default-indents
-  (edn/read-string (slurp (io/resource "cljfmt/indents.edn"))))
+  (read-resource "cljfmt/indents.edn"))
 
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
