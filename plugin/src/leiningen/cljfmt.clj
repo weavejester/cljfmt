@@ -1,4 +1,4 @@
-(ns leiningen.format
+(ns leiningen.cljfmt
   (:refer-clojure :exclude [format])
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
@@ -24,7 +24,7 @@
       (println "ok")
       (println "fail"))))
 
-(defn format
+(defn cljfmt
   "Format Clojure source files"
   [project command]
   (case command
