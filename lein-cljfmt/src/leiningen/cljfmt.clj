@@ -15,7 +15,7 @@
   (mapcat clojure-files (:source-paths project)))
 
 (defn valid-format? [file]
-  (let [s (slurp file)]
+  (let [s (slurp (io/file file))]
     (= s (cljfmt/reformat-string s))))
 
 (defn relative-path [dir file]
@@ -23,21 +23,25 @@
       (.relativize (.toURI file))
       (.getPath)))
 
-(defn project-paths [project files]
-  (let [root (io/file (:root project))]
-   (map (partial relative-path root) files)))
+(defn project-path [project file]
+  (relative-path (io/file (:root project)) (io/file file)))
 
-(defn check [project]
-  (let [files  (source-files project)
-        errors (remove valid-format? files)]
-    (if (empty? errors)
-      (main/info  "All source files formatted correctly")
-      (main/abort "The following source files have incorrect formatting:\n "
-                  (str/join "\n  " (project-paths project errors))))))
+(defn show-paths [project files]
+  (str "  " (str/join "\n  " (map (partial project-path project) files))))
+
+(defn check
+  ([project]
+   (apply check project (source-files project)))
+  ([project file & files]
+   (let [errors (remove valid-format? (cons file files))]
+     (if (empty? errors)
+       (main/info  "Source files formatted correctly")
+       (main/abort (str "The following source files have incorrect formatting:\n"
+                      (show-paths project errors)))))))
 
 (defn cljfmt
   "Format Clojure source files"
-  [project command]
+  [project command & args]
   (case command
-    "check" (check project)
+    "check" (apply check project args)
     (main/abort "Unknown cljfmt command:" command)))
