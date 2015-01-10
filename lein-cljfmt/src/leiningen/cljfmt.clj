@@ -16,7 +16,7 @@
 
 (defn valid-format? [file]
   (let [s (slurp file)]
-    (= (str/trim s) (cljfmt/reformat-string s))))
+    (= s (cljfmt/reformat-string s))))
 
 (defn check [project]
   (let [files (source-files project)]

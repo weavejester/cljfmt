@@ -18,8 +18,15 @@
 (defn- surrounding? [zloc p?]
   (and (p? zloc) (or (z/leftmost? zloc) (z/rightmost? zloc))))
 
+(defn- top? [zloc]
+  (not= (z/node zloc) (z/root zloc)))
+
+(defn- surrounding-whitespace? [zloc]
+  (and (top? (z/up zloc))
+       (surrounding? zloc z/whitespace?)))
+
 (defn remove-surrounding-whitespace [form]
-  (transform form edit-all #(surrounding? % z/whitespace?) fz/remove))
+  (transform form edit-all surrounding-whitespace? fz/remove))
 
 (defn- element? [zloc]
   (if zloc (not (z/whitespace? zloc))))
