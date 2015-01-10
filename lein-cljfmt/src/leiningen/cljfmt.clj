@@ -11,8 +11,12 @@
 (defn clojure-files [dir]
   (filter clojure-file? (file-seq (io/file dir))))
 
-(defn source-files [project]
-  (mapcat clojure-files (:source-paths project)))
+(defn find-files [f]
+  (let [f (io/file f)]
+    (when-not (.exists f) (main/abort "No such file:" (str f)))
+    (if (.isDirectory f)
+      (clojure-files f)
+      [f])))
 
 (defn valid-format? [file]
   (let [s (slurp (io/file file))]
@@ -31,13 +35,14 @@
 
 (defn check
   ([project]
-   (apply check project (source-files project)))
-  ([project file & files]
-   (let [errors (remove valid-format? (cons file files))]
+   (apply check project (:source-paths project)))
+  ([project path & paths]
+   (let [files  (mapcat find-files (cons path paths))
+         errors (remove valid-format? files)]
      (if (empty? errors)
-       (main/info  "Source files formatted correctly")
+       (main/info  "All source files formatted correctly")
        (main/abort (str "The following source files have incorrect formatting:\n"
-                      (show-paths project errors)))))))
+                        (show-paths project errors)))))))
 
 (defn cljfmt
   "Format Clojure source files"
