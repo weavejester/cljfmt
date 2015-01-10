@@ -31,4 +31,4 @@
   [project command]
   (case command
     "check" (check project)
-    (main/abort "Unknown format command:" command)))
+    (main/abort "Unknown cljfmt command:" command)))
