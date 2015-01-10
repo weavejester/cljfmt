@@ -18,13 +18,22 @@
   (let [s (slurp file)]
     (= s (cljfmt/reformat-string s))))
 
+(defn relative-path [dir file]
+  (-> (.toURI dir)
+      (.relativize (.toURI file))
+      (.getPath)))
+
+(defn project-paths [project files]
+  (let [root (io/file (:root project))]
+   (map (partial relative-path root) files)))
+
 (defn check [project]
   (let [files  (source-files project)
         errors (remove valid-format? files)]
     (if (empty? errors)
       (main/info  "All source files formatted correctly")
       (main/abort "The following source files have incorrect formatting:\n "
-                  (str/join "\n  " (map str files))))))
+                  (str/join "\n  " (project-paths project errors))))))
 
 (defn cljfmt
   "Format Clojure source files"
