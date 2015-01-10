@@ -19,10 +19,12 @@
     (= s (cljfmt/reformat-string s))))
 
 (defn check [project]
-  (let [files (source-files project)]
-    (if (every? valid-format? files)
-      (println "ok")
-      (println "fail"))))
+  (let [files  (source-files project)
+        errors (remove valid-format? files)]
+    (if (empty? errors)
+      (main/info  "All source files formatted correctly")
+      (main/abort "The following source files have incorrect formatting:\n "
+                  (str/join "\n  " (map str files))))))
 
 (defn cljfmt
   "Format Clojure source files"
