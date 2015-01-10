@@ -53,7 +53,13 @@
     (is (= (reformat-string "(let [foo {:x 1\n:y 2}]\n(:x foo))")
            "(let [foo {:x 1\n           :y 2}]\n  (:x foo))"))
     (is (= (reformat-string "(if foo\n(do bar\nbaz)\nquz)")
-           "(if foo\n  (do bar\n      baz)\n  quz)"))))
+           "(if foo\n  (do bar\n      baz)\n  quz)")))
+
+  (testing "namespaces"
+    (is (= (reformat-string "(t/defn foo [x]\n(+ x 1))")
+           "(t/defn foo [x]\n  (+ x 1))"))
+    (is (= (reformat-string "(t/defrecord Foo [x]\nCloseable\n(close [_]\n(prn x)))")
+           "(t/defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"

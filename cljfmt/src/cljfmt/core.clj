@@ -87,9 +87,12 @@
 
 (def indent-size 2)
 
+(defn- remove-namespace [x]
+  (if (symbol? x) (symbol (name x)) x))
+
 (defn inner-indent [zloc sym depth]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (= (-> top fz/leftmost z/value) sym)
+    (if (= (-> top fz/leftmost z/value remove-namespace) sym)
       (-> zloc z/up margin (+ indent-size)))))
 
 (defn- nth-form [zloc n]
