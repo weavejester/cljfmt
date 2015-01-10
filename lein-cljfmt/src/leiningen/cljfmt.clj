@@ -44,9 +44,19 @@
        (main/abort (str "The following source files have incorrect formatting:\n"
                         (show-paths project errors)))))))
 
+(defn fix
+  ([project]
+   (apply fix project (:source-paths project)))
+  ([project path & paths]
+   (let [files (mapcat find-files (cons path paths))]
+     (doseq [f files :when (not (valid-format? f))]
+       (main/info "Reformating" (str f))
+       (spit f (cljfmt/reformat-string (slurp f)))))))
+
 (defn cljfmt
   "Format Clojure source files"
   [project command & args]
   (case command
     "check" (apply check project args)
+    "fix"   (apply fix project args)
     (main/abort "Unknown cljfmt command:" command)))
