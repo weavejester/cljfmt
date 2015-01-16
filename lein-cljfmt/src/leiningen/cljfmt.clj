@@ -3,7 +3,8 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [leiningen.core.main :as main]))
+            [leiningen.core.main :as main]
+            [leiningen.cljfmt.diff :as diff]))
 
 (defn clojure-file? [file]
   (re-find #"\.clj[sx]?" (str file)))
@@ -19,8 +20,8 @@
       [f])))
 
 (defn valid-format? [file]
-  (let [s (slurp (io/file file))]
-    (= s (cljfmt/reformat-string s))))
+  (let [content (slurp (io/file file))]
+    (= content (cljfmt/reformat-string content))))
 
 (defn relative-path [dir file]
   (-> (.toURI dir)
@@ -30,19 +31,24 @@
 (defn project-path [project file]
   (relative-path (io/file (:root project)) (io/file file)))
 
-(defn show-paths [project files]
-  (str "  " (str/join "\n  " (map (partial project-path project) files))))
+(defn format-diff [project file]
+  (let [filename (project-path project file)
+        original (slurp (io/file file))
+        revised  (cljfmt/reformat-string original)]
+    (diff/unified-diff filename original revised)))
 
 (defn check
   ([project]
    (apply check project (:source-paths project)))
   ([project path & paths]
-   (let [files  (mapcat find-files (cons path paths))
-         errors (remove valid-format? files)]
-     (if (empty? errors)
+   (let [files   (mapcat find-files (cons path paths))
+         invalid (remove valid-format? files)]
+     (if (empty? invalid)
        (main/info  "All source files formatted correctly")
-       (main/abort (str "The following source files have incorrect formatting:\n"
-                        (show-paths project errors)))))))
+       (do (doseq [f invalid]
+             (main/warn (project-path project f) "formatted incorrectly")
+             (main/warn (format-diff project f)))
+           (main/abort "\n" (count invalid) "file(s) formatted incorrectly"))))))
 
 (defn fix
   ([project]
