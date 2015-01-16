@@ -146,11 +146,15 @@
 (defn reindent [form indents]
   (indent (unindent form) indents))
 
-(defn reformat-form [form & [{:keys [indents]}]]
+(defn reformat-form
+  [form & [{:as opts}]]
   (-> form
-      remove-surrounding-whitespace
-      insert-missing-whitespace
-      (reindent indents)))
+      (cond-> (:remove-surrounding-whitespace? opts true)
+        remove-surrounding-whitespace)
+      (cond-> (:insert-missing-whitespace? opts true)
+        insert-missing-whitespace)
+      (cond-> (:indentation? opts true)
+        (reindent (:indents opts {})))))
 
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)

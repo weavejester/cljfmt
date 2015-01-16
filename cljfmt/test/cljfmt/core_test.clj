@@ -85,3 +85,13 @@
          "(foo) bar (baz)"))
   (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
          "(foo [bar] #{baz} {quz bang})")))
+
+(deftest test-options
+  (is (= (reformat-string "(  foo  )" {:remove-surrounding-whitespace? false})
+         "(  foo  )"))
+  (is (= (reformat-string "(foo(bar))" {:insert-missing-whitespace? false})
+         "(foo(bar))"))
+  (is (= (reformat-string "(foo\nbar)" {:indents '{foo [[:block 0]]}})
+         "(foo\n  bar)"))
+  (is (= (reformat-string "(do\nfoo\nbar)" {:indentation? false})
+         "(do\nfoo\nbar)")))
