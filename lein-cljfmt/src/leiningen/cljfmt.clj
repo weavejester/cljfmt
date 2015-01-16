@@ -37,8 +37,11 @@
 (defn format-diff [project file]
   (let [filename (project-path project file)
         original (slurp (io/file file))
-        revised  (reformat-string project original)]
-    (diff/unified-diff filename original revised)))
+        revised  (reformat-string project original)
+        diff     (diff/unified-diff filename original revised)]
+    (if (get-in project [:cljfmt :ansi?] true)
+      (diff/colorize-diff diff)
+      diff)))
 
 (defn check
   ([project]
@@ -51,7 +54,8 @@
        (do (doseq [f invalid]
              (main/warn (project-path project f) "formatted incorrectly")
              (main/warn (format-diff project f)))
-           (main/abort "\n" (count invalid) "file(s) formatted incorrectly"))))))
+           (main/warn)
+           (main/abort (count invalid) "file(s) formatted incorrectly"))))))
 
 (defn fix
   ([project]
