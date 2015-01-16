@@ -19,9 +19,12 @@
       (clojure-files f)
       [f])))
 
-(defn valid-format? [file]
+(defn reformat-string [project s]
+  (cljfmt/reformat-string s (:cljfmt project {})))
+
+(defn valid-format? [project file]
   (let [content (slurp (io/file file))]
-    (= content (cljfmt/reformat-string content))))
+    (= content (reformat-string project content))))
 
 (defn relative-path [dir file]
   (-> (.toURI dir)
@@ -34,7 +37,7 @@
 (defn format-diff [project file]
   (let [filename (project-path project file)
         original (slurp (io/file file))
-        revised  (cljfmt/reformat-string original)]
+        revised  (reformat-string project original)]
     (diff/unified-diff filename original revised)))
 
 (defn check
@@ -42,7 +45,7 @@
    (apply check project (:source-paths project)))
   ([project path & paths]
    (let [files   (mapcat find-files (cons path paths))
-         invalid (remove valid-format? files)]
+         invalid (remove (partial valid-format? project) files)]
      (if (empty? invalid)
        (main/info  "All source files formatted correctly")
        (do (doseq [f invalid]
@@ -55,9 +58,9 @@
    (apply fix project (:source-paths project)))
   ([project path & paths]
    (let [files (mapcat find-files (cons path paths))]
-     (doseq [f files :when (not (valid-format? f))]
+     (doseq [f files :when (not (valid-format? project f))]
        (main/info "Reformating" (project-path project f))
-       (spit f (cljfmt/reformat-string (slurp f)))))))
+       (spit f (reformat-string project (slurp f)))))))
 
 (defn cljfmt
   "Format Clojure source files"
