@@ -87,13 +87,19 @@
 
 (def indent-size 2)
 
+(defn indent-width [zloc]
+  (case (z/tag zloc)
+    :list indent-size
+    :fn   (inc indent-size)))
+
 (defn- remove-namespace [x]
   (if (symbol? x) (symbol (name x)) x))
 
 (defn inner-indent [zloc sym depth]
   (let [top (nth (iterate z/up zloc) depth)]
     (if (= (-> top fz/leftmost z/value remove-namespace) sym)
-      (-> zloc z/up margin (+ indent-size)))))
+      (let [zup (z/up zloc)]
+        (+ (margin zup) (indent-width zup))))))
 
 (defn- nth-form [zloc n]
   (reduce (fn [z f] (if z (f z)))
@@ -133,7 +139,7 @@
 
 (defn- indent-amount [zloc indents]
   (let [indenter (apply some-fn (map make-indenter indents))]
-    (if (-> zloc z/up z/tag #{:list})
+    (if (-> zloc z/up z/tag #{:list :fn})
       (or (indenter zloc) (list-indent zloc))
       (coll-indent zloc))))
 
