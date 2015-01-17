@@ -63,7 +63,7 @@
   ([project path & paths]
    (let [files (mapcat find-files (cons path paths))]
      (doseq [f files :when (not (valid-format? project f))]
-       (main/info "Reformating" (project-path project f))
+       (main/info "Reformatting" (project-path project f))
        (spit f (reformat-string project (slurp f)))))))
 
 (defn cljfmt
