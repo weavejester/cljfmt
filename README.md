@@ -1,5 +1,7 @@
 # cljfmt
 
+[![Build Status](https://travis-ci.org/weavejester/cljfmt.svg?branch=master)](https://travis-ci.org/weavejester/cljfmt)
+
 cljfmt is a tool for formatting Clojure code.
 
 It can turn something like this:
