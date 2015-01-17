@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [fast-zip.core :as fz]
             [rewrite-clj.parser :as p]
-            [rewrite-clj.printer :as prn]
+            [rewrite-clj.node :as n]
             [rewrite-clj.zip :as z]))
 
 (defn- edit-all [zloc p? f]
@@ -57,9 +57,9 @@
 
 (defn- prior-string [zloc]
   (if-let [p (z/left* zloc)]
-    (str (prior-string p) (prn/->string (z/node p)))
+    (str (prior-string p) (n/string (z/node p)))
     (if-let [p (z/up* zloc)]
-      (str (prior-string p) (start-element (first (z/node p))))
+      (str (prior-string p) (start-element (n/tag (z/node p))))
       "")))
 
 (defn- last-line-in-string [^String s]
@@ -69,7 +69,7 @@
   (-> zloc prior-string last-line-in-string count))
 
 (defn- whitespace [width]
-  [:whitespace (apply str (repeat width " "))])
+  (n/whitespace-node (apply str (repeat width " "))))
 
 (defn coll-indent [zloc]
   (-> zloc fz/leftmost margin))
@@ -137,7 +137,10 @@
       (coll-indent zloc))))
 
 (defn- indent-line [zloc indents]
-  (fz/insert-left zloc (whitespace (indent-amount zloc indents))))
+  (let [width (indent-amount zloc indents)]
+    (if (> width 0)
+      (fz/insert-left zloc (whitespace width))
+      zloc)))
 
 (defn indent [form indents]
   (let [indents (into default-indents indents)]
@@ -159,4 +162,4 @@
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)
       (reformat-form options)
-      (prn/->string)))
+      (n/string)))
