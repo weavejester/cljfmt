@@ -40,6 +40,7 @@
  letfn           [[:block 1] [:inner 2]]
  locking         [[:block 1]]
  loop            [[:block 1]]
+ match           [[:block 1]]
  ns              [[:block 1]]
  proxy           [[:block 2] [:inner 1]]
  reify           [[:inner 0] [:inner 1]]
