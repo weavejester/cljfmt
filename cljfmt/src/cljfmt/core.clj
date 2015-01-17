@@ -116,7 +116,8 @@
   (comp edn/read-string slurp io/resource))
 
 (def default-indents
-  (read-resource "cljfmt/indents/clojure.edn"))
+  (merge (read-resource "cljfmt/indents/clojure.edn")
+         (read-resource "cljfmt/indents/compojure.edn")))
 
 (defmulti indenter-fn
   (fn [sym [type & args]] type))

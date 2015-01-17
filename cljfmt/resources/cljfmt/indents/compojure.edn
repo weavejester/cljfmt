@@ -1,0 +1,12 @@
+{ANY        [[:inner 0]]
+ DELETE     [[:inner 0]]
+ GET        [[:inner 0]]
+ HEAD       [[:inner 0]]
+ OPTIONS    [[:inner 0]]
+ PATCH      [[:inner 0]]
+ POST       [[:inner 0]]
+ PUT        [[:inner 0]]
+ context    [[:inner 0]]
+ defroutes  [[:inner 0]]
+ let-routes [[:block 1]]
+ rfn        [[:inner 0]]}
