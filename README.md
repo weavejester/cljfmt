@@ -5,25 +5,19 @@ cljfmt is a tool for formatting Clojure code.
 It can turn something like this:
 
 ```clojure
-(
-  let [x 4
-    y 5
-  ]
-  (+ (
-    * x x
-  )
-       (* y y)
-  )
-)
+( let [x 3
+    y 4]
+  (+ (* x x
+  )(* y y)
+  ))
 ```
 
 Into nicely formatted Clojure code like this:
 
 ```clojure
-(let [x 4
-      y 5]
-  (+ (* x x)
-     (* y y)))
+(let [x 3
+      y 4]
+  (+ (* x x) (* y y)))
 ```
 
 ## Installation
