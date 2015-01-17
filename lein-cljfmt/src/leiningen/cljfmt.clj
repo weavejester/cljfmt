@@ -52,7 +52,7 @@
      (if (empty? invalid)
        (main/info  "All source files formatted correctly")
        (do (doseq [f invalid]
-             (main/warn (project-path project f) "formatted incorrectly")
+             (main/warn (project-path project f) "has incorrect formatting:")
              (main/warn (format-diff project f)))
            (main/warn)
            (main/abort (count invalid) "file(s) formatted incorrectly"))))))
