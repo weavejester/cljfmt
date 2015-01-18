@@ -58,4 +58,5 @@
  while           [[:block 1]]
  with-local-vars [[:block 1]]
  with-open       [[:block 1]]
- with-precision  [[:block 1]]}
+ with-precision  [[:block 1]]
+ with-redefs     [[:block 1]]}
