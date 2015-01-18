@@ -43,9 +43,15 @@
       (diff/colorize-diff diff)
       diff)))
 
+(defn format-paths [project]
+  (->> (concat (:source-paths project)
+               (:test-paths project))
+       (map io/file)
+       (filter #(and (.exists %) (.isDirectory %)))))
+
 (defn check
   ([project]
-   (apply check project (:source-paths project)))
+   (apply check project (format-paths project)))
   ([project path & paths]
    (let [files   (mapcat find-files (cons path paths))
          invalid (remove (partial valid-format? project) files)]
@@ -59,7 +65,7 @@
 
 (defn fix
   ([project]
-   (apply fix project (:source-paths project)))
+   (apply fix project (format-paths project)))
   ([project path & paths]
    (let [files (mapcat find-files (cons path paths))]
      (doseq [f files :when (not (valid-format? project f))]
