@@ -28,7 +28,7 @@ The easiest way to get started with cljfmt is to add the lein-cljfmt
 plugin to your [Leiningen][] project map:
 
 ```clojure
-:plugins [[lein-cljfmt "0.1.1"]
+:plugins [[lein-cljfmt "0.1.2"]
 ```
 
 [leiningen]: https://github.com/technomancy/leiningen
@@ -81,6 +81,9 @@ selectively enabled or disabled:
   true if cljfmt should insert whitespace missing from between
   elements. This will convert `(foo(bar))` to `(foo (bar))`.
   Defaults to true.
+
+* `:file-pattern` -
+  determines which files to scan, `#”\.clj[sx]?”` by default.
 
 You can also customize the indentation rules cljfmt uses. Rules are
 defined as a map of symbols to vectors:
