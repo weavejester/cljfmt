@@ -82,6 +82,9 @@ selectively enabled or disabled:
   elements. This will convert `(foo(bar))` to `(foo (bar))`.
   Defaults to true.
 
+* `:file-pattern` -
+  determines which files to scan, `#”\.clj[sx]?”` by default.
+
 You can also customize the indentation rules cljfmt uses. Rules are
 defined as a map of symbols to vectors:
 

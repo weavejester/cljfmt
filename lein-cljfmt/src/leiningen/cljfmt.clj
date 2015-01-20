@@ -6,17 +6,17 @@
             [leiningen.core.main :as main]
             [leiningen.cljfmt.diff :as diff]))
 
-(defn clojure-file? [file]
-  (re-find #"\.clj[sx]?" (str file)))
+(defn grep [re dir]
+  (filter #(re-find re (str %)) (file-seq (io/file dir))))
 
-(defn clojure-files [dir]
-  (filter clojure-file? (file-seq (io/file dir))))
+(defn file-pattern [project]
+  (get-in project [:cljfmt :file-pattern] #"\.clj[sx]?"))
 
-(defn find-files [f]
+(defn find-files [project f]
   (let [f (io/file f)]
     (when-not (.exists f) (main/abort "No such file:" (str f)))
     (if (.isDirectory f)
-      (clojure-files f)
+      (grep (file-pattern project) f)
       [f])))
 
 (defn reformat-string [project s]
@@ -53,7 +53,7 @@
   ([project]
    (apply check project (format-paths project)))
   ([project path & paths]
-   (let [files   (mapcat find-files (cons path paths))
+   (let [files   (mapcat (partial find-files project) (cons path paths))
          invalid (remove (partial valid-format? project) files)]
      (if (empty? invalid)
        (main/info  "All source files formatted correctly")
@@ -67,7 +67,7 @@
   ([project]
    (apply fix project (format-paths project)))
   ([project path & paths]
-   (let [files (mapcat find-files (cons path paths))]
+   (let [files (mapcat (partial find-files project) (cons path paths))]
      (doseq [f files :when (not (valid-format? project f))]
        (main/info "Reformatting" (project-path project f))
        (spit f (reformat-string project (slurp f)))))))
