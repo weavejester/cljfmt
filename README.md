@@ -85,8 +85,9 @@ selectively enabled or disabled:
 * `:file-pattern` -
   determines which files to scan, `#”\.clj[sx]?”` by default.
 
-You can also customize the indentation rules cljfmt uses. Rules are
-defined as a map of symbols to vectors:
+You can also customize the indentation rules cljfmt uses. Rules
+are provided under `:cljfmt {:indents ...}` and are defined as
+a map of symbols to vectors:
 
 ```clojure
 {symbol [& rules]}
