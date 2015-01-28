@@ -71,7 +71,9 @@
     (is (= (reformat-string ";foo\n(def x 1)")
            ";foo\n(def x 1)"))
     (is (= (reformat-string "(ns foo.core)\n\n;; foo\n(defn foo [x]\n(inc x))")
-           "(ns foo.core)\n\n;; foo\n(defn foo [x]\n  (inc x))"))))
+           "(ns foo.core)\n\n;; foo\n(defn foo [x]\n  (inc x))"))
+    (is (= (reformat-string "(defn foo [x]\n  ;; +1\n(inc x))")
+           "(defn foo [x]\n  ;; +1\n  (inc x))"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"

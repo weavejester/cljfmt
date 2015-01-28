@@ -40,17 +40,21 @@
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
 
+(defn- comment? [zloc]
+  (-> zloc z/node n/comment?))
+
 (defn- line-start? [zloc]
-  (z/linebreak? (fz/prev zloc)))
+  (let [p (fz/prev zloc)]
+    (or (z/linebreak? p) (comment? p))))
 
 (defn- indentation? [zloc]
   (and (line-start? zloc) (whitespace? zloc)))
 
 (defn- skip-whitespace [zloc]
-  (z/skip z/next whitespace? zloc))
+  (z/skip fz/next whitespace? zloc))
 
 (defn- comment-next? [zloc]
-  (-> zloc skip-whitespace z/node n/comment?))
+  (-> zloc skip-whitespace comment?))
 
 (defn- should-indent? [zloc]
   (and (line-start? zloc) (not (comment-next? zloc))))
