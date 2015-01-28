@@ -46,8 +46,20 @@
 (defn- indentation? [zloc]
   (and (line-start? zloc) (whitespace? zloc)))
 
+(defn- skip-whitespace [zloc]
+  (z/skip z/next whitespace? zloc))
+
+(defn- comment-next? [zloc]
+  (-> zloc skip-whitespace z/node n/comment?))
+
+(defn- should-indent? [zloc]
+  (and (line-start? zloc) (not (comment-next? zloc))))
+
+(defn- should-unindent? [zloc]
+  (and (indentation? zloc) (not (comment-next? zloc))))
+
 (defn unindent [form]
-  (transform form edit-all indentation? fz/remove))
+  (transform form edit-all should-unindent? fz/remove))
 
 (def ^:private start-element
   {:meta "^", :meta* "#^", :vector "[",       :map "{"
@@ -151,7 +163,7 @@
 
 (defn indent [form indents]
   (let [indents (into default-indents indents)]
-    (transform form edit-all line-start? #(indent-line % indents))))
+    (transform form edit-all should-indent? #(indent-line % indents))))
 
 (defn reindent [form indents]
   (indent (unindent form) indents))
