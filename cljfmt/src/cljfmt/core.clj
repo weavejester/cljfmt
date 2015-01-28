@@ -29,7 +29,7 @@
   (transform form edit-all surrounding-whitespace? fz/remove))
 
 (defn- element? [zloc]
-  (if zloc (not (z/whitespace? zloc))))
+  (if zloc (not (z/whitespace-or-comment? zloc))))
 
 (defn missing-whitespace? [zloc]
   (and (element? zloc) (element? (fz/right zloc))))

@@ -65,7 +65,13 @@
     (is (= (reformat-string "#(while true\n(println :foo))")
            "#(while true\n   (println :foo))"))
     (is (= (reformat-string "#(reify Closeable\n(close [_]\n(prn %)))")
-           "#(reify Closeable\n   (close [_]\n     (prn %)))"))))
+           "#(reify Closeable\n   (close [_]\n     (prn %)))")))
+
+  (testing "comments"
+    (is (= (reformat-string ";foo\n(def x 1)")
+           ";foo\n(def x 1)"))
+    (is (= (reformat-string "(ns foo.core)\n\n;; foo\n(defn foo [x]\n(inc x))")
+           "(ns foo.core)\n\n;; foo\n(defn foo [x]\n  (inc x))"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
