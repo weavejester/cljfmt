@@ -19,7 +19,7 @@
   (and (p? zloc) (or (z/leftmost? zloc) (z/rightmost? zloc))))
 
 (defn- top? [zloc]
-  (not= (z/node zloc) (z/root zloc)))
+  (and zloc (not= (z/node zloc) (z/root zloc))))
 
 (defn- surrounding-whitespace? [zloc]
   (and (top? (z/up zloc))
@@ -41,7 +41,7 @@
   (= (z/tag zloc) :whitespace))
 
 (defn- comment? [zloc]
-  (-> zloc z/node n/comment?))
+  (some-> zloc z/node n/comment?))
 
 (defn- line-start? [zloc]
   (let [p (fz/prev zloc)]
