@@ -82,16 +82,17 @@ selectively enabled or disabled:
   elements. This will convert `(foo(bar))` to `(foo (bar))`.
   Defaults to true.
 
+You can also configure the behavior of cljfmt:
+
 * `:file-pattern` -
   determines which files to scan, `#”\.clj[sx]?”` by default.
 
-You can also customize the indentation rules cljfmt uses. Rules
-are provided under `:cljfmt {:indents ...}` and are defined as
-a map of symbols to vectors:
+* `:indents` -
+  a map of var symbols to indentation rules, i.e. `{symbol [& rules}`.
+  See the next section for a detailed explanation.
 
-```clojure
-{symbol [& rules]}
-```
+
+### Indentation rules
 
 There are two types of indentation rule, `:inner` and `:block`.
 
