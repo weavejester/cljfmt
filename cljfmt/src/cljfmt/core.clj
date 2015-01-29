@@ -113,7 +113,7 @@
 
 (defn inner-indent [zloc sym depth]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (= (-> top fz/leftmost z/value remove-namespace) sym)
+    (if (= (-> top z/leftmost z/value remove-namespace) sym)
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
@@ -124,7 +124,7 @@
 
 (defn- first-form-in-line? [zloc]
   (if-let [zloc (fz/left zloc)]
-    (if (whitespace? zloc)
+    (if (or (whitespace? zloc) (comment? zloc))
       (recur zloc)
       (z/linebreak? zloc))
     true))
