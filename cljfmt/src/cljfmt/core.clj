@@ -98,7 +98,7 @@
 
 (defn list-indent [zloc]
   (if (> (index-of zloc) 1)
-    (-> zloc fz/leftmost z/next margin)
+    (-> zloc fz/leftmost z/right margin)
     (coll-indent zloc)))
 
 (def indent-size 2)

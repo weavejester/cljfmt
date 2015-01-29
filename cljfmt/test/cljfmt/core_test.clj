@@ -67,6 +67,10 @@
     (is (= (reformat-string "#(reify Closeable\n(close [_]\n(prn %)))")
            "#(reify Closeable\n   (close [_]\n     (prn %)))")))
 
+  (testing "multiple arities"
+    (is (= (reformat-string "(fn\n([x]\n(foo)\n(bar)))")
+           "(fn\n  ([x]\n   (foo)\n   (bar)))")))
+
   (testing "comments"
     (is (= (reformat-string ";foo\n(def x 1)")
            ";foo\n(def x 1)"))
