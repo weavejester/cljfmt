@@ -82,8 +82,8 @@
            "(let [;foo\n      x (foo bar\n             baz)]\n  x)")))
 
   (testing "metadata"
-    (is (= (reformat-string "(def ^{:doc \"foo\"}\nfoo\n:foo)")
-           "(def ^{:doc \"foo\"}\n  foo\n  :foo)"))
+    (is (= (reformat-string "(defonce ^{:doc \"foo\"}\nfoo\n:foo)")
+           "(defonce ^{:doc \"foo\"}\n  foo\n  :foo)"))
     (is (= (reformat-string "(def ^:private\nfoo\n:foo)")
            "(def ^:private\n  foo\n  :foo)"))
     (is (= (reformat-string "(def ^:private foo\n:foo)")

@@ -15,6 +15,7 @@
  defmulti        [[:inner 0]]
  defn            [[:inner 0]]
  defn-           [[:inner 0]]
+ defonce         [[:inner 0]]
  defprotocol     [[:block 1] [:inner 1]]
  defrecord       [[:block 2] [:inner 1]]
  defstruct       [[:block 1]]
