@@ -79,7 +79,15 @@
     (is (= (reformat-string "(defn foo [x]\n  ;; +1\n(inc x))")
            "(defn foo [x]\n  ;; +1\n  (inc x))"))
     (is (= (reformat-string "(let [;foo\n x (foo bar\n baz)]\n x)")
-           "(let [;foo\n      x (foo bar\n             baz)]\n  x)"))))
+           "(let [;foo\n      x (foo bar\n             baz)]\n  x)")))
+
+  (testing "metadata"
+    (is (= (reformat-string "(def ^{:doc \"foo\"}\nfoo\n:foo)")
+           "(def ^{:doc \"foo\"}\n  foo\n  :foo)"))
+    (is (= (reformat-string "(def ^:private\nfoo\n:foo)")
+           "(def ^:private\n  foo\n  :foo)"))
+    (is (= (reformat-string "(def ^:private foo\n:foo)")
+           "(def ^:private foo\n  :foo)"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"

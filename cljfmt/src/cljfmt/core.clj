@@ -153,11 +153,17 @@
 (defn- make-indenter [[sym opts]]
   (apply some-fn (map (partial indenter-fn sym) opts)))
 
-(defn- indent-amount [zloc indents]
+(defn- custom-indent [zloc indents]
   (let [indenter (apply some-fn (map make-indenter indents))]
-    (if (-> zloc z/up z/tag #{:list :fn})
-      (or (indenter zloc) (list-indent zloc))
-      (coll-indent zloc))))
+    (or (indenter zloc)
+        (list-indent zloc))))
+
+(defn- indent-amount [zloc indents]
+  (case (-> zloc z/up z/tag)
+    :list (custom-indent zloc indents)
+    :fn   (custom-indent zloc indents)
+    :meta (indent-amount (z/up zloc) indents)
+    (coll-indent zloc)))
 
 (defn- indent-line [zloc indents]
   (let [width (indent-amount zloc indents)]
