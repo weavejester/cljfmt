@@ -1,6 +1,7 @@
 (ns cljfmt.core
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
+  (:import [clojure.lang Symbol]
+           [java.util.regex Pattern])
+  (:require [clojure.java.io :as io]
             [fast-zip.core :as fz]
             [rewrite-clj.parser :as p]
             [rewrite-clj.node :as n]
@@ -111,9 +112,17 @@
 (defn- remove-namespace [x]
   (if (symbol? x) (symbol (name x)) x))
 
-(defn inner-indent [zloc sym depth]
+(defn- indent-matches? [key sym]
+  (condp instance? key
+    Symbol  (= key sym)
+    Pattern (re-find key (str sym))))
+
+(defn- form-symbol [zloc]
+  (-> zloc z/leftmost z/value remove-namespace))
+
+(defn inner-indent [zloc key depth]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (= (-> top z/leftmost z/value remove-namespace) sym)
+    (if (indent-matches? key (form-symbol top))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
@@ -129,17 +138,20 @@
       (z/linebreak? zloc))
     true))
 
-(defn block-indent [zloc sym idx]
-  (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
-           (> (index-of zloc) idx))
-    (inner-indent zloc sym 0)))
+(defn block-indent [zloc key idx]
+  (if (indent-matches? key (form-symbol zloc))
+    (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
+             (> (index-of zloc) idx))
+      (inner-indent zloc key 0)
+      (list-indent zloc))))
 
 (def read-resource
-  (comp edn/read-string slurp io/resource))
+  (comp read-string slurp io/resource))
 
 (def default-indents
-  (merge (read-resource "cljfmt/indents/clojure.edn")
-         (read-resource "cljfmt/indents/compojure.edn")))
+  (merge (read-resource "cljfmt/indents/clojure.clj")
+         (read-resource "cljfmt/indents/compojure.clj")
+         (read-resource "cljfmt/indents/fuzzy.clj")))
 
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
@@ -150,11 +162,18 @@
 (defmethod indenter-fn :block [sym [_ idx]]
   (fn [zloc] (block-indent zloc sym idx)))
 
-(defn- make-indenter [[sym opts]]
-  (apply some-fn (map (partial indenter-fn sym) opts)))
+(defn- make-indenter [[key opts]]
+  (apply some-fn (map (partial indenter-fn key) opts)))
+
+(defn- indent-order [[key _]]
+  (condp instance? key
+    Symbol  (str 0 key)
+    Pattern (str 1 key)))
 
 (defn- custom-indent [zloc indents]
-  (let [indenter (apply some-fn (map make-indenter indents))]
+  (let [indenter (->> (sort-by indent-order indents)
+                      (map make-indenter)
+                      (apply some-fn))]
     (or (indenter zloc)
         (list-indent zloc))))
 

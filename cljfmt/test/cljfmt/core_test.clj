@@ -15,7 +15,9 @@
     (is (= (reformat-string "(do\n(foo)\n(bar))")
            "(do\n  (foo)\n  (bar))"))
     (is (= (reformat-string "(do (foo)\n(bar))")
-           "(do (foo)\n    (bar))")))
+           "(do (foo)\n    (bar))"))
+    (is (= (reformat-string "(deftype Foo\n[x]\nBar)")
+           "(deftype Foo\n         [x]\n  Bar)")))
 
   (testing "constant indentation"
     (is (= (reformat-string "(def foo\n\"Hello World\")")
@@ -87,7 +89,13 @@
     (is (= (reformat-string "(def ^:private\nfoo\n:foo)")
            "(def ^:private\n  foo\n  :foo)"))
     (is (= (reformat-string "(def ^:private foo\n:foo)")
-           "(def ^:private foo\n  :foo)"))))
+           "(def ^:private foo\n  :foo)")))
+
+  (testing "fuzzy matches"
+    (is (= (reformat-string "(with-foo x\ny\nz)")
+           "(with-foo x\n  y\n  z)"))
+    (is (= (reformat-string "(defelem foo [x]\n[:foo x])")
+           "(defelem foo [x]\n  [:foo x])"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
