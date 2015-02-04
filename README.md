@@ -56,6 +56,10 @@ As with the `check` task, you can choose to fix a specific file:
 
     lein cljfmt fix src/foo/core.clj
 
+## Editor Support
+
+* [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
+
 ## Configuration
 
 You can configure lein-cljfmt by adding a `:cljfmt` map to your
