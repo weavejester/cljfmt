@@ -56,6 +56,15 @@ As with the `check` task, you can choose to fix a specific file:
 
     lein cljfmt fix src/foo/core.clj
 
+## Editor Support
+
+### Vim
+
+If you have [Syntastic](https://github.com/scrooloose/syntastic) and 
+[vim-fireplace](https://github.com/tpope/vim-fireplace/) installed,
+you can use [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
+to automatically run Cljfmt on the contents of your current buffer.
+
 ## Configuration
 
 You can configure lein-cljfmt by adding a `:cljfmt` map to your
