@@ -136,4 +136,5 @@
   (is (= (reformat-string ";foo") ";foo"))
   (is (= (reformat-string "::foo") "::foo"))
   (is (= (reformat-string "::foo/bar") "::foo/bar"))
-  (is (= (reformat-string "#_(foo\nbar)") "#_(foo\n   bar)")))
+  (is (= (reformat-string "#_(foo\nbar)") "#_(foo\n   bar)"))
+  (is (= (reformat-string "(juxt +' -')") "(juxt +' -')")))
