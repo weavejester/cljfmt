@@ -28,7 +28,7 @@ The easiest way to get started with cljfmt is to add the lein-cljfmt
 plugin to your [Leiningen][] project map:
 
 ```clojure
-:plugins [[lein-cljfmt "0.1.6"]]
+:plugins [[lein-cljfmt "0.1.7"]]
 ```
 
 [leiningen]: https://github.com/technomancy/leiningen
