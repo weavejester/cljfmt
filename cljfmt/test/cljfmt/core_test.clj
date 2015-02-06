@@ -78,6 +78,8 @@
            ";foo\n(def x 1)"))
     (is (= (reformat-string "(ns foo.core)\n\n;; foo\n(defn foo [x]\n(inc x))")
            "(ns foo.core)\n\n;; foo\n(defn foo [x]\n  (inc x))"))
+    (is (= (reformat-string ";; foo\n(ns foo\n(:require bar))")
+           ";; foo\n(ns foo\n  (:require bar))"))
     (is (= (reformat-string "(defn foo [x]\n  ;; +1\n(inc x))")
            "(defn foo [x]\n  ;; +1\n  (inc x))"))
     (is (= (reformat-string "(let [;foo\n x (foo bar\n baz)]\n x)")

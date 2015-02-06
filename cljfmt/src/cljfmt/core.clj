@@ -117,8 +117,14 @@
     Symbol  (= key sym)
     Pattern (re-find key (str sym))))
 
+(defn- token? [zloc]
+  (= (z/tag zloc) :token))
+
+(defn- token-value [zloc]
+  (if (token? zloc) (z/value zloc)))
+
 (defn- form-symbol [zloc]
-  (-> zloc z/leftmost z/value remove-namespace))
+  (-> zloc z/leftmost token-value remove-namespace))
 
 (defn inner-indent [zloc key depth]
   (let [top (nth (iterate z/up zloc) depth)]
@@ -179,9 +185,8 @@
 
 (defn- indent-amount [zloc indents]
   (case (-> zloc z/up z/tag)
-    :list (custom-indent zloc indents)
-    :fn   (custom-indent zloc indents)
-    :meta (indent-amount (z/up zloc) indents)
+    (:list :fn) (custom-indent zloc indents)
+    :meta       (indent-amount (z/up zloc) indents)
     (coll-indent zloc)))
 
 (defn- indent-line [zloc indents]
