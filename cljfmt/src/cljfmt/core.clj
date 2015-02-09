@@ -139,9 +139,9 @@
 
 (defn- first-form-in-line? [zloc]
   (if-let [zloc (fz/left zloc)]
-    (if (or (whitespace? zloc) (comment? zloc))
+    (if (whitespace? zloc)
       (recur zloc)
-      (z/linebreak? zloc))
+      (or (z/linebreak? zloc) (comment? zloc)))
     true))
 
 (defn block-indent [zloc key idx]

@@ -83,7 +83,9 @@
     (is (= (reformat-string "(defn foo [x]\n  ;; +1\n(inc x))")
            "(defn foo [x]\n  ;; +1\n  (inc x))"))
     (is (= (reformat-string "(let [;foo\n x (foo bar\n baz)]\n x)")
-           "(let [;foo\n      x (foo bar\n             baz)]\n  x)")))
+           "(let [;foo\n      x (foo bar\n             baz)]\n  x)"))
+    (is (= (reformat-string "(binding [x 1] ; foo\nx)")
+           "(binding [x 1] ; foo\n  x)")))
 
   (testing "metadata"
     (is (= (reformat-string "(defonce ^{:doc \"foo\"}\nfoo\n:foo)")
