@@ -31,6 +31,9 @@ plugin to your [Leiningen][] project map:
 :plugins [[lein-cljfmt "0.1.7"]]
 ```
 
+cljfmt has tested on Leiningen 2.5, but may not work on older
+versions, particularly versions prior to Leiningen 2.4.
+
 [leiningen]: https://github.com/technomancy/leiningen
 
 ## Usage
