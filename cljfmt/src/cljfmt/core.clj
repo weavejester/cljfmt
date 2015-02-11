@@ -17,7 +17,7 @@
   (z/root (apply zf (z/edn form) args)))
 
 (defn- surrounding? [zloc p?]
-  (and (p? zloc) (or (z/leftmost? zloc) (z/rightmost? zloc))))
+  (and (p? zloc) (or (nil? (fz/left zloc)) (nil? (fz/right zloc)))))
 
 (defn- top? [zloc]
   (and zloc (not= (z/node zloc) (z/root zloc))))
