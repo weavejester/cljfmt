@@ -99,7 +99,15 @@
     (is (= (reformat-string "(with-foo x\ny\nz)")
            "(with-foo x\n  y\n  z)"))
     (is (= (reformat-string "(defelem foo [x]\n[:foo x])")
-           "(defelem foo [x]\n  [:foo x])"))))
+           "(defelem foo [x]\n  [:foo x])")))
+
+  (testing "comment before ending bracket"
+    (is (= (reformat-string "(foo a ; b\nc ; d\n)")
+           "(foo a ; b\n     c ; d\n     )"))
+    (is (= (reformat-string "(do\na ; b\nc ; d\n)")
+           "(do\n  a ; b\n  c ; d\n  )"))
+    (is (= (reformat-string "(let [x [1 2 ;; test1\n2 3 ;; test2\n]])")
+           "(let [x [1 2 ;; test1\n         2 3 ;; test2\n         ]])"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"

@@ -44,21 +44,20 @@
 (defn- comment? [zloc]
   (some-> zloc z/node n/comment?))
 
-(defn- line-start? [zloc]
-  (let [p (fz/prev zloc)]
-    (or (z/linebreak? p) (comment? p))))
+(defn- line-break? [zloc]
+  (or (z/linebreak? zloc) (comment? zloc)))
 
 (defn- indentation? [zloc]
-  (and (line-start? zloc) (whitespace? zloc)))
+  (and (line-break? (fz/prev zloc)) (whitespace? zloc)))
 
 (defn- skip-whitespace [zloc]
   (z/skip fz/next whitespace? zloc))
 
 (defn- comment-next? [zloc]
-  (-> zloc skip-whitespace comment?))
+  (-> zloc fz/next skip-whitespace comment?))
 
 (defn- should-indent? [zloc]
-  (and (line-start? zloc) (not (comment-next? zloc))))
+  (and (line-break? zloc) (not (comment-next? zloc))))
 
 (defn- should-unindent? [zloc]
   (and (indentation? zloc) (not (comment-next? zloc))))
@@ -192,7 +191,7 @@
 (defn- indent-line [zloc indents]
   (let [width (indent-amount zloc indents)]
     (if (> width 0)
-      (fz/insert-left zloc (whitespace width))
+      (fz/insert-right zloc (whitespace width))
       zloc)))
 
 (defn indent [form indents]
