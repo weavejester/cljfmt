@@ -62,6 +62,7 @@ As with the `check` task, you can choose to fix a specific file:
 ## Editor Support
 
 * [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
+* [CIDER 0.9+](https://github.com/clojure-emacs/cider)
 
 ## Configuration
 
@@ -78,7 +79,7 @@ selectively enabled or disabled:
 * `:indentation?` -
   true if cljfmt should correct the indentation of your code.
   Defaults to true.
-  
+
 * `:remove-surrounding-whitespace?` -
   true if cljfmt should remove whitespace surrounding inner
   forms. This will convert `(  foo  )` to `(foo)`.
