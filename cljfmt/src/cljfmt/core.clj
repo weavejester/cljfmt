@@ -2,14 +2,14 @@
   (:import [clojure.lang Symbol]
            [java.util.regex Pattern])
   (:require [clojure.java.io :as io]
-            [fast-zip.core :as fz]
+            [clojure.zip :as zip]
             [rewrite-clj.parser :as p]
             [rewrite-clj.node :as n]
             [rewrite-clj.zip :as z]))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
-    (if-let [zloc (z/find-next zloc fz/next p?)]
+    (if-let [zloc (z/find-next zloc zip/next p?)]
       (recur (f zloc))
       zloc)))
 
@@ -17,7 +17,7 @@
   (z/root (apply zf (z/edn form) args)))
 
 (defn- surrounding? [zloc p?]
-  (and (p? zloc) (or (nil? (fz/left zloc)) (nil? (fz/right zloc)))))
+  (and (p? zloc) (or (nil? (zip/left zloc)) (nil? (zip/right zloc)))))
 
 (defn- top? [zloc]
   (and zloc (not= (z/node zloc) (z/root zloc))))
@@ -27,13 +27,13 @@
        (surrounding? zloc z/whitespace?)))
 
 (defn remove-surrounding-whitespace [form]
-  (transform form edit-all surrounding-whitespace? fz/remove))
+  (transform form edit-all surrounding-whitespace? zip/remove))
 
 (defn- element? [zloc]
   (if zloc (not (z/whitespace-or-comment? zloc))))
 
 (defn missing-whitespace? [zloc]
-  (and (element? zloc) (element? (fz/right zloc))))
+  (and (element? zloc) (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
   (transform form edit-all missing-whitespace? z/append-space))
@@ -48,13 +48,13 @@
   (or (z/linebreak? zloc) (comment? zloc)))
 
 (defn- indentation? [zloc]
-  (and (line-break? (fz/prev zloc)) (whitespace? zloc)))
+  (and (line-break? (zip/prev zloc)) (whitespace? zloc)))
 
 (defn- skip-whitespace [zloc]
-  (z/skip fz/next whitespace? zloc))
+  (z/skip zip/next whitespace? zloc))
 
 (defn- comment-next? [zloc]
-  (-> zloc fz/next skip-whitespace comment?))
+  (-> zloc zip/next skip-whitespace comment?))
 
 (defn- should-indent? [zloc]
   (and (line-break? zloc) (not (comment-next? zloc))))
@@ -63,7 +63,7 @@
   (and (indentation? zloc) (not (comment-next? zloc))))
 
 (defn unindent [form]
-  (transform form edit-all should-unindent? fz/remove))
+  (transform form edit-all should-unindent? zip/remove))
 
 (def ^:private start-element
   {:meta "^", :meta* "#^", :vector "[",       :map "{"
@@ -88,7 +88,7 @@
   (n/whitespace-node (apply str (repeat width " "))))
 
 (defn coll-indent [zloc]
-  (-> zloc fz/leftmost margin))
+  (-> zloc zip/leftmost margin))
 
 (defn- index-of [zloc]
   (->> (iterate z/left zloc)
@@ -98,7 +98,7 @@
 
 (defn list-indent [zloc]
   (if (> (index-of zloc) 1)
-    (-> zloc fz/leftmost z/right margin)
+    (-> zloc zip/leftmost z/right margin)
     (coll-indent zloc)))
 
 (def indent-size 2)
@@ -137,7 +137,7 @@
           (repeat n z/right)))
 
 (defn- first-form-in-line? [zloc]
-  (if-let [zloc (fz/left zloc)]
+  (if-let [zloc (zip/left zloc)]
     (if (whitespace? zloc)
       (recur zloc)
       (or (z/linebreak? zloc) (comment? zloc)))
@@ -191,7 +191,7 @@
 (defn- indent-line [zloc indents]
   (let [width (indent-amount zloc indents)]
     (if (> width 0)
-      (fz/insert-right zloc (whitespace width))
+      (zip/insert-right zloc (whitespace width))
       zloc)))
 
 (defn indent [form indents]
