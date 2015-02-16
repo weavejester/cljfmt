@@ -121,10 +121,18 @@
   (testing "surrounding newlines"
     (is (= (reformat-string "(\n  foo\n)")
            "(foo)"))
+    (is (= (reformat-string "(  \nfoo\n)")
+           "(foo)"))
+    (is (= (reformat-string "(foo  \n)")
+           "(foo)"))
+    (is (= (reformat-string "(foo\n  )")
+           "(foo)"))
     (is (= (reformat-string "[\n1 2 3\n]")
            "[1 2 3]"))
     (is (= (reformat-string "{\n:foo \"bar\"\n}")
-           "{:foo \"bar\"}"))))
+           "{:foo \"bar\"}"))
+    (is (= (reformat-string "( let [x 3\ny 4]\n(+ (* x x\n)(* y y)\n))")
+           "(let [x 3\n      y 4]\n  (+ (* x x) (* y y)))"))))
 
 (deftest test-missing-whitespace
   (is (= (reformat-string "(foo(bar baz)qux)")
