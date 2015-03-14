@@ -10,7 +10,7 @@
   (filter #(re-find re (str %)) (file-seq (io/file dir))))
 
 (defn file-pattern [project]
-  (get-in project [:cljfmt :file-pattern] #"\.clj[sx]?"))
+  (get-in project [:cljfmt :file-pattern] #"\.clj[sx]?$"))
 
 (defn find-files [project f]
   (let [f (io/file f)]
