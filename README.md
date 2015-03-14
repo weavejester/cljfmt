@@ -93,7 +93,7 @@ selectively enabled or disabled:
 You can also configure the behavior of cljfmt:
 
 * `:file-pattern` -
-  determines which files to scan, `#”\.clj[sx]?”` by default.
+  determines which files to scan, `#”\.clj[sx]?$”` by default.
 
 * `:indents` -
   a map of var symbols to indentation rules, i.e. `{symbol [& rules}`.
