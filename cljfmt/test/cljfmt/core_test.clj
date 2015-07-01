@@ -107,7 +107,10 @@
     (is (= (reformat-string "(do\na ; b\nc ; d\n)")
            "(do\n  a ; b\n  c ; d\n  )"))
     (is (= (reformat-string "(let [x [1 2 ;; test1\n2 3 ;; test2\n]])")
-           "(let [x [1 2 ;; test1\n         2 3 ;; test2\n         ]])"))))
+           "(let [x [1 2 ;; test1\n         2 3 ;; test2\n         ]])")))
+  (testing "indented comments with blank lines"
+    (is (= (reformat-string "(;a\n\n ;b\n )")
+           "(;a\n\n ;b\n )"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
