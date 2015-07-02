@@ -33,7 +33,7 @@
 (defn- element? [zloc]
   (if zloc (not (z/whitespace-or-comment? zloc))))
 
-(defn missing-whitespace? [zloc]
+(defn- missing-whitespace? [zloc]
   (and (element? zloc) (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
@@ -91,7 +91,7 @@
 (defn- whitespace [width]
   (n/whitespace-node (apply str (repeat width " "))))
 
-(defn coll-indent [zloc]
+(defn- coll-indent [zloc]
   (-> zloc zip/leftmost margin))
 
 (defn- index-of [zloc]
@@ -100,14 +100,14 @@
        (count)
        (dec)))
 
-(defn list-indent [zloc]
+(defn- list-indent [zloc]
   (if (> (index-of zloc) 1)
     (-> zloc zip/leftmost z/right margin)
     (coll-indent zloc)))
 
 (def indent-size 2)
 
-(defn indent-width [zloc]
+(defn- indent-width [zloc]
   (case (z/tag zloc)
     :list indent-size
     :fn   (inc indent-size)))
@@ -133,7 +133,7 @@
   (and (> depth 0)
        (= idx (index-of (nth (iterate z/up zloc) (dec depth))))))
 
-(defn inner-indent [zloc key depth idx]
+(defn- inner-indent [zloc key depth idx]
   (let [top (nth (iterate z/up zloc) depth)]
     (if (and (indent-matches? key (form-symbol top))
              (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
@@ -152,7 +152,7 @@
       (or (z/linebreak? zloc) (comment? zloc)))
     true))
 
-(defn block-indent [zloc key idx]
+(defn- block-indent [zloc key idx]
   (if (indent-matches? key (form-symbol zloc))
     (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
              (> (index-of zloc) idx))
@@ -167,7 +167,7 @@
          (read-resource "cljfmt/indents/compojure.clj")
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
-(defmulti indenter-fn
+(defmulti ^:private indenter-fn
   (fn [sym [type & args]] type))
 
 (defmethod indenter-fn :inner [sym [_ depth idx]]
