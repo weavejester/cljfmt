@@ -39,7 +39,7 @@
  if-not          [[:block 1]]
  if-some         [[:block 1]]
  let             [[:block 1]]
- letfn           [[:block 1] [:inner 2]]
+ letfn           [[:block 1] [:inner 2 0]]
  locking         [[:block 1]]
  loop            [[:block 1]]
  match           [[:block 1]]

@@ -129,9 +129,14 @@
 (defn- form-symbol [zloc]
   (-> zloc z/leftmost token-value remove-namespace))
 
-(defn inner-indent [zloc key depth]
+(defn- index-matches-top-argument? [zloc depth idx]
+  (and (> depth 0)
+       (= idx (index-of (nth (iterate z/up zloc) (dec depth))))))
+
+(defn inner-indent [zloc key depth idx]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (indent-matches? key (form-symbol top))
+    (if (and (indent-matches? key (form-symbol top))
+             (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
@@ -151,7 +156,7 @@
   (if (indent-matches? key (form-symbol zloc))
     (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
              (> (index-of zloc) idx))
-      (inner-indent zloc key 0)
+      (inner-indent zloc key 0 nil)
       (list-indent zloc))))
 
 (def read-resource
@@ -165,8 +170,8 @@
 (defmulti indenter-fn
   (fn [sym [type & args]] type))
 
-(defmethod indenter-fn :inner [sym [_ depth]]
-  (fn [zloc] (inner-indent zloc sym depth)))
+(defmethod indenter-fn :inner [sym [_ depth idx]]
+  (fn [zloc] (inner-indent zloc sym depth idx)))
 
 (defmethod indenter-fn :block [sym [_ idx]]
   (fn [zloc] (block-indent zloc sym idx)))
