@@ -57,8 +57,11 @@
 (defn- comment-next? [zloc]
   (-> zloc zip/next skip-whitespace comment?))
 
+(defn- line-break-next? [zloc]
+  (-> zloc zip/next skip-whitespace line-break?))
+
 (defn- should-indent? [zloc]
-  (and (line-break? zloc) (not (comment-next? zloc))))
+  (and (line-break? zloc) (not (line-break-next? zloc))))
 
 (defn- should-unindent? [zloc]
   (and (indentation? zloc) (not (comment-next? zloc))))
