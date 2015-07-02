@@ -137,6 +137,27 @@ Will indent all subforms one level in:
    qoz))
 ```
 
+Sometimes it's useful to limit indentation to one argument of the
+surrounding form. For example, `letfn` uses inner indentation only in
+its binding vector:
+
+```clojure
+(letfn [(double [x]
+          (* x 2))]   ;; special indentation here
+  (let [y (double 2)
+        z (double 3)]
+    (println y
+             z)))     ;; but not here
+```
+
+To achieve this, an additional index argument may be used:
+
+```clojure
+{letfn [[:inner 2 0]]}
+```
+
+This will limit the inner indent to depth 2 in argument 0.
+
 #### Block rules
 
 A `:block` rule is a little smarter. This will act like an inner
