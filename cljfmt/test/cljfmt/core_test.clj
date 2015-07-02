@@ -111,7 +111,12 @@
 
   (testing "indented comments with blank lines"
     (is (= (reformat-string "(;a\n\n ;b\n )")
-           "(;a\n\n ;b\n )"))))
+           "(;a\n\n ;b\n )")))
+
+  (testing "indentated forms in letfn block"
+    (is (= (reformat-string "(letfn [(f [x]\nx)]\n(let [x (f 1)]\n(str x 2\n3 4)))")
+           (str "(letfn [(f [x]\n          x)]\n"
+                "  (let [x (f 1)]\n    (str x 2\n         3 4)))")))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
