@@ -44,10 +44,12 @@
       diff)))
 
 (defn format-paths [project]
-  (->> (concat (:source-paths project)
-               (:test-paths project))
-       (map io/file)
-       (filter #(and (.exists %) (.isDirectory %)))))
+  (let [paths (concat (:source-paths project)
+                      (:test-paths project))]
+    (if (empty? paths)
+      (main/abort "No source or test paths defined in project map")
+      (->> (map io/file paths)
+           (filter #(and (.exists %) (.isDirectory %)))))))
 
 (defn check
   ([project]
