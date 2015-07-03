@@ -90,6 +90,11 @@ selectively enabled or disabled:
   elements. This will convert `(foo(bar))` to `(foo (bar))`.
   Defaults to true.
 
+* `:remove-consecutive-blank-lines?` -
+  true if cljfmt should collapse consecutive blank lines. This will
+  convert `(foo)\n\n\n\(bar)` to `(foo)\n\n(bar)`. Defaults to true.
+
+
 You can also configure the behavior of cljfmt:
 
 * `:file-pattern` -
