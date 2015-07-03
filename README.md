@@ -92,7 +92,7 @@ selectively enabled or disabled:
 
 * `:remove-consecutive-blank-lines?` -
   true if cljfmt should collapse consecutive blank lines. This will
-  convert `(foo)\n\n\n\(bar)` to `(foo)\n\n(bar)`. Defaults to true.
+  convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
 
 
 You can also configure the behavior of cljfmt:
