@@ -48,11 +48,32 @@
 (defn- line-break? [zloc]
   (or (z/linebreak? zloc) (comment? zloc)))
 
-(defn- indentation? [zloc]
-  (and (line-break? (zip/prev zloc)) (whitespace? zloc)))
-
 (defn- skip-whitespace [zloc]
   (z/skip zip/next whitespace? zloc))
+
+(defn- count-newlines [zloc]
+  (loop [zloc zloc, newlines 0]
+    (if (z/linebreak? zloc)
+      (recur (-> zloc zip/next skip-whitespace)
+             (-> zloc z/string count (+ newlines)))
+      newlines)))
+
+(defn- consecutive-blank-line? [zloc]
+  (> (count-newlines zloc) 2))
+
+(defn- remove-whitespace-and-newlines [zloc]
+  (if (z/whitespace? zloc)
+    (recur (zip/remove zloc))
+    zloc))
+
+(defn- replace-consecutive-blank-lines [zloc]
+  (-> zloc (zip/replace (n/newlines 2)) zip/next remove-whitespace-and-newlines))
+
+(defn remove-consecutive-blank-lines [form]
+  (transform form edit-all consecutive-blank-line? replace-consecutive-blank-lines))
+
+(defn- indentation? [zloc]
+  (and (line-break? (zip/prev zloc)) (whitespace? zloc)))
 
 (defn- comment-next? [zloc]
   (-> zloc zip/next skip-whitespace comment?))
@@ -213,6 +234,8 @@
 (defn reformat-form
   [form & [{:as opts}]]
   (-> form
+      (cond-> (:remove-consecutive-blank-lines? opts true)
+        remove-consecutive-blank-lines)
       (cond-> (:remove-surrounding-whitespace? opts true)
         remove-surrounding-whitespace)
       (cond-> (:insert-missing-whitespace? opts true)

@@ -151,7 +151,23 @@
   (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
          "(foo [bar] #{baz} {quz bang})")))
 
+(deftest test-consecutive-blank-lines
+  (is (= (reformat-string "(foo)\n\n(bar)")
+         "(foo)\n\n(bar)"))
+  (is (= (reformat-string "(foo)\n\n\n(bar)")
+         "(foo)\n\n(bar)"))
+  (is (= (reformat-string "(foo)\n \n \n(bar)")
+         "(foo)\n\n(bar)"))
+  (is (= (reformat-string "(foo)\n\n\n\n\n(bar)")
+         "(foo)\n\n(bar)"))
+  (is (= (reformat-string "(foo)\n\n;bar\n\n(baz)")
+         "(foo)\n\n;bar\n\n(baz)"))
+  (is (= (reformat-string "(foo)\n;bar\n;baz\n;qux\n(bang)")
+         "(foo)\n;bar\n;baz\n;qux\n(bang)")))
+
 (deftest test-options
+  (is (= (reformat-string "(foo)\n\n\n(bar)" {:remove-consecutive-blank-lines? false})
+         "(foo)\n\n\n(bar)"))
   (is (= (reformat-string "(  foo  )" {:remove-surrounding-whitespace? false})
          "(  foo  )"))
   (is (= (reformat-string "(foo(bar))" {:insert-missing-whitespace? false})
