@@ -9,6 +9,7 @@
  cond            [[:block 0]]
  condp           [[:block 2]]
  cond->          [[:block 1]]
+ cond->>         [[:block 1]]
  def             [[:inner 0]]
  defmacro        [[:inner 0]]
  defmethod       [[:inner 0]]

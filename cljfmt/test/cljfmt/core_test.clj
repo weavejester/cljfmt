@@ -17,7 +17,9 @@
     (is (= (reformat-string "(do (foo)\n(bar))")
            "(do (foo)\n    (bar))"))
     (is (= (reformat-string "(deftype Foo\n[x]\nBar)")
-           "(deftype Foo\n         [x]\n  Bar)")))
+           "(deftype Foo\n         [x]\n  Bar)"))
+    (is (= (reformat-string "(cond->> x\na? a\nb? b)")
+           "(cond->> x\n  a? a\n  b? b)")))
 
   (testing "constant indentation"
     (is (= (reformat-string "(def foo\n\"Hello World\")")
