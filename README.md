@@ -101,7 +101,7 @@ You can also configure the behavior of cljfmt:
   determines which files to scan, `#”\.clj[sx]?$”` by default.
 
 * `:indents` -
-  a map of var symbols to indentation rules, i.e. `{symbol [& rules}`.
+  a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
   See the next section for a detailed explanation.
 
 
