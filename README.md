@@ -104,6 +104,14 @@ You can also configure the behavior of cljfmt:
   a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
   See the next section for a detailed explanation.
 
+As with Leiningen profiles, you can add metadata hints. If you want to
+override all existing indents, instead of just supplying new indents
+that are merged with the defaults, you can use the `:replace` hint:
+
+```clojure
+:cljfmt {:indents ^:replace {#".*" [[:inner 0]]}}
+```
+
 
 ### Indentation rules
 
