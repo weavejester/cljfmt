@@ -176,6 +176,8 @@
          "(foo(bar))"))
   (is (= (reformat-string "(foo\nbar)" {:indents '{foo [[:block 0]]}})
          "(foo\n  bar)"))
+  (is (= (reformat-string "(do\nfoo\nbar)" {:indents {}})
+         "(do\n foo\n bar)"))
   (is (= (reformat-string "(do\nfoo\nbar)" {:indentation? false})
          "(do\nfoo\nbar)")))
 

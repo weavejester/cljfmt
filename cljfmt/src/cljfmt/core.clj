@@ -206,11 +206,13 @@
     Pattern (str 1 key)))
 
 (defn- custom-indent [zloc indents]
-  (let [indenter (->> (sort-by indent-order indents)
-                      (map make-indenter)
-                      (apply some-fn))]
-    (or (indenter zloc)
-        (list-indent zloc))))
+  (if (empty? indents)
+    (list-indent zloc)
+    (let [indenter (->> (sort-by indent-order indents)
+                        (map make-indenter)
+                        (apply some-fn))]
+      (or (indenter zloc)
+          (list-indent zloc)))))
 
 (defn- indent-amount [zloc indents]
   (case (-> zloc z/up z/tag)
@@ -224,12 +226,17 @@
       (zip/insert-right zloc (whitespace width))
       zloc)))
 
-(defn indent [form indents]
-  (let [indents (into default-indents indents)]
-    (transform form edit-all should-indent? #(indent-line % indents))))
+(defn indent
+  ([form]
+   (indent form default-indents))
+  ([form indents]
+   (transform form edit-all should-indent? #(indent-line % indents))))
 
-(defn reindent [form indents]
-  (indent (unindent form) indents))
+(defn reindent
+  ([form]
+   (indent (unindent form)))
+  ([form indents]
+   (indent (unindent form) indents)))
 
 (defn reformat-form
   [form & [{:as opts}]]
@@ -241,7 +248,7 @@
       (cond-> (:insert-missing-whitespace? opts true)
         insert-missing-whitespace)
       (cond-> (:indentation? opts true)
-        (reindent (:indents opts {})))))
+        (reindent (:indents opts default-indents)))))
 
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)
