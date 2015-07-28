@@ -4,7 +4,8 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [leiningen.core.main :as main]
-            [leiningen.cljfmt.diff :as diff]))
+            [leiningen.cljfmt.diff :as diff]
+            [meta-merge.core :refer [meta-merge]]))
 
 (defn grep [re dir]
   (filter #(re-find re (str %)) (file-seq (io/file dir))))
@@ -19,8 +20,11 @@
       (grep (file-pattern project) f)
       [f])))
 
+(def default-config
+  {:indents cljfmt/default-indents})
+
 (defn reformat-string [project s]
-  (cljfmt/reformat-string s (:cljfmt project {})))
+  (cljfmt/reformat-string s (meta-merge default-config (:cljfmt project {}))))
 
 (defn valid-format? [project file]
   (let [content (slurp (io/file file))]

@@ -6,4 +6,5 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :eval-in-leiningen true
   :dependencies [[cljfmt "0.2.1"]
+                 [meta-merge "0.1.1"]
                  [com.googlecode.java-diff-utils/diffutils "1.2.1"]])
