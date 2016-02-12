@@ -18,10 +18,10 @@
          [rewrite-clj.zip.base :as zb :refer [edn]]
          [rewrite-clj.zip.whitespace :as zw
           :refer [append-space skip whitespace-or-comment?]])
-        (:require-macros [cljfmt.macros :refer [read-resource]])]))
+        (:require-macros [cljfmt.core :refer [read-resource]])]))
 
-#?(:cljs
-    (def read-string reader/read-string))
+#?(:clj (def read-resource* (comp read-string slurp io/resource)))
+#?(:clj (defmacro read-resource [path] `'~(read-resource* path)))
 
 (def zwhitespace?
   #?(:clj z/whitespace? :cljs zw/whitespace?))
@@ -164,11 +164,8 @@
 
 (defn- indent-matches? [key sym]
   (cond
-    (symbol? key)
-    (= key sym)
-
-    (pattern? key)
-    (re-find key (str sym))))
+    (symbol? key) (= key sym)
+    (pattern? key) (re-find key (str sym))))
 
 (defn- token? [zloc]
   (= (z/tag zloc) :token))
@@ -208,10 +205,6 @@
              (> (index-of zloc) idx))
       (inner-indent zloc key 0 nil)
       (list-indent zloc))))
-
-#?(:clj
-   (def read-resource
-    (comp read-string slurp io/resource)))
 
 (def default-indents
   (merge (read-resource "cljfmt/indents/clojure.clj")
