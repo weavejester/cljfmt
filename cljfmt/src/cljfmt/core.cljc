@@ -1,11 +1,33 @@
 (ns cljfmt.core
-  (:import [clojure.lang Symbol]
-           [java.util.regex Pattern])
-  (:require [clojure.java.io :as io]
-            [clojure.zip :as zip]
-            [rewrite-clj.parser :as p]
-            [rewrite-clj.node :as n]
-            [rewrite-clj.zip :as z]))
+  #?@(:clj
+       [(:require
+         [clojure.java.io :as io]
+         [clojure.zip :as zip]
+         [rewrite-clj.node :as n]
+         [rewrite-clj.parser :as p]
+         [rewrite-clj.zip :as z
+          :refer [append-space edn skip whitespace-or-comment?]])
+        (:import java.util.regex.Pattern)]
+       :cljs
+       [(:require
+         [cljs.reader :as reader]
+         [clojure.zip :as zip]
+         [rewrite-clj.node :as n]
+         [rewrite-clj.parser :as p]
+         [rewrite-clj.zip :as z]
+         [rewrite-clj.zip.base :as zb :refer [edn]]
+         [rewrite-clj.zip.whitespace :as zw
+          :refer [append-space skip whitespace-or-comment?]])
+        (:require-macros [cljfmt.core :refer [read-resource]])]))
+
+#?(:clj (def read-resource* (comp read-string slurp io/resource)))
+#?(:clj (defmacro read-resource [path] `'~(read-resource* path)))
+
+(def zwhitespace?
+  #?(:clj z/whitespace? :cljs zw/whitespace?))
+
+(def zlinebreak?
+  #?(:clj z/linebreak? :cljs zw/linebreak?))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
@@ -14,30 +36,30 @@
       zloc)))
 
 (defn- transform [form zf & args]
-  (z/root (apply zf (z/edn form) args)))
+  (z/root (apply zf (edn form) args)))
 
 (defn- surrounding? [zloc p?]
   (and (p? zloc) (or (nil? (zip/left zloc))
-                     (nil? (z/skip zip/right p? zloc)))))
+                     (nil? (skip zip/right p? zloc)))))
 
 (defn- top? [zloc]
   (and zloc (not= (z/node zloc) (z/root zloc))))
 
 (defn- surrounding-whitespace? [zloc]
   (and (top? (z/up zloc))
-       (surrounding? zloc z/whitespace?)))
+       (surrounding? zloc zwhitespace?)))
 
 (defn remove-surrounding-whitespace [form]
   (transform form edit-all surrounding-whitespace? zip/remove))
 
 (defn- element? [zloc]
-  (if zloc (not (z/whitespace-or-comment? zloc))))
+  (if zloc (not (whitespace-or-comment? zloc))))
 
 (defn- missing-whitespace? [zloc]
   (and (element? zloc) (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
-  (transform form edit-all missing-whitespace? z/append-space))
+  (transform form edit-all missing-whitespace? append-space))
 
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
@@ -46,14 +68,14 @@
   (some-> zloc z/node n/comment?))
 
 (defn- line-break? [zloc]
-  (or (z/linebreak? zloc) (comment? zloc)))
+  (or (zlinebreak? zloc) (comment? zloc)))
 
 (defn- skip-whitespace [zloc]
-  (z/skip zip/next whitespace? zloc))
+  (skip zip/next whitespace? zloc))
 
 (defn- count-newlines [zloc]
   (loop [zloc zloc, newlines 0]
-    (if (z/linebreak? zloc)
+    (if (zlinebreak? zloc)
       (recur (-> zloc zip/next skip-whitespace)
              (-> zloc z/string count (+ newlines)))
       newlines)))
@@ -62,7 +84,7 @@
   (> (count-newlines zloc) 2))
 
 (defn- remove-whitespace-and-newlines [zloc]
-  (if (z/whitespace? zloc)
+  (if (zwhitespace? zloc)
     (recur (zip/remove zloc))
     zloc))
 
@@ -97,9 +119,9 @@
    :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"})
 
 (defn- prior-string [zloc]
-  (if-let [p (z/left* zloc)]
+  (if-let [p (zip/left zloc)]
     (str (prior-string p) (n/string (z/node p)))
-    (if-let [p (z/up* zloc)]
+    (if-let [p (zip/up zloc)]
       (str (prior-string p) (start-element (n/tag (z/node p))))
       "")))
 
@@ -136,16 +158,20 @@
 (defn- remove-namespace [x]
   (if (symbol? x) (symbol (name x)) x))
 
+(defn pattern?
+  [v]
+  (instance? #?(:clj Pattern :cljs js/RegExp) v))
+
 (defn- indent-matches? [key sym]
-  (condp instance? key
-    Symbol  (= key sym)
-    Pattern (re-find key (str sym))))
+  (cond
+    (symbol? key) (= key sym)
+    (pattern? key) (re-find key (str sym))))
 
 (defn- token? [zloc]
   (= (z/tag zloc) :token))
 
 (defn- token-value [zloc]
-  (if (token? zloc) (z/value zloc)))
+  (if (token? zloc) (z/sexpr zloc)))
 
 (defn- form-symbol [zloc]
   (-> zloc z/leftmost token-value remove-namespace))
@@ -170,7 +196,7 @@
   (if-let [zloc (zip/left zloc)]
     (if (whitespace? zloc)
       (recur zloc)
-      (or (z/linebreak? zloc) (comment? zloc)))
+      (or (zlinebreak? zloc) (comment? zloc)))
     true))
 
 (defn- block-indent [zloc key idx]
@@ -179,9 +205,6 @@
              (> (index-of zloc) idx))
       (inner-indent zloc key 0 nil)
       (list-indent zloc))))
-
-(def read-resource
-  (comp read-string slurp io/resource))
 
 (def default-indents
   (merge (read-resource "cljfmt/indents/clojure.clj")
@@ -201,9 +224,9 @@
   (apply some-fn (map (partial indenter-fn key) opts)))
 
 (defn- indent-order [[key _]]
-  (condp instance? key
-    Symbol  (str 0 key)
-    Pattern (str 1 key)))
+  (cond
+    (symbol? key) (str 0 key)
+    (pattern? key) (str 1 key)))
 
 (defn- custom-indent [zloc indents]
   (if (empty? indents)
