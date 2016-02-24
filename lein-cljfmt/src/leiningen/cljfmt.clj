@@ -38,14 +38,16 @@
 (defn project-path [project file]
   (relative-path (io/file (:root project)) (io/file file)))
 
-(defn format-diff [project file]
-  (let [filename (project-path project file)
-        original (slurp (io/file file))
-        revised  (reformat-string project original)
-        diff     (diff/unified-diff filename original revised)]
-    (if (get-in project [:cljfmt :ansi?] true)
-      (diff/colorize-diff diff)
-      diff)))
+(defn format-diff
+  ([project file]
+   (let [original (slurp (io/file file))]
+     (format-diff project file original (reformat-string project original))))
+  ([project file original revised]
+   (let [filename (project-path project file)
+         diff     (diff/unified-diff filename original revised)]
+     (if (get-in project [:cljfmt :ansi?] true)
+       (diff/colorize-diff diff)
+       diff))))
 
 (defn format-paths [project]
   (let [paths (concat (:source-paths project)
@@ -60,14 +62,19 @@
    (apply check project (format-paths project)))
   ([project path & paths]
    (let [files   (mapcat (partial find-files project) (cons path paths))
-         invalid (remove (partial valid-format? project) files)]
-     (if (empty? invalid)
+         flag    (atom 0)]
+     (doseq [f     files
+             :let  [original (slurp f)
+                    revised  (reformat-string project original)]
+             :when (not= original revised)]
+       (main/warn (project-path project f) "has incorrect formatting:")
+       (main/warn (format-diff project f original revised))
+       (swap! flag inc))
+     (if (zero? @flag)
        (main/info  "All source files formatted correctly")
-       (do (doseq [f invalid]
-             (main/warn (project-path project f) "has incorrect formatting:")
-             (main/warn (format-diff project f)))
-           (main/warn)
-           (main/abort (count invalid) "file(s) formatted incorrectly"))))))
+       (do
+         (main/warn)
+         (main/abort @flag "file(s) formatted incorrectly"))))))
 
 (defn fix
   ([project]
