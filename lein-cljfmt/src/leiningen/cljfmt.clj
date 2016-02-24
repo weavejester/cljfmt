@@ -26,10 +26,6 @@
 (defn reformat-string [project s]
   (cljfmt/reformat-string s (meta-merge default-config (:cljfmt project {}))))
 
-(defn valid-format? [project file]
-  (let [content (slurp (io/file file))]
-    (= content (reformat-string project content))))
-
 (defn relative-path [dir file]
   (-> (.toURI dir)
       (.relativize (.toURI file))
