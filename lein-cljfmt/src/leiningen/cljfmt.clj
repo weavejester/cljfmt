@@ -32,7 +32,7 @@
       (.getPath)))
 
 (defn project-path [project file]
-  (relative-path (io/file (:root project)) (io/file file)))
+  (relative-path (io/file (:root project ".")) (io/file file)))
 
 (defn format-diff
   ([project file]
@@ -55,7 +55,9 @@
 
 (defn check
   ([project]
-   (apply check project (format-paths project)))
+   (if project
+     (apply check project (format-paths project))
+     (main/abort "No project found and no source paths provided")))
   ([project path & paths]
    (let [files   (mapcat (partial find-files project) (cons path paths))
          flag    (atom 0)]
@@ -74,7 +76,9 @@
 
 (defn fix
   ([project]
-   (apply fix project (format-paths project)))
+   (if project
+     (apply fix project (format-paths project))
+     (main/abort "No project found and no source paths provided")))
   ([project path & paths]
    (let [files (mapcat (partial find-files project) (cons path paths))]
      (doseq [f     files
@@ -84,7 +88,7 @@
        (main/info "Reformatting" (project-path project f))
        (spit f revised)))))
 
-(defn cljfmt
+(defn ^:no-project-needed cljfmt
   "Format Clojure source files"
   [project command & args]
   (case command
