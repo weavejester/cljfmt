@@ -119,11 +119,13 @@
    :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"})
 
 (defn- prior-string [zloc]
-  (if-let [p (zip/left zloc)]
-    (str (prior-string p) (n/string (z/node p)))
-    (if-let [p (zip/up zloc)]
-      (str (prior-string p) (start-element (n/tag (z/node p))))
-      "")))
+  (loop [zloc     zloc
+         worklist '()]
+    (if-let [p (zip/left zloc)]
+      (recur p (cons (n/string (z/node p)) worklist))
+      (if-let [p (zip/up zloc)]
+        (recur p  (cons (start-element (n/tag (z/node p))) worklist))
+        (apply str worklist)))))
 
 (defn- last-line-in-string [^String s]
   (subs s (inc (.lastIndexOf s "\n"))))
