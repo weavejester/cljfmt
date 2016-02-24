@@ -119,7 +119,11 @@
   (testing "indentated forms in letfn block"
     (is (= (reformat-string "(letfn [(f [x]\nx)]\n(let [x (f 1)]\n(str x 2\n3 4)))")
            (str "(letfn [(f [x]\n          x)]\n"
-                "  (let [x (f 1)]\n    (str x 2\n         3 4)))")))))
+                "  (let [x (f 1)]\n    (str x 2\n         3 4)))"))))
+
+  (testing "miltiline right hand side forms"
+    (is (= (reformat-string "(list foo :bar (fn a\n([] nil)\n([b] b)))")
+           "(list foo :bar (fn a\n                 ([] nil)\n                 ([b] b)))"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"
