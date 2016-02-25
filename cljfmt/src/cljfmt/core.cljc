@@ -8,10 +8,11 @@
          [rewrite-clj.zip :as z
           :refer [append-space edn skip whitespace-or-comment?]])
         (:import java.util.regex.Pattern)]
-       :cljs
+      :cljs
        [(:require
          [cljs.reader :as reader]
          [clojure.zip :as zip]
+         [clojure.string :as str]
          [rewrite-clj.node :as n]
          [rewrite-clj.parser :as p]
          [rewrite-clj.zip :as z]
@@ -28,6 +29,10 @@
 
 (def zlinebreak?
   #?(:clj z/linebreak? :cljs zw/linebreak?))
+
+(def includes?
+  #?(:clj  (fn [^String a ^String b] (.contains a b))
+     :cljs str/includes?))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
@@ -118,18 +123,25 @@
    :set "#{", :deref "@",  :reader-macro "#", :unquote "~"
    :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"})
 
-(defn- prior-string [zloc]
-  (if-let [p (zip/left zloc)]
-    (str (prior-string p) (n/string (z/node p)))
-    (if-let [p (zip/up zloc)]
-      (str (prior-string p) (start-element (n/tag (z/node p))))
-      "")))
+(defn- prior-line-string [zloc]
+  (loop [zloc     zloc
+         worklist '()]
+    (if-let [p (zip/left zloc)]
+      (let [s            (str (n/string (z/node p)))
+            new-worklist (cons s worklist)]
+        (if-not (includes? s "\n")
+          (recur p new-worklist)
+          (apply str new-worklist)))
+      (if-let [p (zip/up zloc)]
+        ;; newline cannot be introduced by start-element
+        (recur p (cons (start-element (n/tag (z/node p))) worklist))
+        (apply str worklist)))))
 
 (defn- last-line-in-string [^String s]
   (subs s (inc (.lastIndexOf s "\n"))))
 
 (defn- margin [zloc]
-  (-> zloc prior-string last-line-in-string count))
+  (-> zloc prior-line-string last-line-in-string count))
 
 (defn- whitespace [width]
   (n/whitespace-node (apply str (repeat width " "))))
