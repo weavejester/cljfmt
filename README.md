@@ -85,6 +85,10 @@ selectively enabled or disabled:
   forms. This will convert `(  foo  )` to `(foo)`.
   Defaults to true.
 
+* `:remove-trailing-whitespace?` -
+  true if cljfmt should remove trailing whitespace in lines. This will
+  convert `(foo)   \n` to `(foo)\n`. Defaults to true.
+
 * `:insert-missing-whitespace?` -
   true if cljfmt should insert whitespace missing from between
   elements. This will convert `(foo(bar))` to `(foo (bar))`.
