@@ -273,6 +273,19 @@
   ([form indents]
    (indent (unindent form) indents)))
 
+(defn root? [zloc]
+  (nil? (zip/up zloc)))
+
+(defn final? [zloc]
+  (and (nil? (zip/right zloc)) (root? (zip/up zloc))))
+
+(defn- trailing-whitespace? [zloc]
+ (and (whitespace? zloc)
+      (or (zlinebreak? (zip/right zloc)) (final? zloc))))
+
+(defn remove-trailing-whitespace [form]
+  (transform form edit-all trailing-whitespace? zip/remove))
+
 (defn reformat-form
   [form & [{:as opts}]]
   (-> form
@@ -283,7 +296,9 @@
       (cond-> (:insert-missing-whitespace? opts true)
         insert-missing-whitespace)
       (cond-> (:indentation? opts true)
-        (reindent (:indents opts default-indents)))))
+        (reindent (:indents opts default-indents)))
+      (cond-> (:remove-trailing-whitespace? opts true)
+        remove-trailing-whitespace)))
 
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)

@@ -172,6 +172,26 @@
   (is (= (reformat-string "(foo)\n;bar\n;baz\n;qux\n(bang)")
          "(foo)\n;bar\n;baz\n;qux\n(bang)")))
 
+(deftest test-trailing-whitespace
+  (testing "trailing-whitespace"
+    (is (= (reformat-string "(foo bar) ")
+           "(foo bar)"))
+    (is (= (reformat-string "(foo bar)\n")
+           "(foo bar)\n"))
+    (is (= (reformat-string "(foo bar) \n ")
+           "(foo bar)\n"))
+    (is (= (reformat-string "(foo bar) \n(foo baz)")
+           "(foo bar)\n(foo baz)"))
+    (is (= (reformat-string "(foo bar)\t\n(foo baz)")
+           "(foo bar)\n(foo baz)")))
+
+  (testing "preserve surrounding whitespace"
+    (is (= (reformat-string "( foo bar ) \n" {:remove-surrounding-whitespace? false})
+           "( foo bar )\n"))
+    (is (= (reformat-string
+            "( foo bar )   \n( foo baz )\n" {:remove-surrounding-whitespace? false})
+           "( foo bar )\n( foo baz )\n"))))
+
 (deftest test-options
   (is (= (reformat-string "(foo)\n\n\n(bar)" {:remove-consecutive-blank-lines? false})
          "(foo)\n\n\n(bar)"))
@@ -184,7 +204,11 @@
   (is (= (reformat-string "(do\nfoo\nbar)" {:indents {}})
          "(do\n foo\n bar)"))
   (is (= (reformat-string "(do\nfoo\nbar)" {:indentation? false})
-         "(do\nfoo\nbar)")))
+         "(do\nfoo\nbar)"))
+  (is (= (reformat-string "(foo bar) \n(foo baz)" {:remove-trailing-whitespace? false})
+         "(foo bar) \n(foo baz)"))
+  (is (= (reformat-string "(foo bar) \n" {:remove-trailing-whitespace? false})
+         "(foo bar) \n")))
 
 (deftest test-parsing
   (is (= (reformat-string ";foo") ";foo"))
