@@ -3,6 +3,7 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.stacktrace :refer [print-stacktrace]]
             [leiningen.core.main :as main]
             [leiningen.cljfmt.diff :as diff]
             [meta-merge.core :refer [meta-merge]]))
@@ -53,26 +54,54 @@
       (->> (map io/file paths)
            (filter #(and (.exists %) (.isDirectory %)))))))
 
+(defn check-one [project ^java.io.File f]
+  (let [original (slurp f)]
+    (try
+      (let [revised (reformat-string project original)]
+        (if (not= original revised)
+          {:incorrect 1
+           :file      f
+           :diff      (format-diff project f original revised)}
+          {:okay 1}))
+      (catch Exception e
+        {:error 1
+         :ex    e}))))
+
 (defn check
   ([project]
    (if project
      (apply check project (format-paths project))
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
-   (let [files   (mapcat (partial find-files project) (cons path paths))
-         flag    (atom 0)]
-     (doseq [f     files
-             :let  [original (slurp f)
-                    revised  (reformat-string project original)]
-             :when (not= original revised)]
-       (main/warn (project-path project f) "has incorrect formatting:")
-       (main/warn (format-diff project f original revised))
-       (swap! flag inc))
-     (if (zero? @flag)
-       (main/info  "All source files formatted correctly")
-       (do
-         (main/warn)
-         (main/abort @flag "file(s) formatted incorrectly"))))))
+   (loop [[^java.io.File f & files'] (mapcat (partial find-files project) (cons path paths))
+          acc                        {:okay      0
+                                      :incorrect 0
+                                      :error     0}]
+     (let [status (check-one f)
+           path   (project-path project f)
+           acc'   (merge-with (fnil + 0 0) acc (dissoc status :diff :ex :file))]
+
+       (when-let [ex (:ex status)]
+         (main/warn "Failed to format file:" path)
+         (binding [*out* *err*]
+           (print-stacktrace ex)))
+
+       (when-let [diff (:diff status)]
+         (main/warn path "has incorrect formatting")
+         (main/warn diff))
+
+       (if-not (empty? files')
+         (recur files' acc')
+         (let [error     (:error acc' 0)
+               incorrect (:incorrect acc' 0)]
+           (when-not (zero? error)
+             (main/warn error "file(s) could not be parsed for formatting"))
+           (when-not (zero? incorrect)
+             (main/warn incorrect "file(s) formatted incorrectly"))
+           (if (and (zero? incorrect)
+                    (zero? error))
+             (main/info  "All source files formatted correctly")
+             (main/exit 1))))))))
 
 (defn fix
   ([project]
@@ -81,12 +110,17 @@
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
    (let [files (mapcat (partial find-files project) (cons path paths))]
-     (doseq [f     files
-             :let  [original (slurp f)
-                    revised  (reformat-string project original)]
-             :when (not= original revised)]
-       (main/info "Reformatting" (project-path project f))
-       (spit f revised)))))
+     (doseq [^java.io.File f files]
+       (let [original (slurp f)]
+         (try
+           (let [revised (reformat-string project original)]
+             (when (not= original revised)
+               (main/info "Reformatting" (project-path project f))
+               (spit f revised)))
+           (catch Exception e
+             (main/warn "Failed to format file:" (project-path project-path f))
+             (binding [*out* *err*]
+               (print-stacktrace e)))))))))
 
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
