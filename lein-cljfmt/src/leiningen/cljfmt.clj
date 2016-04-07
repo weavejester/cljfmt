@@ -3,7 +3,7 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.stacktrace :refer [print-stacktrace]]
+            [clojure.stacktrace :refer [print-stack-trace]]
             [leiningen.core.main :as main]
             [leiningen.cljfmt.diff :as diff]
             [meta-merge.core :refer [meta-merge]]))
@@ -77,14 +77,14 @@
           acc                        {:okay      0
                                       :incorrect 0
                                       :error     0}]
-     (let [status (check-one f)
+     (let [status (check-one project f)
            path   (project-path project f)
            acc'   (merge-with (fnil + 0 0) acc (dissoc status :diff :ex :file))]
 
        (when-let [ex (:ex status)]
          (main/warn "Failed to format file:" path)
          (binding [*out* *err*]
-           (print-stacktrace ex)))
+           (print-stack-trace ex)))
 
        (when-let [diff (:diff status)]
          (main/warn path "has incorrect formatting")
@@ -120,7 +120,7 @@
            (catch Exception e
              (main/warn "Failed to format file:" (project-path project-path f))
              (binding [*out* *err*]
-               (print-stacktrace e)))))))))
+               (print-stack-trace e)))))))))
 
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
