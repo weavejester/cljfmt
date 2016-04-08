@@ -3,7 +3,7 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.stacktrace :refer [print-stack-trace]]
+            [clojure.stacktrace :as st]
             [leiningen.core.main :as main]
             [leiningen.cljfmt.diff :as diff]
             [meta-merge.core :refer [meta-merge]]))
@@ -54,18 +54,50 @@
       (->> (map io/file paths)
            (filter #(and (.exists %) (.isDirectory %)))))))
 
-(defn check-one [project ^java.io.File f]
-  (let [original (slurp f)]
+(def zero-counts {:okay 0, :incorrect 0, :error 0})
+
+(defn check-one [project file]
+  (let [original (slurp file)
+        status   {:counts zero-counts :file file}]
     (try
       (let [revised (reformat-string project original)]
         (if (not= original revised)
-          {:incorrect 1
-           :file      f
-           :diff      (format-diff project f original revised)}
-          {:okay 1}))
-      (catch Exception e
-        {:error 1
-         :ex    e}))))
+          (-> status
+              (assoc-in [:counts :incorrect] 1)
+              (assoc :diff (format-diff project file original revised)))
+          (assoc-in status [:counts :okay] 1)))
+      (catch Exception ex
+        (-> status
+            (assoc-in [:counts :error] 1)
+            (assoc :exception ex))))))
+
+(defn print-stack-trace [ex]
+  (binding [*out* *err*]
+    (st/print-stack-trace ex)))
+
+(defn print-file-status [project status]
+  (let [path (project-path project (:file status))]
+    (when-let [ex (:exception status)]
+      (main/warn "Failed to format file:" path)
+      (print-stack-trace ex))
+    (when-let [diff (:diff status)]
+      (main/warn path "has incorrect formatting")
+      (main/warn diff))))
+
+(defn print-final-count [counts]
+  (let [error     (:error counts 0)
+        incorrect (:incorrect counts 0)]
+    (when-not (zero? error)
+      (main/warn error "file(s) could not be parsed for formatting"))
+    (when-not (zero? incorrect)
+      (main/warn incorrect "file(s) formatted incorrectly"))
+    (when (and (zero? incorrect) (zero? error))
+      (main/info "All source files formatted correctly"))))
+
+(defn merge-counts
+  ([]    zero-counts)
+  ([a]   a)
+  ([a b] (merge-with + a b)))
 
 (defn check
   ([project]
@@ -73,35 +105,15 @@
      (apply check project (format-paths project))
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
-   (loop [[^java.io.File f & files'] (mapcat (partial find-files project) (cons path paths))
-          acc                        {:okay      0
-                                      :incorrect 0
-                                      :error     0}]
-     (let [status (check-one project f)
-           path   (project-path project f)
-           acc'   (merge-with (fnil + 0 0) acc (dissoc status :diff :ex :file))]
-
-       (when-let [ex (:ex status)]
-         (main/warn "Failed to format file:" path)
-         (binding [*out* *err*]
-           (print-stack-trace ex)))
-
-       (when-let [diff (:diff status)]
-         (main/warn path "has incorrect formatting")
-         (main/warn diff))
-
-       (if-not (empty? files')
-         (recur files' acc')
-         (let [error     (:error acc' 0)
-               incorrect (:incorrect acc' 0)]
-           (when-not (zero? error)
-             (main/warn error "file(s) could not be parsed for formatting"))
-           (when-not (zero? incorrect)
-             (main/warn incorrect "file(s) formatted incorrectly"))
-           (if (and (zero? incorrect)
-                    (zero? error))
-             (main/info  "All source files formatted correctly")
-             (main/exit 1))))))))
+   (->> (cons path paths)
+        (transduce
+         (comp (mapcat (partial find-files project))
+               (map (partial check-one project))
+               (map (fn [status]
+                      (print-file-status project status)
+                      (:counts status))))
+         (completing merge-counts))
+        (print-final-count))))
 
 (defn fix
   ([project]
