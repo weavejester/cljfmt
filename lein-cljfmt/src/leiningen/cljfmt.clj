@@ -84,6 +84,12 @@
       (main/warn path "has incorrect formatting")
       (main/warn diff))))
 
+(defn exit [counts]
+  (when-not (zero? (:error counts 0))
+    (main/exit 2))
+  (when-not (zero? (:incorrect counts 0))
+    (main/exit 1)))
+
 (defn print-final-count [counts]
   (let [error     (:error counts 0)
         incorrect (:incorrect counts 0)]
@@ -105,15 +111,16 @@
      (apply check project (format-paths project))
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
-   (->> (cons path paths)
-        (transduce
-         (comp (mapcat (partial find-files project))
-               (map (partial check-one project))
-               (map (fn [status]
-                      (print-file-status project status)
-                      (:counts status))))
-         (completing merge-counts))
-        (print-final-count))))
+   (let [counts (transduce
+                 (comp (mapcat (partial find-files project))
+                       (map (partial check-one project))
+                       (map (fn [status]
+                              (print-file-status project status)
+                              (:counts status))))
+                 (completing merge-counts)
+                 (cons path paths))]
+     (print-final-count counts)
+     (exit counts))))
 
 (defn fix
   ([project]
