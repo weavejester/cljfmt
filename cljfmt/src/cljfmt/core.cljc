@@ -251,8 +251,13 @@
 
 (defn- indent-amount [zloc indents]
   (case (-> zloc z/up z/tag)
-    (:list :fn) (custom-indent zloc indents)
-    :meta       (indent-amount (z/up zloc) indents)
+    ;; Handle reader conditionals by aligning to the opening paren.
+    :list (if (and (= (-> zloc z/up z/up z/tag) :reader-macro)
+                   (contains? #{"?" "?@"} (-> zloc z/up z/leftmost z/string)))
+            (coll-indent zloc)
+            (custom-indent zloc indents))
+    :fn   (custom-indent zloc indents)
+    :meta (indent-amount (z/up zloc) indents)
     (coll-indent zloc)))
 
 (defn- indent-line [zloc indents]
@@ -286,9 +291,29 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
+(defn reader-cond-splicing? [form]
+  (and (= (z/tag form) :reader-macro)
+       (= (z/string (z/down form)) "?")
+       (= (-> form z/down z/rightmost z/tag) :deref)))
+
+(defn fix-reader-cond-splicing [form]
+  ;; rewrite-clj needs to fix reader conditional parsing; for now
+  ;; just make sure the #?@(foo) doesn't get turned into #? @(foo).
+  (let [contents (z/down form)
+        inner-contents (z/down (z/rightmost contents))]
+    (-> contents
+        (z/leftmost)
+        (z/replace (symbol "?@"))
+        (z/rightmost)
+        (z/splice))))
+
+(defn- fix-reader-cond [form]
+  (transform form edit-all reader-cond-splicing? fix-reader-cond-splicing))
+
 (defn reformat-form
   [form & [{:as opts}]]
   (-> form
+      fix-reader-cond
       (cond-> (:remove-consecutive-blank-lines? opts true)
         remove-consecutive-blank-lines)
       (cond-> (:remove-surrounding-whitespace? opts true)
