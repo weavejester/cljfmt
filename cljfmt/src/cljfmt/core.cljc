@@ -81,7 +81,7 @@
 (defn- count-newlines [zloc]
   (loop [zloc zloc, newlines 0]
     (if (zlinebreak? zloc)
-      (recur (-> zloc zip/next skip-whitespace)
+      (recur (-> zloc zip/right skip-whitespace)
              (-> zloc z/string count (+ newlines)))
       newlines)))
 

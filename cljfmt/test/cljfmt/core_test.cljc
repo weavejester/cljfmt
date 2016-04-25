@@ -170,7 +170,9 @@
   (is (= (reformat-string "(foo)\n\n;bar\n\n(baz)")
          "(foo)\n\n;bar\n\n(baz)"))
   (is (= (reformat-string "(foo)\n;bar\n;baz\n;qux\n(bang)")
-         "(foo)\n;bar\n;baz\n;qux\n(bang)")))
+         "(foo)\n;bar\n;baz\n;qux\n(bang)"))
+  (is (= (reformat-string "(foo\n)\n\n(bar)")
+         "(foo)\n\n(bar)")))
 
 (deftest test-trailing-whitespace
   (testing "trailing-whitespace"
