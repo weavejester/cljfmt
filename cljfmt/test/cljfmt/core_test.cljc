@@ -72,6 +72,12 @@
     (is (= (reformat-string "#(reify Closeable\n(close [_]\n(prn %)))")
            "#(reify Closeable\n   (close [_]\n     (prn %)))")))
 
+  (testing "reader conditionals"
+    (is (= (reformat-string "#?(:clj hello\n:cljs goodbye)")
+           "#? (:clj hello\n    :cljs goodbye)"))
+    (is (= (reformat-string "#?@(:clj [hello]\n:cljs [goodbye])")
+           "#?@ (:clj [hello]\n     :cljs [goodbye])")))
+
   (testing "multiple arities"
     (is (= (reformat-string "(fn\n([x]\n(foo)\n(bar)))")
            "(fn\n  ([x]\n   (foo)\n   (bar)))")))
