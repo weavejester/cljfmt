@@ -6,7 +6,8 @@
          [rewrite-clj.node :as n]
          [rewrite-clj.parser :as p]
          [rewrite-clj.zip :as z
-          :refer [append-space edn skip whitespace-or-comment?]])
+          :refer [append-space edn skip whitespace-or-comment?]]
+         [rewrite-clj.zip.utils :as u])
         (:import java.util.regex.Pattern)]
       :cljs
        [(:require
@@ -17,6 +18,7 @@
          [rewrite-clj.parser :as p]
          [rewrite-clj.zip :as z]
          [rewrite-clj.zip.base :as zb :refer [edn]]
+         [rewrite-clj.zip.utils :as u]
          [rewrite-clj.zip.whitespace :as zw
           :refer [append-space skip whitespace-or-comment?]])
         (:require-macros [cljfmt.core :refer [read-resource]])]))
@@ -286,6 +288,116 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
+(defn- append-newline-if-absent [zloc]
+  (if (or (-> zloc zip/right skip-whitespace line-break?)
+          (z/rightmost? zloc))
+      zloc
+      (zip/insert-right zloc (n/newlines 1))))
+
+(defn- map-odd-seq
+  "Applies f to all oddly-indexed nodes."
+  [f zloc]
+  (loop [loc (z/down zloc)
+         parent zloc]
+    (if-not (and loc (z/node loc))
+      parent
+      (if-let [v (f loc)]
+        (recur (z/right (z/right v)) (z/up v))
+        (recur (z/right (z/right loc)) parent)))))
+
+(defn- map-even-seq
+  "Applies f to all evenly-indexed nodes."
+  [f zloc]
+  (loop [loc   (z/right (z/down zloc))
+         parent zloc]
+    (if-not (and loc (z/node loc))
+      parent
+      (if-let [v (f loc)]
+        (recur (z/right (z/right v)) (z/up v))
+        (recur (z/right (z/right loc)) parent)))))
+
+(defn- add-map-newlines [zloc]
+  (map-even-seq #(cond-> % (complement z/rightmost?)
+                         append-newline-if-absent) zloc))
+
+(defn- add-binding-newlines [zloc]
+  (map-even-seq append-newline-if-absent zloc))
+
+(defn- update-in-path [[node path :as loc] k f]
+  (let [v (get path k)]
+    (if (seq v)
+      (with-meta
+        [node (assoc path k (f v) :changed? true)]
+        (meta loc))
+      loc)))
+
+(defn- remove-right
+  [loc]
+  (update-in-path loc :r next))
+
+(defn- *remove-right-while
+  [zloc p?]
+  (loop [zloc zloc]
+    (if-let [rloc (zip/right zloc)]
+      (if (p? rloc)
+        (recur (remove-right zloc))
+        zloc)
+      zloc)))
+
+(defn- align-seq-value [zloc max-length]
+  (let [key-length (-> zloc z/sexpr str count)
+        width      (- max-length key-length)
+        zloc       (*remove-right-while zloc zwhitespace?)]
+    (zip/insert-right zloc (whitespace (inc width)))))
+
+(defn- align-map [zloc]
+  (let [key-list       (-> zloc z/sexpr keys)
+        max-key-length (apply max (map #(-> % str count) key-list))]
+    (map-odd-seq #(align-seq-value % max-key-length) zloc)))
+
+(defn- align-binding [zloc]
+  (let [vec-sexpr    (z/sexpr zloc)
+        odd-elements (take-nth 2 vec-sexpr)
+        max-length   (apply max (map #(-> % str count) odd-elements))]
+    (map-odd-seq #(align-seq-value % max-length) zloc)))
+
+(defn- align-elements [zloc]
+  (if (z/map? zloc)
+      (-> zloc align-map add-map-newlines)
+      (-> zloc align-binding add-binding-newlines)))
+
+(def ^:private binding-keywords
+  #{"doseq" "let" "loop" "binding" "with-open" "go-loop" "if-let" "when-some"
+    "if-some" "for" "with-local-vars" "with-redefs"})
+
+(defn- binding? [zloc]
+  (and (z/vector? zloc)
+       (-> zloc z/sexpr count even?)
+       (->> zloc
+            z/left
+            z/string
+            (contains? binding-keywords))))
+
+(defn- align-binding? [zloc]
+  (and (binding? zloc)
+       (-> zloc z/sexpr count (> 2))))
+
+(defn- empty-seq? [zloc]
+  (if (z/map? zloc)
+      (-> zloc z/sexpr empty?)
+      false))
+
+(defn- align-map? [zloc]
+  (and (z/map? zloc)
+       (not (empty-seq? zloc))))
+
+(defn- align-elements? [zloc]
+  (or (align-binding? zloc)
+      (align-map? zloc)))
+
+(defn align-collection-elements [form]
+  (transform form edit-all align-elements? align-elements))
+
 (defn reformat-form
   [form & [{:as opts}]]
   (-> form
@@ -295,6 +407,8 @@
         remove-surrounding-whitespace)
       (cond-> (:insert-missing-whitespace? opts true)
         insert-missing-whitespace)
+      (cond-> (:align-associative? opts true)
+        align-collection-elements)
       (cond-> (:indentation? opts true)
         (reindent (:indents opts default-indents)))
       (cond-> (:remove-trailing-whitespace? opts true)
