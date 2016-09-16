@@ -158,6 +158,12 @@
   (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
          "(foo [bar] #{baz} {quz bang})")))
 
+(deftest missing-whitespace-reader-conditionals
+  (is (= (reformat-string "#?(:cljs(bar 1) :clj(foo 2))")
+         "#?(:cljs (bar 1) :clj (foo 2))"))
+  (is (= (reformat-string "#?@(:cljs[foo bar] :clj[baz quux])")
+         "#?@(:cljs [foo bar] :clj [baz quux])")))
+
 (deftest test-consecutive-blank-lines
   (is (= (reformat-string "(foo)\n\n(bar)")
          "(foo)\n\n(bar)"))
