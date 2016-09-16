@@ -59,15 +59,15 @@
   (transform form edit-all surrounding-whitespace? zip/remove))
 
 (defn- element? [zloc]
-  (if zloc (not (whitespace-or-comment? zloc))))
+  (and zloc (not (whitespace-or-comment? zloc))))
 
 (defn- reader-macro? [zloc]
-  (when zloc (= (n/tag (z/node zloc)) :reader-macro)))
+  (and zloc (= (n/tag (z/node zloc)) :reader-macro)))
 
 (defn- missing-whitespace? [zloc]
-  (and
-    (and (element? zloc) (not (reader-macro? (zip/up zloc))))
-    (element? (zip/right zloc))))
+  (and (element? zloc)
+       (not (reader-macro? (zip/up zloc)))
+       (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
   (transform form edit-all missing-whitespace? append-space))
@@ -176,8 +176,7 @@
 (defn- remove-namespace [x]
   (if (symbol? x) (symbol (name x)) x))
 
-(defn pattern?
-  [v]
+(defn pattern? [v]
   (instance? #?(:clj Pattern :cljs js/RegExp) v))
 
 (defn- indent-matches? [key sym]
@@ -189,7 +188,7 @@
   (= (z/tag zloc) :token))
 
 (defn- token-value [zloc]
-  (if (token? zloc) (z/sexpr zloc)))
+  (and (token? zloc) (z/sexpr zloc)))
 
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
@@ -292,14 +291,13 @@
   (and (nil? (zip/right zloc)) (root? (zip/up zloc))))
 
 (defn- trailing-whitespace? [zloc]
- (and (whitespace? zloc)
-      (or (zlinebreak? (zip/right zloc)) (final? zloc))))
+  (and (whitespace? zloc)
+       (or (zlinebreak? (zip/right zloc)) (final? zloc))))
 
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
-(defn reformat-form
-  [form & [{:as opts}]]
+(defn reformat-form [form & [{:as opts}]]
   (-> form
       (cond-> (:remove-consecutive-blank-lines? opts true)
         remove-consecutive-blank-lines)
