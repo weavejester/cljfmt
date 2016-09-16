@@ -98,6 +98,12 @@ selectively enabled or disabled:
   true if cljfmt should collapse consecutive blank lines. This will
   convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
 
+* `:align-associative?` -
+  true if cljfmt should left align the values of maps and binding
+  special forms (let, loop, binding). This will convert 
+  `{:foo 1\n:barbaz 2}` to `{:foo    1\n :barbaz 2}`
+  and `(let [foo 1\n barbaz 2])` to `(let [foo    1\n      barbaz 2])`.
+  Defaults to true.
 
 You can also configure the behavior of cljfmt:
 
