@@ -123,7 +123,13 @@
 
   (testing "miltiline right hand side forms"
     (is (= (reformat-string "(list foo :bar (fn a\n([] nil)\n([b] b)))")
-           "(list foo :bar (fn a\n                 ([] nil)\n                 ([b] b)))"))))
+           "(list foo :bar (fn a\n                 ([] nil)\n                 ([b] b)))")))
+
+  (testing "reader conditionals"
+    (is (= (reformat-string "#?(:clj foo\n:cljs bar)")
+           "#?(:clj foo\n   :cljs bar)"))
+    (is (= (reformat-string "#?@(:clj foo\n:cljs bar)")
+           "#?@(:clj foo\n    :cljs bar)"))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding spaces"

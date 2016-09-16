@@ -1,6 +1,7 @@
 (ns cljfmt.core
   #?@(:clj
-       [(:require
+      [(:refer-clojure :exclude [reader-conditional?])
+       (:require
          [clojure.java.io :as io]
          [clojure.zip :as zip]
          [rewrite-clj.node :as n]
@@ -190,6 +191,9 @@
 (defn- token-value [zloc]
   (if (token? zloc) (z/sexpr zloc)))
 
+(defn- reader-conditional? [zloc]
+  (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
+
 (defn- form-symbol [zloc]
   (-> zloc z/leftmost token-value remove-namespace))
 
@@ -255,10 +259,13 @@
           (list-indent zloc)))))
 
 (defn- indent-amount [zloc indents]
-  (case (-> zloc z/up z/tag)
-    (:list :fn) (custom-indent zloc indents)
-    :meta       (indent-amount (z/up zloc) indents)
-    (coll-indent zloc)))
+  (let [tag (-> zloc z/up z/tag)
+        gp  (-> zloc z/up z/up)]
+    (cond
+      (reader-conditional? gp) (coll-indent zloc)
+      (#{:list :fn} tag)       (custom-indent zloc indents)
+      (= :meta tag)            (indent-amount (z/up zloc) indents)
+      :else                    (coll-indent zloc))))
 
 (defn- indent-line [zloc indents]
   (let [width (indent-amount zloc indents)]
