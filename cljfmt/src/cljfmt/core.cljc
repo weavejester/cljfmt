@@ -60,8 +60,13 @@
 (defn- element? [zloc]
   (if zloc (not (whitespace-or-comment? zloc))))
 
+(defn- reader-macro? [zloc]
+  (when zloc (= (n/tag (z/node zloc)) :reader-macro)))
+
 (defn- missing-whitespace? [zloc]
-  (and (element? zloc) (element? (zip/right zloc))))
+  (and
+    (and (element? zloc) (not (reader-macro? (zip/up zloc))))
+    (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
   (transform form edit-all missing-whitespace? append-space))
