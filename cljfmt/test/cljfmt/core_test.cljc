@@ -151,18 +151,19 @@
            "(let [x 3\n      y 4]\n  (+ (* x x) (* y y)))"))))
 
 (deftest test-missing-whitespace
-  (is (= (reformat-string "(foo(bar baz)qux)")
-         "(foo (bar baz) qux)"))
-  (is (= (reformat-string "(foo)bar(baz)")
-         "(foo) bar (baz)"))
-  (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
-         "(foo [bar] #{baz} {quz bang})")))
+  (testing "collections"
+    (is (= (reformat-string "(foo(bar baz)qux)")
+           "(foo (bar baz) qux)"))
+    (is (= (reformat-string "(foo)bar(baz)")
+           "(foo) bar (baz)"))
+    (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
+           "(foo [bar] #{baz} {quz bang})")))
 
-(deftest missing-whitespace-reader-conditionals
-  (is (= (reformat-string "#?(:cljs(bar 1) :clj(foo 2))")
-         "#?(:cljs (bar 1) :clj (foo 2))"))
-  (is (= (reformat-string "#?@(:cljs[foo bar] :clj[baz quux])")
-         "#?@(:cljs [foo bar] :clj [baz quux])")))
+  (testing "reader conditionals"
+    (is (= (reformat-string "#?(:cljs(bar 1) :clj(foo 2))")
+           "#?(:cljs (bar 1) :clj (foo 2))"))
+    (is (= (reformat-string "#?@(:cljs[foo bar] :clj[baz quux])")
+           "#?@(:cljs [foo bar] :clj [baz quux])"))))
 
 (deftest test-consecutive-blank-lines
   (is (= (reformat-string "(foo)\n\n(bar)")
