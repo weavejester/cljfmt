@@ -8,8 +8,13 @@
             [leiningen.cljfmt.diff :as diff]
             [meta-merge.core :refer [meta-merge]]))
 
+(defn relative-path [dir file]
+  (-> (.toURI dir)
+      (.relativize (.toURI file))
+      (.getPath)))
+
 (defn grep [re dir]
-  (filter #(re-find re (str %)) (file-seq (io/file dir))))
+  (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
 
 (defn file-pattern [project]
   (get-in project [:cljfmt :file-pattern] #"\.clj[sx]?$"))
@@ -26,11 +31,6 @@
 
 (defn reformat-string [project s]
   (cljfmt/reformat-string s (meta-merge default-config (:cljfmt project {}))))
-
-(defn relative-path [dir file]
-  (-> (.toURI dir)
-      (.relativize (.toURI file))
-      (.getPath)))
 
 (defn project-path [project file]
   (relative-path (io/file (:root project ".")) (io/file file)))
