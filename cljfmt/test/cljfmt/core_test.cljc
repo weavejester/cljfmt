@@ -1,7 +1,8 @@
 (ns cljfmt.core-test
   (:require [#?@(:clj (clojure.test :refer)
                  :cljs (cljs.test :refer-macros)) [deftest testing is]]
-            [cljfmt.core :refer [reformat-string]]))
+            [cljfmt.core :refer [reformat-string]]
+            [clojure.string :as str]))
 
 (deftest test-indent
   (testing "list indentation"
@@ -105,6 +106,23 @@
            "(defelem foo [x]\n  [:foo x])")))
 
   (testing "comment before ending bracket"
+    (is (= (->> ["(defn foo"
+                 "  []"
+                 "  (let [x 1]"
+                 "    ;; test1"
+                 "    )"
+                 "  ;; test2"
+                 "  )"]
+                (str/join "\n")
+                reformat-string
+                str/split-lines)
+           ["(defn foo"
+            "  []"
+            "  (let [x 1]"
+            "    ;; test1"
+            "    )"
+            "  ;; test2"
+            "  )"]))
     (is (= (reformat-string "(foo a ; b\nc ; d\n)")
            "(foo a ; b\n     c ; d\n     )"))
     (is (= (reformat-string "(do\na ; b\nc ; d\n)")
