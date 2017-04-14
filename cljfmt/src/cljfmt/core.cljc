@@ -297,6 +297,15 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
+(defn order-ns-require [form]
+  (if-let [node (z/find
+                  (z/down (edn form))
+                  z/right
+                  (fn [[{:keys [children]}]]
+                    (= :require (-> children first :k))))]
+    (-> node (z/replace (cons :require (->> node z/sexpr rest sort))) z/root)
+    form))
+
 (defn reformat-form [form & [{:as opts}]]
   (-> form
       (cond-> (:remove-consecutive-blank-lines? opts true)
@@ -308,7 +317,9 @@
       (cond-> (:indentation? opts true)
         (reindent (:indents opts default-indents)))
       (cond-> (:remove-trailing-whitespace? opts true)
-        remove-trailing-whitespace)))
+        remove-trailing-whitespace)
+      (cond-> (:order-ns-require? opts true)
+        order-ns-require)))
 
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)

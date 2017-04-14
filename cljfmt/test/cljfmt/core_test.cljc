@@ -225,6 +225,10 @@
   (is (= (reformat-string "(foo bar) \n" {:remove-trailing-whitespace? false})
          "(foo bar) \n")))
 
+(deftest order-imports
+  (is (= (reformat-string "(ns foo (:require [b :refer :all] [c :refer :all] [a :refer :all]))")
+         "(ns foo (:require [a :refer :all] [b :refer :all] [c :refer :all]))")))
+
 (deftest test-parsing
   (is (= (reformat-string ";foo") ";foo"))
   (is (= (reformat-string "::foo") "::foo"))
