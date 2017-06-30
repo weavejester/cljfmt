@@ -22,6 +22,9 @@
           :refer [append-space skip whitespace-or-comment?]])
         (:require-macros [cljfmt.core :refer [read-resource]])]))
 
+(def project-settings-store (atom {}))
+(defn project-settings [] @project-settings-store)
+
 #?(:clj (def read-resource* (comp read-string slurp io/resource)))
 #?(:clj (defmacro read-resource [path] `'~(read-resource* path)))
 
