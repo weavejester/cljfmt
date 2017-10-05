@@ -7,4 +7,5 @@
   :eval-in-leiningen true
   :dependencies [[cljfmt "0.5.7"]
                  [meta-merge "1.0.0"]
+                 [org.clojure/core.async "0.3.443"]
                  [com.googlecode.java-diff-utils/diffutils "1.2.1"]])
