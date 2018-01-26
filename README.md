@@ -98,6 +98,9 @@ selectively enabled or disabled:
   true if cljfmt should collapse consecutive blank lines. This will
   convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
 
+* `:sort-ns-requires?` -
+  true if cljfmt should sort namespace `(:require)` vectors lexicographically
+  Defaults to false.
 
 You can also configure the behavior of cljfmt:
 

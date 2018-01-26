@@ -234,3 +234,24 @@
   (is (= (reformat-string "(juxt +' -')") "(juxt +' -')"))
   (is (= (reformat-string "#\"(?i)foo\"") "#\"(?i)foo\""))
   (is (= (reformat-string "#\"a\nb\"") "#\"a\nb\"")))
+
+(deftest sorting-ns-requires
+  (is (= (reformat-string "(ns foo)"
+                          {:sort-ns-requires? true})
+         "(ns foo)"))
+  (is (= (reformat-string "(ns foo (:require [b :refer :all] [c :refer :all] [a :refer :all]))"
+                          {:sort-ns-requires? true})
+         "(ns foo (:require [a :refer :all] [b :refer :all] [c :refer :all]))"))
+  (is (= (reformat-string "(ns foo (:require [b :refer :all] [c :refer :all] [a :refer :all])) (def test {:require [1 2 3]})"
+                          {:sort-ns-requires? true})
+         "(ns foo (:require [a :refer :all] [b :refer :all] [c :refer :all])) (def test {:require [1 2 3]})"))
+  (is (= (reformat-string "(ns foo\n  (:require [c :refer :all]\n            [b :refer :all]\n            [a :refer :all]))"
+                          {:sort-ns-requires? true})
+         "(ns foo\n  (:require [a :refer :all]\n            [b :refer :all]\n            [c :refer :all]))"))
+  (is (= (reformat-string "(ns foo\n  (:require [c :refer :all]\n            [b :refer :all]\n            [a :refer :all])\n  (:require [d :refer :all]\n            [f :refer :all]\n            [e :refer :all]))"
+                          {:sort-ns-requires? true})
+         "(ns foo\n  (:require [a :refer :all]\n            [b :refer :all]\n            [c :refer :all])\n  (:require [d :refer :all]\n            [e :refer :all]\n            [f :refer :all]))"))
+  (is (= (reformat-string "(ns foo\n  (:require [c :refer :all]\n            baz\n            [b :refer :all]\n            [a :refer :all]\n            bar))"
+                           {:sort-ns-requires? true})
+         "(ns foo\n  (:require [a :refer :all]\n            baz\n            [b :refer :all]\n            [c :refer :all]\n            bar))")))
+

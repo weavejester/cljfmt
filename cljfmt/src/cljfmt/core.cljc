@@ -297,6 +297,34 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
+
+(defn sort-requires
+  [require-zloc]
+  (z/replace
+   require-zloc
+   (n/replace-children
+    (z/node require-zloc)
+    (cons
+     (n/keyword-node :require)
+     ; because we want to keep the current whitespace and only reorder the requires
+     (loop [unsorted-requires (->> require-zloc z/node n/children rest)
+            sorted-requires (->> unsorted-requires (filter #(= :vector (n/tag %))) (sort #(compare (n/sexpr %1) (n/sexpr %2))))
+            new-children []]
+       (if (empty? unsorted-requires)
+         new-children
+         (let [unsorted-require (first unsorted-requires)]
+           (if (= :vector (n/tag unsorted-require))
+             (recur (rest unsorted-requires) (rest sorted-requires) (conj new-children (first sorted-requires)))
+             (recur (rest unsorted-requires) sorted-requires (conj new-children (first unsorted-requires)))))))))))
+
+(defn require-node? [zloc]
+  (and
+   (= :require (z/sexpr (z/down zloc)))
+   (= (symbol "ns") (z/sexpr (z/next (z/up zloc))))))
+
+(defn sort-ns-requires [form]
+  (transform form edit-all require-node? sort-requires))
+
 (defn reformat-form [form & [{:as opts}]]
   (-> form
       (cond-> (:remove-consecutive-blank-lines? opts true)
@@ -308,7 +336,9 @@
       (cond-> (:indentation? opts true)
         (reindent (:indents opts default-indents)))
       (cond-> (:remove-trailing-whitespace? opts true)
-        remove-trailing-whitespace)))
+        remove-trailing-whitespace)
+      (cond-> (:sort-ns-requires? opts false)
+        sort-ns-requires)))
 
 (defn reformat-string [form-string & [options]]
   (-> (p/parse-string-all form-string)
