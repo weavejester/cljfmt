@@ -1,7 +1,8 @@
 (ns cljfmt.core-test
   (:require [#?@(:clj (clojure.test :refer)
                  :cljs (cljs.test :refer-macros)) [deftest testing is]]
-            [cljfmt.core :refer [reformat-string]]))
+            [cljfmt.core :refer [reformat-string]]
+            [clojure.string :as str]))
 
 (deftest test-indent
   (testing "list indentation"
@@ -64,7 +65,43 @@
     (is (= (reformat-string "(t/defn foo [x]\n(+ x 1))")
            "(t/defn foo [x]\n  (+ x 1))"))
     (is (= (reformat-string "(t/defrecord Foo [x]\nCloseable\n(close [_]\n(prn x)))")
-           "(t/defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))")))
+           "(t/defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))"))
+    (is (= (-> (str "(ns example\n"
+                    "(:require [thing.core :as t]))\n\n"
+                    "(t/defn foo [x]\n"
+                    "(+ x 1))\n\n"
+                    "(defn foo [x]\n"
+                    "(+ x 1))\n")
+               (reformat-string {:indents {'thing.core/defn [[:inner 0]]}
+                                 #?@(:cljs [:alias-map {"t" "thing.core"}])}))
+           (str "(ns example\n"
+                "    (:require [thing.core :as t]))\n\n"
+                "(t/defn foo [x]\n"
+                "  (+ x 1))\n\n"
+                "(defn foo [x]\n"
+                "      (+ x 1))\n")))
+    (is (= (-> (str "(ns example\n"
+                    "(:require [thing.core :as t]))\n\n"
+                    "(t/defrecord Foo [x]\n"
+                    "Closeable\n"
+                    "(close [_]\n"
+                    "(prn x)))\n\n"
+                    "(defrecord Foo [x]\n"
+                    "Closeable\n"
+                    "(close [_]\n"
+                    "(prn x)))\n")
+               (reformat-string {:indents {'thing.core/defrecord [[:inner 0]]}
+                                 #?@(:cljs [:alias-map {"t" "thing.core"}])}))
+           (str "(ns example\n"
+                "    (:require [thing.core :as t]))\n\n"
+                "(t/defrecord Foo [x]\n"
+                "  Closeable\n"
+                "  (close [_]\n"
+                "         (prn x)))\n\n"
+                "(defrecord Foo [x]\n"
+                "           Closeable\n"
+                "           (close [_]\n"
+                "                  (prn x)))\n"))))
 
   (testing "function #() syntax"
     (is (= (reformat-string "#(while true\n(println :foo))")
