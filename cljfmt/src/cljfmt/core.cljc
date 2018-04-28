@@ -108,7 +108,12 @@
     zloc))
 
 (defn- replace-consecutive-blank-lines [zloc]
-  (-> zloc (zip/replace (n/newlines 2)) zip/next remove-whitespace-and-newlines))
+  (-> zloc
+      z/next
+      zip/prev
+      remove-whitespace-and-newlines
+      z/next
+      (zip/insert-left (n/newlines 2))))
 
 (defn remove-consecutive-blank-lines [form]
   (transform form edit-all consecutive-blank-line? replace-consecutive-blank-lines))

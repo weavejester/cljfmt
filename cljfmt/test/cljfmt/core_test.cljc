@@ -211,6 +211,8 @@
 (deftest test-consecutive-blank-lines
   (is (= (reformat-string "(foo)\n\n(bar)")
          "(foo)\n\n(bar)"))
+  (is (= (reformat-string "(foo)\n\n\n (bar)")
+         "(foo)\n\n(bar)"))
   (is (= (reformat-string "(foo)\n\n\n(bar)")
          "(foo)\n\n(bar)"))
   (is (= (reformat-string "(foo)\n \n \n(bar)")
