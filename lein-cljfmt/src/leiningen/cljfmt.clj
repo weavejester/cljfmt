@@ -3,6 +3,7 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.core.async :as async]
             [clojure.stacktrace :as st]
             [leiningen.core.main :as main]
             [leiningen.cljfmt.diff :as diff]
@@ -100,27 +101,45 @@
     (when (and (zero? incorrect) (zero? error))
       (main/info "All source files formatted correctly"))))
 
-(defn merge-counts
-  ([]    zero-counts)
-  ([a]   a)
-  ([a b] (merge-with + a b)))
-
 (defn check
   ([project]
    (if project
      (apply check project (format-paths project))
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
-   (let [counts (transduce
-                 (comp (mapcat (partial find-files project))
-                       (map (partial check-one project))
-                       (map (fn [status]
-                              (print-file-status project status)
-                              (:counts status))))
-                 (completing merge-counts)
-                 (cons path paths))]
-     (print-final-count counts)
-     (exit counts))))
+   (let [ch (async/chan)
+         state (atom zero-counts)]
+     (async/go-loop []
+       (let [result (async/<! ch)]
+         (swap! state #(merge-with + % result))
+         (recur)))
+     (async/<!!
+      (async/pipeline
+       (.availableProcessors (Runtime/getRuntime))
+       ch
+       (comp (mapcat (partial find-files project))
+             (map (partial check-one project))
+             (map (fn [status]
+                    (print-file-status project status)
+                    (:counts status))))
+       (async/to-chan (cons path paths))))
+     (let [counts @state]
+       (print-final-count counts)
+       (exit counts)))))
+
+(defn- fixer [project file]
+  (let [original (slurp file)]
+    (try
+      (let [revised (reformat-string project original)]
+        (when (not= original revised)
+          (main/info "Reformatting" (project-path project file))
+          (spit file revised)))
+      true
+      (catch Exception e
+        (main/warn "Failed to format file:" (project-path project-path file))
+        (binding [*out* *err*]
+          (print-stack-trace e))
+        false))))
 
 (defn fix
   ([project]
@@ -129,17 +148,12 @@
      (main/abort "No project found and no source paths provided")))
   ([project path & paths]
    (let [files (mapcat (partial find-files project) (cons path paths))]
-     (doseq [^java.io.File f files]
-       (let [original (slurp f)]
-         (try
-           (let [revised (reformat-string project original)]
-             (when (not= original revised)
-               (main/info "Reformatting" (project-path project f))
-               (spit f revised)))
-           (catch Exception e
-             (main/warn "Failed to format file:" (project-path project-path f))
-             (binding [*out* *err*]
-               (print-stack-trace e)))))))))
+     (async/<!!
+      (async/pipeline
+       (.availableProcessors (Runtime/getRuntime))
+       (doto (async/chan) (async/close!))
+       (map (partial fixer project))
+       (async/to-chan files))))))
 
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
