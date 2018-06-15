@@ -1,32 +1,38 @@
-(ns leiningen.cljfmt.diff
-  (:import [difflib DiffUtils Delta$TYPE])
+(ns cljfmt.diff
+  (:import [difflib DiffUtils Delta$TYPE]
+           [java.io File])
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(defn lines [s]
+(defn- lines [s]
   (str/split s #"\n"))
 
-(defn unlines [ss]
+(defn- unlines [ss]
   (str/join "\n" ss))
+
+(defn to-absolute-path [filename]
+  (->> (str/split filename (re-pattern File/separator))
+       (apply io/file)
+       .getCanonicalPath))
 
 (defn unified-diff
   ([filename original revised]
    (unified-diff filename original revised 3))
   ([filename original revised context]
    (unlines (DiffUtils/generateUnifiedDiff
-             (str (io/file "a" filename))
-             (str (io/file "b" filename))
+             (->> filename to-absolute-path (str "a"))
+             (->> filename to-absolute-path (str "b"))
              (lines original)
              (DiffUtils/diff (lines original) (lines revised))
              context))))
 
-(def ansi-colors
+(def ^:private ansi-colors
   {:reset "[0m"
    :red   "[031m"
    :green "[032m"
    :cyan  "[036m"})
 
-(defn colorize [s color]
+(defn- colorize [s color]
   (str \u001b (ansi-colors color) s \u001b (ansi-colors :reset)))
 
 (defn colorize-diff [diff-text]
