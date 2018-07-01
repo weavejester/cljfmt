@@ -1,26 +1,24 @@
 (ns cljfmt.core
   #?@(:clj
       [(:refer-clojure :exclude [reader-conditional?])
-       (:require
-         [clojure.java.io :as io]
-         [clojure.zip :as zip]
-         [rewrite-clj.node :as n]
-         [rewrite-clj.parser :as p]
-         [rewrite-clj.zip :as z
-          :refer [append-space edn skip whitespace-or-comment?]])
-        (:import java.util.regex.Pattern)]
+       (:require [clojure.java.io :as io]
+                 [clojure.zip :as zip]
+                 [rewrite-clj.node :as n]
+                 [rewrite-clj.parser :as p]
+                 [rewrite-clj.zip :as z
+                  :refer [append-space edn skip whitespace-or-comment?]])
+       (:import java.util.regex.Pattern)]
       :cljs
-       [(:require
-         [cljs.reader :as reader]
-         [clojure.zip :as zip]
-         [clojure.string :as str]
-         [rewrite-clj.node :as n]
-         [rewrite-clj.parser :as p]
-         [rewrite-clj.zip :as z]
-         [rewrite-clj.zip.base :as zb :refer [edn]]
-         [rewrite-clj.zip.whitespace :as zw
-          :refer [append-space skip whitespace-or-comment?]])
-        (:require-macros [cljfmt.core :refer [read-resource]])]))
+      [(:require [cljs.reader :as reader]
+                 [clojure.zip :as zip]
+                 [clojure.string :as str]
+                 [rewrite-clj.node :as n]
+                 [rewrite-clj.parser :as p]
+                 [rewrite-clj.zip :as z]
+                 [rewrite-clj.zip.base :as zb :refer [edn]]
+                 [rewrite-clj.zip.whitespace :as zw
+                  :refer [append-space skip whitespace-or-comment?]])
+       (:require-macros [cljfmt.core :refer [read-resource]])]))
 
 #?(:clj (def read-resource* (comp read-string slurp io/resource)))
 #?(:clj (defmacro read-resource [path] `'~(read-resource* path)))
