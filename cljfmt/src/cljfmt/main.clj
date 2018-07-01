@@ -154,56 +154,49 @@
   (comp edn/read-string slurp diff/to-absolute-path))
 
 (def ^:private cli-options
-  [[nil
-    "--file-pattern FILE_PATTERN"
-    "The pattern that files to be formatted should match"
+  [[nil "--help"]
+   [nil "--file-pattern FILE_PATTERN"
     :default (:file-pattern default-config)
     :parse-fn re-pattern]
-   [nil
-    "--indents INDENTS_PATH"
-    "The path to a file containing the edn data for indentation rules"
+   [nil "--indents INDENTS_PATH"
     :parse-fn cli-file-reader]
-   [nil
-    "--alias-map ALIAS_MAP_PATH"
-    "The path to a file containing the edn data for the alias map"
+   [nil "--alias-map ALIAS_MAP_PATH"
     :parse-fn cli-file-reader]
-   [nil
-    "--project-root PROJECT_ROOT"
-    "The directory to be considered the project root"
+   [nil "--project-root PROJECT_ROOT"
     :default (:project-root default-config)]
-   [nil
-    "--[no-]ansi"
-    "Whether to colorize output"
+   [nil "--[no-]ansi"
     :default (:ansi? default-config)
     :id :ansi?]
-   [nil
-    "--[no-]indentation"
+   [nil "--[no-]indentation"
     :default (:indentation? default-config)
     :id :indentation?]
-   [nil
-    "--[no-]remove-surrounding-whitespace"
+   [nil "--[no-]remove-surrounding-whitespace"
     :default (:remove-surrounding-whitespace? default-config)
     :id :remove-surrounding-whitespace?]
-   [nil
-    "--[no-]remove-trailing-whitespace"
+   [nil "--[no-]remove-trailing-whitespace"
     :default (:remove-trailing-whitespace? default-config)
     :id :remove-trailing-whitespace?]
-   [nil
-    "--[no-]insert-missing-whitespace"
+   [nil "--[no-]insert-missing-whitespace"
     :default (:insert-missing-whitespace? default-config)
     :id :insert-missing-whitespace?]
-   [nil
-    "--[no-]remove-consecutive-blank-lines"
+   [nil "--[no-]remove-consecutive-blank-lines"
     :default (:remove-consecutive-blank-lines? default-config)
     :id :remove-consecutive-blank-lines?]])
 
+(defn- command-name []
+  (or (System/getProperty "sun.java.command") "cljfmt"))
+
 (defn -main [& args]
-  (let [{:keys [errors options]
-         [command & paths] :arguments} (cli/parse-opts args cli-options)
-        options (merge default-config options)]
-    (if errors
-      (abort errors)
-      (case command
-        "check" (check paths options)
-        "fix"   (fix paths options)
-        (abort "Unknown cljfmt command:" command)))))
+  (let [parsed-opts   (cli/parse-opts args cli-options)
+        [cmd & paths] (:arguments parsed-opts)
+        options       (merge default-config (:options parsed-opts))
+        paths         (or (seq paths) ["src" "test"])]
+    (if (:errors parsed-opts)
+      (abort (:errors parsed-opts))
+      (if (or (nil? cmd) (:help options))
+        (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
+            (println (:summary parsed-opts)))
+        (case cmd
+          "check" (check paths options)
+          "fix"   (fix paths options)
+          (abort "Unknown cljfmt command:" cmd))))))
