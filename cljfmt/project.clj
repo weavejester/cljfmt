@@ -6,10 +6,10 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.cli "0.3.7"]
-                 [org.clojure/tools.reader "1.0.0-alpha4"]
-                 [com.googlecode.java-diff-utils/diffutils "1.2.1"]
-                 [rewrite-clj "0.5.2"]
-                 [rewrite-cljs "0.4.3"]]
+                 [org.clojure/tools.reader "1.2.2"]
+                 [com.googlecode.java-diff-utils/diffutils "1.3.0"]
+                 [rewrite-clj "0.6.0"]
+                 [rewrite-cljs "0.4.4"]]
   :plugins [[lein-cljsbuild "1.1.2"]]
   :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds
