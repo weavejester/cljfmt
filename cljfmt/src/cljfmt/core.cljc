@@ -322,19 +322,22 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
-(defn reformat-form [form & [{:as opts}]]
-  (-> form
-      (cond-> (:remove-consecutive-blank-lines? opts true)
-        remove-consecutive-blank-lines)
-      (cond-> (:remove-surrounding-whitespace? opts true)
-        remove-surrounding-whitespace)
-      (cond-> (:insert-missing-whitespace? opts true)
-        insert-missing-whitespace)
-      (cond-> (:indentation? opts true)
-        (reindent (:indents opts default-indents)
-                  (:alias-map opts {})))
-      (cond-> (:remove-trailing-whitespace? opts true)
-        remove-trailing-whitespace)))
+(defn reformat-form
+  ([form]
+   (reformat-form form {}))
+  ([form opts]
+   (-> form
+       (cond-> (:remove-consecutive-blank-lines? opts true)
+         remove-consecutive-blank-lines)
+       (cond-> (:remove-surrounding-whitespace? opts true)
+         remove-surrounding-whitespace)
+       (cond-> (:insert-missing-whitespace? opts true)
+         insert-missing-whitespace)
+       (cond-> (:indentation? opts true)
+         (reindent (:indents opts default-indents)
+                   (:alias-map opts {})))
+       (cond-> (:remove-trailing-whitespace? opts true)
+         remove-trailing-whitespace))))
 
 (defn- top-level-form [zloc]
   (->> zloc
@@ -375,12 +378,15 @@
             (map as-zloc->alias-mapping)
             (apply merge)))))
 
-(defn reformat-string [form-string & [options]]
-  (let [parsed-form (p/parse-string-all form-string)
-        alias-map #?(:clj (or (:alias-map options)
-                              (alias-map-for-form parsed-form))
-                     :cljs (:alias-map options))]
-    (-> parsed-form
-        (reformat-form (cond-> options
-                         alias-map (assoc :alias-map alias-map)))
-        (n/string))))
+(defn reformat-string
+  ([form-string]
+   (reformat-string form-string {}))
+  ([form-string options]
+   (let [parsed-form (p/parse-string-all form-string)
+         alias-map   #?(:clj (or (:alias-map options)
+                                 (alias-map-for-form parsed-form))
+                        :cljs (:alias-map options))]
+     (-> parsed-form
+         (reformat-form (cond-> options
+                          alias-map (assoc :alias-map alias-map)))
+         (n/string)))))
