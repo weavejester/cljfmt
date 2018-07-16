@@ -134,8 +134,7 @@
                (spit f revised)))
            (catch Exception e
              (warn "Failed to format file:" (project-path options f))
-             (binding [*out* *err*]
-               (print-stack-trace e)))))))))
+             (print-stack-trace e))))))))
 
 (def ^:private cli-file-reader
   (comp edn/read-string slurp diff/to-absolute-path))
