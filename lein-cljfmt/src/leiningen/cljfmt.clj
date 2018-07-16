@@ -2,8 +2,7 @@
   (:require [cljfmt.core :as cljfmt]
             [cljfmt.main]
             [clojure.java.io :as io]
-            [leiningen.core.main]
-            [meta-merge.core :refer [meta-merge]]))
+            [leiningen.core.main]))
 
 (defn- format-paths [project]
   (let [paths (concat (:source-paths project)
@@ -22,11 +21,10 @@
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
   [project command & paths]
-  (let [paths (or (seq paths) (format-paths project))
-        options (-> cljfmt.main/default-config
-                    (assoc :paths paths
-                           :project-root (:root project))
-                    (meta-merge (:cljfmt project)))]
+  (let [paths   (or (seq paths) (format-paths project))
+        options (-> (:cljfmt project)
+                    (assoc :project-root (:root project))
+                    (cljfmt.main/merge-default-config))]
     (if leiningen.core.main/*info*
       (execute-command command options paths)
       (with-out-str

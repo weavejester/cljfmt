@@ -142,7 +142,6 @@
 (def default-options
   {:project-root "."
    :file-pattern #"\.clj[csx]?$"
-   :paths        []
    :ansi?        true
    :indentation? true
    :insert-missing-whitespace?      true
