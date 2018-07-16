@@ -8,19 +8,6 @@
             [clojure.tools.cli :as cli]
             [cljfmt.diff :as diff]))
 
-(def default-config
-  {:project-root "."
-   :file-pattern #"\.clj[csx]?$"
-   :paths []
-   :ansi? true
-   :indentation? true
-   :insert-missing-whitespace? true
-   :remove-surrounding-whitespace? true
-   :remove-trailing-whitespace? true
-   :remove-consecutive-blank-lines? true
-   :indents cljfmt/default-indents
-   :alias-map {}})
-
 (defn- abort [& msg]
   (binding [*out* *err*]
     (when (seq msg)
@@ -118,7 +105,7 @@
   "Checks that the Clojure files contained in `paths` follow the formatting
   (as per `options`)."
   ([paths]
-   (check paths default-config))
+   (check paths {}))
   ([paths options]
    (let [counts (transduce
                  (comp (mapcat (partial find-files options))
@@ -135,7 +122,7 @@
   "Applies the formatting (as per `options`) to the Clojure files
   contained in `paths`."
   ([paths]
-   (fix paths default-config))
+   (fix paths {}))
   ([paths options]
    (let [files (mapcat (partial find-files options) paths)]
      (doseq [^java.io.File f files]
@@ -153,34 +140,47 @@
 (def ^:private cli-file-reader
   (comp edn/read-string slurp diff/to-absolute-path))
 
+(def default-options
+  {:project-root "."
+   :file-pattern #"\.clj[csx]?$"
+   :paths        []
+   :ansi?        true
+   :indentation? true
+   :insert-missing-whitespace?      true
+   :remove-surrounding-whitespace?  true
+   :remove-trailing-whitespace?     true
+   :remove-consecutive-blank-lines? true
+   :indents   cljfmt/default-indents
+   :alias-map {}})
+
 (def ^:private cli-options
   [[nil "--help"]
    [nil "--file-pattern FILE_PATTERN"
-    :default (:file-pattern default-config)
+    :default (:file-pattern default-options)
     :parse-fn re-pattern]
    [nil "--indents INDENTS_PATH"
     :parse-fn cli-file-reader]
    [nil "--alias-map ALIAS_MAP_PATH"
     :parse-fn cli-file-reader]
    [nil "--project-root PROJECT_ROOT"
-    :default (:project-root default-config)]
+    :default (:project-root default-options)]
    [nil "--[no-]ansi"
-    :default (:ansi? default-config)
+    :default (:ansi? default-options)
     :id :ansi?]
    [nil "--[no-]indentation"
-    :default (:indentation? default-config)
+    :default (:indentation? default-options)
     :id :indentation?]
    [nil "--[no-]remove-surrounding-whitespace"
-    :default (:remove-surrounding-whitespace? default-config)
+    :default (:remove-surrounding-whitespace? default-options)
     :id :remove-surrounding-whitespace?]
    [nil "--[no-]remove-trailing-whitespace"
-    :default (:remove-trailing-whitespace? default-config)
+    :default (:remove-trailing-whitespace? default-options)
     :id :remove-trailing-whitespace?]
    [nil "--[no-]insert-missing-whitespace"
-    :default (:insert-missing-whitespace? default-config)
+    :default (:insert-missing-whitespace? default-options)
     :id :insert-missing-whitespace?]
    [nil "--[no-]remove-consecutive-blank-lines"
-    :default (:remove-consecutive-blank-lines? default-config)
+    :default (:remove-consecutive-blank-lines? default-options)
     :id :remove-consecutive-blank-lines?]])
 
 (defn- command-name []
@@ -189,7 +189,7 @@
 (defn -main [& args]
   (let [parsed-opts   (cli/parse-opts args cli-options)
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge default-config (:options parsed-opts))
+        options       (merge default-options (:options parsed-opts))
         paths         (or (seq paths) ["src" "test"])]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
