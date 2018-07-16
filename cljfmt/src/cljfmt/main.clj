@@ -153,6 +153,11 @@
    :indents   cljfmt/default-indents
    :alias-map {}})
 
+(defn merge-default-options [options]
+  (-> (merge default-options options)
+      (assoc :indents (merge (:indents default-options)
+                             (:indents options {})))))
+
 (def ^:private cli-options
   [[nil "--help"]
    [nil "--file-pattern FILE_PATTERN"
@@ -189,7 +194,7 @@
 (defn -main [& args]
   (let [parsed-opts   (cli/parse-opts args cli-options)
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge default-options (:options parsed-opts))
+        options       (merge-default-options (:options parsed-opts))
         paths         (or (seq paths) ["src" "test"])]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
