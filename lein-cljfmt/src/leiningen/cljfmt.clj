@@ -24,7 +24,7 @@
   (let [paths   (or (seq paths) (format-paths project))
         options (-> (:cljfmt project)
                     (assoc :project-root (:root project))
-                    (cljfmt.main/merge-default-config))]
+                    (cljfmt.main/merge-default-options))]
     (if leiningen.core.main/*info*
       (execute-command command options paths)
       (with-out-str
