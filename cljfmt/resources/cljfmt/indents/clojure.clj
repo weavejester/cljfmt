@@ -30,6 +30,7 @@
  extend          [[:block 1]]
  extend-protocol [[:block 1] [:inner 1]]
  extend-type     [[:block 1] [:inner 1]]
+ fdef            [[:inner 0]]
  finally         [[:block 0]]
  fn              [[:inner 0]]
  for             [[:block 1]]

@@ -35,7 +35,17 @@
     (is (= (reformat-string "(fn [x]\n(foo bar\nbaz))")
            "(fn [x]\n  (foo bar\n       baz))"))
     (is (= (reformat-string "(fn [x] (foo bar\nbaz))")
-           "(fn [x] (foo bar\n             baz))")))
+           "(fn [x] (foo bar\n             baz))"))
+    (is (= (reformat-string (str "(clojure.spec.alpha/def ::foo\n"
+                                 "                        string?)" ))
+           "(clojure.spec.alpha/def ::foo\n  string?)"))
+    (is (= (reformat-string
+            (str "(clojure.spec.alpha/fdef foo\n"
+                 "                         :args (clojure.spec.alpha/cat :x string?)\n"
+                 "                         :ret nat-int?)"))
+           (str "(clojure.spec.alpha/fdef foo\n"
+                "  :args (clojure.spec.alpha/cat :x string?)\n"
+                "  :ret nat-int?)"))))
 
   (testing "inner indentation"
     (is (= (reformat-string "(letfn [(foo [x]\n(* x x))]\n(foo 5))")
