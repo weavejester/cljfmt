@@ -37,7 +37,7 @@
   (cljfmt/reformat-string s options))
 
 (defn- project-path [{:keys [project-root]} file]
-  (-> project-root io/file (relative-path (io/file file))))
+  (-> project-root (or ".") io/file (relative-path (io/file file))))
 
 (defn- format-diff
   ([options file]
