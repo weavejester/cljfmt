@@ -1,6 +1,7 @@
 (ns cljfmt.diff
   (:import [difflib DiffUtils Delta$TYPE]
-           [java.io File])
+           [java.io File]
+           [java.util.regex Pattern])
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -11,7 +12,7 @@
   (str/join "\n" ss))
 
 (defn to-absolute-path [filename]
-  (->> (str/split filename (re-pattern File/separator))
+  (->> (str/split filename (re-pattern (Pattern/quote File/separator)))
        (apply io/file)
        .getCanonicalPath))
 
