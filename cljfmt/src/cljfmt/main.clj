@@ -19,9 +19,9 @@
     (apply println args)))
 
 (defn- relative-path [dir file]
-  (-> (.toURI dir)
-      (.relativize (.toURI file))
-      (.getPath)))
+  (-> (.toAbsolutePath (.toPath dir))
+      (.relativize (.toAbsolutePath (.toPath file)))
+      (.toString)))
 
 (defn- grep [re dir]
   (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
