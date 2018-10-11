@@ -1,7 +1,9 @@
 (ns cljfmt.core-test
   (:require [#?@(:clj (clojure.test :refer)
                  :cljs (cljs.test :refer-macros)) [deftest testing is]]
-            [cljfmt.core :refer [reformat-string]]
+            [cljfmt.core :refer [reformat-string default-line-separator
+                                 normalize-newlines find-line-separator
+                                 replace-newlines wrap-normalize-newlines]]
             [clojure.string :as str]))
 
 (deftest test-indent
@@ -283,3 +285,32 @@
   (is (= (reformat-string "(juxt +' -')") "(juxt +' -')"))
   (is (= (reformat-string "#\"(?i)foo\"") "#\"(?i)foo\""))
   (is (= (reformat-string "#\"a\nb\"") "#\"a\nb\"")))
+
+(deftest test-normalize-newlines
+  (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
+  (is (= (normalize-newlines "foo\r\nbar\r\nbaz") "foo\nbar\nbaz"))
+  (is (= (normalize-newlines "foo\r\nbar\nbaz\r\n") "foo\nbar\nbaz\n"))
+  (is (= (normalize-newlines "foo\\nbar\nbaz\r\n") "foo\\nbar\nbaz\n"))
+  (is (= (normalize-newlines "foo\\nbar\r\nbaz\r\n") "foo\\nbar\nbaz\n"))
+  (is (= (normalize-newlines "foo\\nbar\\r\nbaz") "foo\\nbar\\r\nbaz"))
+  (is (= (normalize-newlines "foobarbaz") "foobarbaz")))
+
+(deftest test-find-line-separator
+  (is (= (find-line-separator "foo\nbar\nbaz") "\n"))
+  (is (= (find-line-separator "foo\r\nbar\r\nbaz") "\r\n"))
+  (is (= (find-line-separator "foo\r\nbar\nbaz\r\n") "\r\n"))
+  (is (= (find-line-separator "foo\\nbar\nbaz\r\n") "\n"))
+  (is (= (find-line-separator "foo\\nbar\r\nbaz\r\n") "\r\n"))
+  (is (= (find-line-separator "foo\\nbar\\r\nbaz") "\n"))
+  (is (= (find-line-separator "foobarbaz") default-line-separator)))
+
+(deftest test-replace-newlines
+  (is (= (replace-newlines "foo\nbar\nbaz" "\n") "foo\nbar\nbaz"))
+  (is (= (replace-newlines "foo\nbar\nbaz" "\r\n") "foo\r\nbar\r\nbaz"))
+  (is (= (replace-newlines "foobarbaz" "\n") "foobarbaz"))
+  (is (= (replace-newlines "foobarbaz" "\r\n") "foobarbaz")))
+
+(deftest test-wrap-normalize-newlines
+  (is (= ((wrap-normalize-newlines identity) "foo\nbar\nbaz") "foo\nbar\nbaz"))
+  (is (= ((wrap-normalize-newlines identity) "foo\r\nbar\r\nbaz") "foo\r\nbar\r\nbaz"))
+  (is (= ((wrap-normalize-newlines identity) "foobarbaz") "foobarbaz")))
