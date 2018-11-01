@@ -2,6 +2,7 @@
   #?@(:clj
       [(:refer-clojure :exclude [reader-conditional?])
        (:require [clojure.java.io :as io]
+                 [clojure.string :as str]
                  [clojure.zip :as zip]
                  [rewrite-clj.node :as n]
                  [rewrite-clj.parser :as p]
@@ -390,3 +391,20 @@
          (reformat-form (cond-> options
                           alias-map (assoc :alias-map alias-map)))
          (n/string)))))
+
+(def default-line-separator
+  #?(:clj (System/lineSeparator) :cljs \newline))
+
+(defn normalize-newlines [s]
+  (str/replace s #"\r\n" "\n"))
+
+(defn replace-newlines [s sep]
+  (str/replace s #"\n" sep))
+
+(defn find-line-separator [s]
+  (or (re-find #"\r?\n" s) default-line-separator))
+
+(defn wrap-normalize-newlines [f]
+  (fn [s]
+    (let [sep (find-line-separator s)]
+      (-> s normalize-newlines f (replace-newlines sep)))))
