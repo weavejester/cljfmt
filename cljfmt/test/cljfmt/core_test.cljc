@@ -4,289 +4,738 @@
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines]]
-            [clojure.string :as str]))
+            [cljfmt.test-util.common :as common]
+            #?(:clj [cljfmt.test-util.clojure]))
+  #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
   (testing "list indentation"
-    (is (= (reformat-string "(foo bar\nbaz\nquz)")
-           "(foo bar\n     baz\n     quz)"))
-    (is (= (reformat-string "(foo\nbar\nbaz)")
-           "(foo\n bar\n baz)")))
+    (is (reformats-to?
+         ["(foo bar"
+          "baz"
+          "quz)"]
+         ["(foo bar"
+          "     baz"
+          "     quz)"]))
+
+    (is (reformats-to?
+         ["(foo"
+          "bar"
+          "baz)"]
+         ["(foo"
+          " bar"
+          " baz)"])
+        "to first arg"))
 
   (testing "block indentation"
-    (is (= (reformat-string "(if (= x 1)\n:foo\n:bar)")
-           "(if (= x 1)\n  :foo\n  :bar)"))
-    (is (= (reformat-string "(do\n(foo)\n(bar))")
-           "(do\n  (foo)\n  (bar))"))
-    (is (= (reformat-string "(do (foo)\n(bar))")
-           "(do (foo)\n    (bar))"))
-    (is (= (reformat-string "(deftype Foo\n[x]\nBar)")
-           "(deftype Foo\n         [x]\n  Bar)"))
-    (is (= (reformat-string "(cond->> x\na? a\nb? b)")
-           "(cond->> x\n  a? a\n  b? b)")))
+    (is (reformats-to?
+         ["(if (= x 1)"
+          ":foo"
+          ":bar)"]
+         ["(if (= x 1)"
+          "  :foo"
+          "  :bar)"]))
+    (is (reformats-to?
+         ["(do"
+          "(foo)"
+          "(bar))"]
+         ["(do"
+          "  (foo)"
+          "  (bar))"]))
+    (is (reformats-to?
+         ["(do (foo)"
+          "(bar))"]
+         ["(do (foo)"
+          "    (bar))"])
+        "do block to hanging argument")
+    (is (reformats-to?
+         ["(deftype Foo"
+          "[x]"
+          "Bar)"]
+         ["(deftype Foo"
+          "         [x]"
+          "  Bar)"])
+        "deftype fields to class name")
+    (is (reformats-to?
+         ["(cond->> x"
+          "a? a"
+          "b? b)"]
+         ["(cond->> x"
+          "  a? a"
+          "  b? b)"])))
 
   (testing "constant indentation"
-    (is (= (reformat-string "(def foo\n\"Hello World\")")
-           "(def foo\n  \"Hello World\")"))
-    (is (= (reformat-string "(defn foo [x]\n(+ x 1))")
-           "(defn foo [x]\n  (+ x 1))"))
-    (is (= (reformat-string "(defn foo\n[x]\n(+ x 1))")
-           "(defn foo\n  [x]\n  (+ x 1))"))
-    (is (= (reformat-string "(defn foo\n([] 0)\n([x]\n(+ x 1)))")
-           "(defn foo\n  ([] 0)\n  ([x]\n   (+ x 1)))"))
-    (is (= (reformat-string "(fn [x]\n(foo bar\nbaz))")
-           "(fn [x]\n  (foo bar\n       baz))"))
-    (is (= (reformat-string "(fn [x] (foo bar\nbaz))")
-           "(fn [x] (foo bar\n             baz))"))
-    (is (= (reformat-string (str "(clojure.spec.alpha/def ::foo\n"
-                                 "                        string?)"))
-           "(clojure.spec.alpha/def ::foo\n  string?)"))
-    (is (= (reformat-string
-            (str "(clojure.spec.alpha/fdef foo\n"
-                 "                         :args (clojure.spec.alpha/cat :x string?)\n"
-                 "                         :ret nat-int?)"))
-           (str "(clojure.spec.alpha/fdef foo\n"
-                "  :args (clojure.spec.alpha/cat :x string?)\n"
-                "  :ret nat-int?)"))))
+    (is (reformats-to?
+         ["(def foo"
+          "\"Hello World\")"]
+         ["(def foo"
+          "  \"Hello World\")"]))
+    (is (reformats-to?
+         ["(defn foo [x]"
+          "(+ x 1))"]
+         ["(defn foo [x]"
+          "  (+ x 1))"])
+        "defn does not indent to hanging name and params")
+    (is (reformats-to?
+         ["(defn foo"
+          "[x]"
+          "(+ x 1))"]
+         ["(defn foo"
+          "  [x]"
+          "  (+ x 1))"])
+        "defn does not indent to hanging name")
+    (is (reformats-to?
+         ["(defn foo"
+          "([] 0)"
+          "([x]"
+          "(+ x 1)))"]
+         ["(defn foo"
+          "  ([] 0)"
+          "  ([x]"
+          "   (+ x 1)))"])
+        "defn multi-arity")
+    (is (reformats-to?
+         ["(fn [x]"
+          "(foo bar"
+          "baz))"]
+         ["(fn [x]"
+          "  (foo bar"
+          "       baz))"])
+        "fn with body")
+    (is (reformats-to?
+         ["(fn [x] (foo bar"
+          "baz))"]
+         ["(fn [x] (foo bar"
+          "             baz))"])
+        "fn with hanging body")
+    (is (reformats-to?
+         ["(clojure.spec.alpha/def ::foo"
+          "                        string?)"]
+         ["(clojure.spec.alpha/def ::foo"
+          "  string?)"])
+        "unhangs hanging spec indentation")
+    (is (reformats-to?
+         ["(clojure.spec.alpha/fdef foo"
+          "                         :args (clojure.spec.alpha/cat :x string?)"
+          "                         :ret nat-int?)"]
+         ["(clojure.spec.alpha/fdef foo"
+          "  :args (clojure.spec.alpha/cat :x string?)"
+          "  :ret nat-int?)"])
+        "unhangs hanging spec indentations"))
 
   (testing "inner indentation"
-    (is (= (reformat-string "(letfn [(foo [x]\n(* x x))]\n(foo 5))")
-           "(letfn [(foo [x]\n          (* x x))]\n  (foo 5))"))
-    (is (= (reformat-string "(reify Closeable\n(close [_]\n(prn :closed)))")
-           "(reify Closeable\n  (close [_]\n    (prn :closed)))"))
-    (is (= (reformat-string "(defrecord Foo [x]\nCloseable\n(close [_]\n(prn x)))")
-           "(defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))")))
+    (is (reformats-to?
+         ["(letfn [(foo [x]"
+          "(* x x))]"
+          "(foo 5))"]
+         ["(letfn [(foo [x]"
+          "          (* x x))]"
+          "  (foo 5))"]))
+    (is (reformats-to?
+         ["(reify Closeable"
+          "(close [_]"
+          "(prn :closed)))"]
+         ["(reify Closeable"
+          "  (close [_]"
+          "    (prn :closed)))"]))
+    (is (reformats-to?
+         ["(defrecord Foo [x]"
+          "Closeable"
+          "(close [_]"
+          "(prn x)))"]
+         ["(defrecord Foo [x]"
+          "  Closeable"
+          "  (close [_]"
+          "    (prn x)))"])))
 
   (testing "data structure indentation"
-    (is (= (reformat-string "[:foo\n:bar\n:baz]")
-           "[:foo\n :bar\n :baz]"))
-    (is (= (reformat-string "{:foo 1\n:bar 2}")
-           "{:foo 1\n :bar 2}"))
-    (is (= (reformat-string "#{:foo\n:bar\n:baz}")
-           "#{:foo\n  :bar\n  :baz}"))
-    (is (= (reformat-string "{:foo [:bar\n:baz]}")
-           "{:foo [:bar\n       :baz]}")))
+    (is (reformats-to?
+         ["[:foo"
+          ":bar"
+          ":baz]"]
+         ["[:foo"
+          " :bar"
+          " :baz]"]))
+    (is (reformats-to?
+         ["{:foo 1"
+          ":bar 2}"]
+         ["{:foo 1"
+          " :bar 2}"]))
+    (is (reformats-to?
+         ["#{:foo"
+          ":bar"
+          ":baz}"]
+         ["#{:foo"
+          "  :bar"
+          "  :baz}"]))
+    (is (reformats-to?
+         ["{:foo [:bar"
+          ":baz]}"]
+         ["{:foo [:bar"
+          "       :baz]}"])))
 
   (testing "embedded structures"
-    (is (= (reformat-string "(let [foo {:x 1\n:y 2}]\n(:x foo))")
-           "(let [foo {:x 1\n           :y 2}]\n  (:x foo))"))
-    (is (= (reformat-string "(if foo\n(do bar\nbaz)\nquz)")
-           "(if foo\n  (do bar\n      baz)\n  quz)")))
+    (is (reformats-to?
+         ["(let [foo {:x 1"
+          ":y 2}]"
+          "(:x foo))"]
+         ["(let [foo {:x 1"
+          "           :y 2}]"
+          "  (:x foo))"]))
+    (is (reformats-to?
+         ["(if foo"
+          "(do bar"
+          "baz)"
+          "quz)"]
+         ["(if foo"
+          "  (do bar"
+          "      baz)"
+          "  quz)"])))
 
   (testing "namespaces"
-    (is (= (reformat-string "(t/defn foo [x]\n(+ x 1))")
-           "(t/defn foo [x]\n  (+ x 1))"))
-    (is (= (reformat-string "(t/defrecord Foo [x]\nCloseable\n(close [_]\n(prn x)))")
-           "(t/defrecord Foo [x]\n  Closeable\n  (close [_]\n    (prn x)))"))
-    (is (= (-> (str "(ns example\n"
-                    "(:require [thing.core :as t]))\n\n"
-                    "(t/defn foo [x]\n"
-                    "(+ x 1))\n\n"
-                    "(defn foo [x]\n"
-                    "(+ x 1))\n")
-               (reformat-string {:indents {'thing.core/defn [[:inner 0]]}
-                                 #?@(:cljs [:alias-map {"t" "thing.core"}])}))
-           (str "(ns example\n"
-                "    (:require [thing.core :as t]))\n\n"
-                "(t/defn foo [x]\n"
-                "  (+ x 1))\n\n"
-                "(defn foo [x]\n"
-                "      (+ x 1))\n")))
-    (is (= (-> (str "(ns example\n"
-                    "(:require [thing.core :as t]))\n\n"
-                    "(t/defrecord Foo [x]\n"
-                    "Closeable\n"
-                    "(close [_]\n"
-                    "(prn x)))\n\n"
-                    "(defrecord Foo [x]\n"
-                    "Closeable\n"
-                    "(close [_]\n"
-                    "(prn x)))\n")
-               (reformat-string {:indents {'thing.core/defrecord [[:inner 0]]}
-                                 #?@(:cljs [:alias-map {"t" "thing.core"}])}))
-           (str "(ns example\n"
-                "    (:require [thing.core :as t]))\n\n"
-                "(t/defrecord Foo [x]\n"
-                "  Closeable\n"
-                "  (close [_]\n"
-                "         (prn x)))\n\n"
-                "(defrecord Foo [x]\n"
-                "           Closeable\n"
-                "           (close [_]\n"
-                "                  (prn x)))\n"))))
+    (is (reformats-to?
+         ["(t/defn foo [x]"
+          "(+ x 1))"]
+         ["(t/defn foo [x]"
+          "  (+ x 1))"])
+        "namespaced defn")
+    (is (reformats-to?
+         ["(t/defrecord Foo [x]"
+          "Closeable"
+          "(close [_]"
+          "(prn x)))"]
+         ["(t/defrecord Foo [x]"
+          "  Closeable"
+          "  (close [_]"
+          "    (prn x)))"])
+        "namespaced defrecord")
+
+    (is (reformats-to?
+         ["(ns example"
+          "(:require [thing.core :as t]))"
+          ""
+          "(t/defn foo [x]"
+          "(+ x 1))"
+          ""
+          "(defn foo [x]"
+          "(+ x 1))"]
+         ["(ns example"
+          "    (:require [thing.core :as t]))"
+          ""
+          "(t/defn foo [x]"
+          "  (+ x 1))"
+          ""
+          "(defn foo [x]"
+          "      (+ x 1))"]
+         {:indents {'thing.core/defn [[:inner 0]]}
+          #?@(:cljs [:alias-map {"t" "thing.core"}])})
+        "applies custom indentation to namespaced defn")
+    (is (reformats-to?
+         ["(ns example"
+          "(:require [thing.core :as t]))"
+          ""
+          "(t/defrecord Foo [x]"
+          "Closeable"
+          "(close [_]"
+          "(prn x)))"
+          ""
+          "(defrecord Foo [x]"
+          "Closeable"
+          "(close [_]"
+          "(prn x)))"]
+         ["(ns example"
+          "    (:require [thing.core :as t]))"
+          ""
+          "(t/defrecord Foo [x]"
+          "  Closeable"
+          "  (close [_]"
+          "         (prn x)))"
+          ""
+          "(defrecord Foo [x]"
+          "           Closeable"
+          "           (close [_]"
+          "                  (prn x)))"]
+         {:indents {'thing.core/defrecord [[:inner 0]]}
+          #?@(:cljs [:alias-map {"t" "thing.core"}])})
+        "applies custom indentation to namespaced defrecord"))
 
   (testing "function #() syntax"
-    (is (= (reformat-string "#(while true\n(println :foo))")
-           "#(while true\n   (println :foo))"))
-    (is (= (reformat-string "#(reify Closeable\n(close [_]\n(prn %)))")
-           "#(reify Closeable\n   (close [_]\n     (prn %)))")))
+    (is (reformats-to?
+         ["#(while true"
+          "(println :foo))"]
+         ["#(while true"
+          "   (println :foo))"])
+        "anonymous function")
+    (is (reformats-to?
+         ["#(reify Closeable"
+          "(close [_]"
+          "(prn %)))"]
+         ["#(reify Closeable"
+          "   (close [_]"
+          "     (prn %)))"])
+        "anonymous class"))
 
   (testing "multiple arities"
-    (is (= (reformat-string "(fn\n([x]\n(foo)\n(bar)))")
-           "(fn\n  ([x]\n   (foo)\n   (bar)))")))
+    (is (reformats-to?
+         ["(fn"
+          "([x]"
+          "(foo)"
+          "(bar)))"]
+         ["(fn"
+          "  ([x]"
+          "   (foo)"
+          "   (bar)))"])
+        "multiple arity function with only one arity defined"))
 
   (testing "comments"
-    (is (= (reformat-string ";foo\n(def x 1)")
-           ";foo\n(def x 1)"))
-    (is (= (reformat-string "(ns foo.core)\n\n;; foo\n(defn foo [x]\n(inc x))")
-           "(ns foo.core)\n\n;; foo\n(defn foo [x]\n  (inc x))"))
-    (is (= (reformat-string ";; foo\n(ns foo\n(:require bar))")
-           ";; foo\n(ns foo\n  (:require bar))"))
-    (is (= (reformat-string "(defn foo [x]\n  ;; +1\n(inc x))")
-           "(defn foo [x]\n  ;; +1\n  (inc x))"))
-    (is (= (reformat-string "(let [;foo\n x (foo bar\n baz)]\n x)")
-           "(let [;foo\n      x (foo bar\n             baz)]\n  x)"))
-    (is (= (reformat-string "(binding [x 1] ; foo\nx)")
-           "(binding [x 1] ; foo\n  x)")))
+    (is (reformats-to?
+         [";foo"
+          "(def x 1)"]
+         [";foo"
+          "(def x 1)"])
+        "header comments unchanged")
+    (is (reformats-to?
+         ["(ns foo.core)"
+          ""
+          ";; foo"
+          "(defn foo [x]"
+          "(inc x))"]
+         ["(ns foo.core)"
+          ""
+          ";; foo"
+          "(defn foo [x]"
+          "  (inc x))"])
+        "post namespace comment unchanged, code indented")
+    (is (reformats-to?
+         [";; foo"
+          "(ns foo"
+          "(:require bar))"]
+         [";; foo"
+          "(ns foo"
+          "  (:require bar))"])
+        "pre namespace comment unchanged, namespace indented")
+    (is (reformats-to?
+         ["(defn foo [x]"
+          "  ;; +1"
+          "(inc x))"]
+         ["(defn foo [x]"
+          "  ;; +1"
+          "  (inc x))"])
+        "commented out line unchanged, code indented")
+    (is (reformats-to?
+         ["(let [;foo"
+          " x (foo bar"
+          " baz)]"
+          " x)"]
+         ["(let [;foo"
+          "      x (foo bar"
+          "             baz)]"
+          "  x)"])
+        "inline comment unchanged, code indented")
+    (is (reformats-to?
+         ["(binding [x 1] ; foo"
+          "x)"]
+         ["(binding [x 1] ; foo"
+          "  x)"])
+        "binding inline comment unchanged, code indented"))
 
   (testing "metadata"
-    (is (= (reformat-string "(defonce ^{:doc \"foo\"}\nfoo\n:foo)")
-           "(defonce ^{:doc \"foo\"}\n  foo\n  :foo)"))
-    (is (= (reformat-string "(def ^:private\nfoo\n:foo)")
-           "(def ^:private\n  foo\n  :foo)"))
-    (is (= (reformat-string "(def ^:private foo\n:foo)")
-           "(def ^:private foo\n  :foo)")))
+    (is (reformats-to?
+         ["(defonce ^{:doc \"foo\"}"
+          "foo"
+          ":foo)"]
+         ["(defonce ^{:doc \"foo\"}"
+          "  foo"
+          "  :foo)"])
+        "hanging metadata on defonce does not hang subsequent indentation")
+    (is (reformats-to?
+         ["(def ^:private"
+          "foo"
+          ":foo)"]
+         ["(def ^:private"
+          "  foo"
+          "  :foo)"])
+        "hanging metata on def does not hang subsequent indentation")
+    (is (reformats-to?
+         ["(def ^:private foo"
+          ":foo)"]
+         ["(def ^:private foo"
+          "  :foo)"])
+        "hanging metadata and name on def does not hang subsequent indentation"))
 
   (testing "fuzzy matches"
-    (is (= (reformat-string "(with-foo x\ny\nz)")
-           "(with-foo x\n  y\n  z)"))
-    (is (= (reformat-string "(defelem foo [x]\n[:foo x])")
-           "(defelem foo [x]\n  [:foo x])")))
+    (is (reformats-to?
+         ["(with-foo x"
+          "y"
+          "z)"]
+         ["(with-foo x"
+          "  y"
+          "  z)"])
+        "^with fuzzy rule respected")
+    (is (reformats-to?
+         ["(defelem foo [x]"
+          "[:foo x])"]
+         ["(defelem foo [x]"
+          "  [:foo x])"])
+        "^def fuzzy rule respected"))
 
   (testing "comment before ending bracket"
-    (is (= (reformat-string "(foo a ; b\nc ; d\n)")
-           "(foo a ; b\n     c ; d\n     )"))
-    (is (= (reformat-string "(do\na ; b\nc ; d\n)")
-           "(do\n  a ; b\n  c ; d\n  )"))
-    (is (= (reformat-string "(let [x [1 2 ;; test1\n2 3 ;; test2\n]])")
-           "(let [x [1 2 ;; test1\n         2 3 ;; test2\n         ]])")))
+    (is (reformats-to?
+         ["(foo a ; b"
+          "c ; d"
+          ")"]
+         ["(foo a ; b"
+          "     c ; d"
+          "     )"])
+        "ending parens indents after hanging inline comment")
+    (is (reformats-to?
+         ["(do"
+          "a ; b"
+          "c ; d"
+          ")"]
+         ["(do"
+          "  a ; b"
+          "  c ; d"
+          "  )"])
+        "ending parens indents after inline comment")
+    (is (reformats-to?
+         ["(let [x [1 2 ;; test1"
+          "2 3 ;; test2"
+          "]])"]
+         ["(let [x [1 2 ;; test1"
+          "         2 3 ;; test2"
+          "         ]])"])
+        "ending square bracket indents after inline comment "))
 
   (testing "indented comments with blank lines"
-    (is (= (reformat-string "(;a\n\n ;b\n )")
-           "(;a\n\n ;b\n )")))
+    (is (reformats-to?
+         ["(;a"
+          ""
+          " ;b"
+          " )"]
+         ["(;a"
+          ""
+          " ;b"
+          " )"])))
 
-  (testing "indentated forms in letfn block"
-    (is (= (reformat-string "(letfn [(f [x]\nx)]\n(let [x (f 1)]\n(str x 2\n3 4)))")
-           (str "(letfn [(f [x]\n          x)]\n"
-                "  (let [x (f 1)]\n    (str x 2\n         3 4)))"))))
+  (testing "letfn block"
+    (is (reformats-to?
+         ["(letfn [(f [x]"
+          "x)]"
+          "(let [x (f 1)]"
+          "(str x 2"
+          "3 4)))"]
+         ["(letfn [(f [x]"
+          "          x)]"
+          "  (let [x (f 1)]"
+          "    (str x 2"
+          "         3 4)))"])))
 
-  (testing "miltiline right hand side forms"
-    (is (= (reformat-string "(list foo :bar (fn a\n([] nil)\n([b] b)))")
-           "(list foo :bar (fn a\n                 ([] nil)\n                 ([b] b)))")))
+  (testing "multiline right hand side forms"
+    (is (reformats-to?
+         ["(list foo :bar (fn a"
+          "([] nil)"
+          "([b] b)))"]
+         ["(list foo :bar (fn a"
+          "                 ([] nil)"
+          "                 ([b] b)))"])))
 
   (testing "reader conditionals"
-    (is (= (reformat-string "#?(:clj foo\n:cljs bar)")
-           "#?(:clj foo\n   :cljs bar)"))
-    (is (= (reformat-string "#?@(:clj foo\n:cljs bar)")
-           "#?@(:clj foo\n    :cljs bar)"))))
+    (is (reformats-to?
+         ["#?(:clj foo"
+          ":cljs bar)"]
+         ["#?(:clj foo"
+          "   :cljs bar)"])
+        "standard syntax")
+    (is (reformats-to?
+         ["#?@(:clj foo"
+          ":cljs bar)"]
+         ["#?@(:clj foo"
+          "    :cljs bar)"])
+        "splicing syntax")))
 
 (deftest test-surrounding-whitespace
-  (testing "surrounding spaces"
-    (is (= (reformat-string "( foo bar )")
-           "(foo bar)"))
-    (is (= (reformat-string "[ 1 2 3 ]")
-           "[1 2 3]"))
-    (is (= (reformat-string "{  :x 1, :y 2 }")
-           "{:x 1, :y 2}")))
+  (testing "surrounding whitespace removed"
+    (is (reformats-to?
+         ["( foo bar )"]
+         ["(foo bar)"]))
+    (is (reformats-to?
+         ["[ 1 2 3 ]"]
+         ["[1 2 3]"]))
+    (is (reformats-to?
+         ["{  :x 1, :y 2 }"]
+         ["{:x 1, :y 2}"])))
 
-  (testing "surrounding newlines"
-    (is (= (reformat-string "(\n  foo\n)")
-           "(foo)"))
-    (is (= (reformat-string "(  \nfoo\n)")
-           "(foo)"))
-    (is (= (reformat-string "(foo  \n)")
-           "(foo)"))
-    (is (= (reformat-string "(foo\n  )")
-           "(foo)"))
-    (is (= (reformat-string "[\n1 2 3\n]")
-           "[1 2 3]"))
-    (is (= (reformat-string "{\n:foo \"bar\"\n}")
-           "{:foo \"bar\"}"))
-    (is (= (reformat-string "( let [x 3\ny 4]\n(+ (* x x\n)(* y y)\n))")
-           "(let [x 3\n      y 4]\n  (+ (* x x) (* y y)))"))))
+  (testing "surrounding newlines removed"
+    (is (reformats-to?
+         ["("
+          "  foo"
+          ")"]
+         ["(foo)"]))
+    (is (reformats-to?
+         ["(  "
+          "foo"
+          ")"]
+         ["(foo)"]))
+    (is (reformats-to?
+         ["(foo  "
+          ")"]
+         ["(foo)"]))
+    (is (reformats-to?
+         ["(foo"
+          "  )"]
+         ["(foo)"]))
+    (is (reformats-to?
+         ["["
+          "1 2 3"
+          "]"]
+         ["[1 2 3]"]))
+    (is (reformats-to?
+         ["{"
+          ":foo \"bar\""
+          "}"]
+         ["{:foo \"bar\"}"]))
+    (is (reformats-to?
+         ["( let [x 3"
+          "y 4]"
+          "(+ (* x x"
+          ")(* y y)"
+          "))"]
+         ["(let [x 3"
+          "      y 4]"
+          "  (+ (* x x) (* y y)))"]))))
 
 (deftest test-missing-whitespace
-  (testing "collections"
-    (is (= (reformat-string "(foo(bar baz)qux)")
-           "(foo (bar baz) qux)"))
-    (is (= (reformat-string "(foo)bar(baz)")
-           "(foo) bar (baz)"))
-    (is (= (reformat-string "(foo[bar]#{baz}{quz bang})")
-           "(foo [bar] #{baz} {quz bang})")))
+  (testing "unglue inner"
+    (is (reformats-to?
+         ["(foo(bar baz)qux)"]
+         ["(foo (bar baz) qux)"]))
+    (is (reformats-to?
+         ["(foo)bar(baz)"]
+         ["(foo) bar (baz)"]))
+    (is (reformats-to?
+         ["(foo[bar]#{baz}{quz bang})"]
+         ["(foo [bar] #{baz} {quz bang})"])))
 
   (testing "reader conditionals"
-    (is (= (reformat-string "#?(:cljs(bar 1) :clj(foo 2))")
-           "#?(:cljs (bar 1) :clj (foo 2))"))
-    (is (= (reformat-string "#?@(:cljs[foo bar] :clj[baz quux])")
-           "#?@(:cljs [foo bar] :clj [baz quux])"))))
+    (is (reformats-to?
+         ["#?(:cljs(bar 1) :clj(foo 2))"]
+         ["#?(:cljs (bar 1) :clj (foo 2))"]))
+    (is (reformats-to?
+         ["#?@(:cljs[foo bar] :clj[baz quux])"]
+         ["#?@(:cljs [foo bar] :clj [baz quux])"]))))
 
 (deftest test-consecutive-blank-lines
-  (is (= (reformat-string "(foo)\n\n(bar)")
-         "(foo)\n\n(bar)"))
-  (is (= (reformat-string "(foo)\n\n\n (bar)")
-         "(foo)\n\n(bar)"))
-  (is (= (reformat-string "(foo)\n\n\n(bar)")
-         "(foo)\n\n(bar)"))
-  (is (= (reformat-string "(foo)\n \n \n(bar)")
-         "(foo)\n\n(bar)"))
-  (is (= (reformat-string "(foo)\n\n\n\n\n(bar)")
-         "(foo)\n\n(bar)"))
-  (is (= (reformat-string "(foo)\n\n;bar\n\n(baz)")
-         "(foo)\n\n;bar\n\n(baz)"))
-  (is (= (reformat-string "(foo)\n;bar\n;baz\n;qux\n(bang)")
-         "(foo)\n;bar\n;baz\n;qux\n(bang)"))
-  (is (= (reformat-string "(foo\n)\n\n(bar)")
-         "(foo)\n\n(bar)")))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        "(bar)"]
+       ["(foo)"
+        ""
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        " (bar)"]
+       ["(foo)"
+        ""
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        "(bar)"]
+       ["(foo)"
+        ""
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
+        " "
+        " "
+        "(bar)"]
+       ["(foo)"
+        ""
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        ""
+        ""
+        "(bar)"]
+       ["(foo)"
+        ""
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ";bar"
+        ""
+        "(baz)"]
+       ["(foo)"
+        ""
+        ";bar"
+        ""
+        "(baz)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ";bar"
+        ";baz"
+        ";qux"
+        "(bang)"]
+       ["(foo)"
+        ";bar"
+        ";baz"
+        ";qux"
+        "(bang)"]))
+  (is (reformats-to?
+       ["(foo"
+        ")"
+        ""
+        "(bar)"]
+       ["(foo)"
+        ""
+        "(bar)"])))
 
 (deftest test-trailing-whitespace
-  (testing "trailing-whitespace"
-    (is (= (reformat-string "(foo bar) ")
-           "(foo bar)"))
-    (is (= (reformat-string "(foo bar)\n")
-           "(foo bar)\n"))
-    (is (= (reformat-string "(foo bar) \n ")
-           "(foo bar)\n"))
-    (is (= (reformat-string "(foo bar) \n(foo baz)")
-           "(foo bar)\n(foo baz)"))
-    (is (= (reformat-string "(foo bar)\t\n(foo baz)")
-           "(foo bar)\n(foo baz)")))
+  (testing "trailing-whitespace removed"
+    (is (reformats-to?
+         ["(foo bar) "]
+         ["(foo bar)"]))
+    (is (reformats-to?
+         ["(foo bar)"
+          ""]
+         ["(foo bar)"
+          ""]))
+    (is (reformats-to?
+         ["(foo bar) "
+          " "]
+         ["(foo bar)"
+          ""]))
+    (is (reformats-to?
+         ["(foo bar) "
+          "(foo baz)"]
+         ["(foo bar)"
+          "(foo baz)"]))
+    (is (reformats-to?
+         ["(foo bar)\t"
+          "(foo baz)"]
+         ["(foo bar)"
+          "(foo baz)"])))
 
   (testing "preserve surrounding whitespace"
-    (is (= (reformat-string "( foo bar ) \n" {:remove-surrounding-whitespace? false})
-           "( foo bar )\n"))
-    (is (= (reformat-string
-            "( foo bar )   \n( foo baz )\n" {:remove-surrounding-whitespace? false})
-           "( foo bar )\n( foo baz )\n"))
-    (is (= (reformat-string "(foo\n(bar\n)\n)" {:remove-surrounding-whitespace? false})
-           "(foo\n (bar\n  )\n )"))))
+    (is (reformats-to?
+         ["( foo bar ) "
+          ""]
+         ["( foo bar )"
+          ""]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["( foo bar )   "
+          "( foo baz )"
+          ""]
+         ["( foo bar )"
+          "( foo baz )"
+          ""]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(foo"
+          "(bar"
+          ")"
+          ")"]
+         ["(foo"
+          " (bar"
+          "  )"
+          " )"]
+         {:remove-surrounding-whitespace? false})
+        "indents properly")))
 
 (deftest test-options
-  (is (= (reformat-string "(foo)\n\n\n(bar)" {:remove-consecutive-blank-lines? false})
-         "(foo)\n\n\n(bar)"))
-  (is (= (reformat-string "(  foo  )" {:remove-surrounding-whitespace? false})
-         "(  foo  )"))
-  (is (= (reformat-string "(foo(bar))" {:insert-missing-whitespace? false})
-         "(foo(bar))"))
-  (is (= (reformat-string "(foo\nbar)" {:indents '{foo [[:block 0]]}})
-         "(foo\n  bar)"))
-  (is (= (reformat-string "(do\nfoo\nbar)" {:indents {}})
-         "(do\n foo\n bar)"))
-  (is (= (reformat-string "(do\nfoo\nbar)" {:indentation? false})
-         "(do\nfoo\nbar)"))
-  (is (= (reformat-string "(foo bar) \n(foo baz)" {:remove-trailing-whitespace? false})
-         "(foo bar) \n(foo baz)"))
-  (is (= (reformat-string "(foo bar) \n" {:remove-trailing-whitespace? false})
-         "(foo bar) \n")))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        "(bar)"]
+       ["(foo)"
+        ""
+        ""
+        "(bar)"]
+       {:remove-consecutive-blank-lines? false}))
+  (is (reformats-to?
+       ["(  foo  )"]
+       ["(  foo  )"]
+       {:remove-surrounding-whitespace? false}))
+  (is (reformats-to?
+       ["(foo(bar))"]
+       ["(foo(bar))"]
+       {:insert-missing-whitespace? false}))
+  (is (reformats-to?
+       ["(foo"
+        "bar)"]
+       ["(foo"
+        "  bar)"]
+       {:indents {'foo [[:block 0]]}})
+      "can customize block indentation")
+  (is (reformats-to?
+       ["(do"
+        "foo"
+        "bar)"]
+       ["(do"
+        " foo"
+        " bar)"]
+       {:indents {}})
+      "can clear all indents rules")
+  (is (reformats-to?
+       ["(do"
+        "foo"
+        "bar)"]
+       ["(do"
+        "foo"
+        "bar)"]
+       {:indentation? false})
+      "can disable indentation")
+  (is (reformats-to?
+       ["(foo bar) "
+        "(foo baz)"]
+       ["(foo bar) "
+        "(foo baz)"]
+       {:remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["(foo bar) "
+        ""]
+       ["(foo bar) "
+        ""]
+       {:remove-trailing-whitespace? false})))
 
 (deftest test-parsing
-  (is (= (reformat-string ";foo") ";foo"))
-  (is (= (reformat-string "::foo") "::foo"))
-  (is (= (reformat-string "::foo/bar") "::foo/bar"))
-  (is (= (reformat-string "foo:bar") "foo:bar"))
-  (is (= (reformat-string "#_(foo\nbar)") "#_(foo\n   bar)"))
-  (is (= (reformat-string "(juxt +' -')") "(juxt +' -')"))
-  (is (= (reformat-string "#\"(?i)foo\"") "#\"(?i)foo\""))
-  (is (= (reformat-string "#\"a\nb\"") "#\"a\nb\"")))
+  (is (reformats-to?
+       [";foo"]
+       [";foo"]))
+  (is (reformats-to?
+       ["::foo"]
+       ["::foo"]))
+  (is (reformats-to?
+       ["::foo/bar"]
+       ["::foo/bar"]))
+  (is (reformats-to?
+       ["foo:bar"]
+       ["foo:bar"])
+      "a name with an embedded colon")
+  (is (reformats-to?
+       ["#_(foo"
+        "bar)"]
+       ["#_(foo"
+        "   bar)"]))
+  (is (reformats-to?
+       ["(juxt +' -')"]
+       ["(juxt +' -')"]))
+  (is (reformats-to?
+       ["#\"(?i)foo\""]
+       ["#\"(?i)foo\""]))
+  (is (= "#\"a\nb\""
+         (reformat-string "#\"a\nb\""))
+      "regular expression with embedded newline"))
 
 (deftest test-normalize-newlines
   (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
