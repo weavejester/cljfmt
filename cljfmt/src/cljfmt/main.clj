@@ -156,6 +156,8 @@
       (assoc :indents (merge (:indents default-options)
                              (:indents options {})))))
 
+(def default-paths ["src" "test" "project.clj"])
+
 (def ^:private cli-options
   [[nil "--help"]
    [nil "--file-pattern FILE_PATTERN"
@@ -193,7 +195,7 @@
   (let [parsed-opts   (cli/parse-opts args cli-options)
         [cmd & paths] (:arguments parsed-opts)
         options       (merge-default-options (:options parsed-opts))
-        paths         (or (seq paths) ["src" "test"])]
+        paths         (or (seq paths) default-paths)]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
       (if (or (nil? cmd) (:help options))
