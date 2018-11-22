@@ -39,7 +39,7 @@
     (is (= (reformat-string "(fn [x] (foo bar\nbaz))")
            "(fn [x] (foo bar\n             baz))"))
     (is (= (reformat-string (str "(clojure.spec.alpha/def ::foo\n"
-                                 "                        string?)" ))
+                                 "                        string?)"))
            "(clojure.spec.alpha/def ::foo\n  string?)"))
     (is (= (reformat-string
             (str "(clojure.spec.alpha/fdef foo\n"
