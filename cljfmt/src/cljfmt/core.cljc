@@ -211,7 +211,7 @@
 
 (defn- index-matches-top-argument? [zloc depth idx]
   (and (> depth 0)
-       (= idx (index-of (nth (iterate z/up zloc) (dec depth))))))
+       (= (inc idx) (index-of (nth (iterate z/up zloc) depth)))))
 
 (defn- fully-qualify-symbol [possible-sym alias-map]
   (if-let [ns-string (and (symbol? possible-sym)

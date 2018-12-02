@@ -132,6 +132,16 @@
           "          (* x x))]"
           "  (foo 5))"]))
     (is (reformats-to?
+         ["(letfn [(foo [x]"
+          "(* x x))"
+          "(bar [x]\n(+ x x))]"
+          "(foo 5))"]
+         ["(letfn [(foo [x]"
+          "          (* x x))"
+          "        (bar [x]"
+          "          (+ x x))]"
+          "  (foo 5))"]))
+    (is (reformats-to?
          ["(reify Closeable"
           "(close [_]"
           "(prn :closed)))"]
