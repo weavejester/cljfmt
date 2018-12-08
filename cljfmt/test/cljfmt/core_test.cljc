@@ -337,7 +337,38 @@
           "x)"]
          ["(binding [x 1] ; foo"
           "  x)"])
-        "binding inline comment unchanged, code indented"))
+        "binding inline comment unchanged, code indented")
+    (is (reformats-to?
+         ["(let [x y]"
+          "  [this"
+          "   that"
+          "   ;;other"
+          "   ]"
+          "  )"]
+         ["(let [x y]"
+          "  [this"
+          "   that"
+          "   ;;other"
+          "   ])"])
+        "indents correctly after last comment in block")
+    (is (reformats-to?
+         ["(defn foo"
+          "  []"
+          "  (let [x 1]"
+          "    x"
+          "    ;; test1"
+          "    )"
+          "  ;; test2"
+          "  )"]
+         ["(defn foo"
+          "  []"
+          "  (let [x 1]"
+          "    x"
+          "    ;; test1"
+          "    )"
+          "  ;; test2"
+          "  )"])
+        "indentation should not be lost after comment line"))
 
   (testing "metadata"
     (is (reformats-to?
