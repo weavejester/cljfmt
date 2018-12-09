@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/weavejester/cljfmt.svg?branch=master)](https://travis-ci.org/weavejester/cljfmt)
 
-cljfmt is a tool for formatting Clojure code.
+cljfmt is a tool for formatting Clojure code [idiomatically][].
 
 It can turn something like this:
 
@@ -21,6 +21,10 @@ Into nicely formatted Clojure code like this:
       y 4]
   (+ (* x x) (* y y)))
 ```
+
+However, it is not the goal of cljfmt to provide a canonical format.
+
+[idiomatically]: https://github.com/bbatsov/clojure-style-guide
 
 ## Installation
 
