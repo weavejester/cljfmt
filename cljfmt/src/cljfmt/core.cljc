@@ -98,8 +98,12 @@
              (-> zloc z/string count (+ newlines)))
       newlines)))
 
+(defn- final-transform-element? [zloc]
+  (= (z/next zloc) zloc))
+
 (defn- consecutive-blank-line? [zloc]
-  (> (count-newlines zloc) 2))
+  (and (> (count-newlines zloc) 2)
+       (not (final-transform-element? zloc))))
 
 (defn- remove-whitespace-and-newlines [zloc]
   (if (zwhitespace? zloc)
