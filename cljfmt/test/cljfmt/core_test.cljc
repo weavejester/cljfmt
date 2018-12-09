@@ -449,6 +449,78 @@
           " ;b"
           " )"])))
 
+  (testing "empty indent blocks"
+    (is (reformats-to?
+         ["(deftest foo"
+          "  (testing \"testing foo\""
+          "    (let [a b]"
+          "      ;; comment only"
+          "      )))"]
+         ["(deftest foo"
+          "  (testing \"testing foo\""
+          "    (let [a b]"
+          "      ;; comment only"
+          "      )))"]))
+    (is (reformats-to?
+         ["(let []"
+          ")"]
+         ["(let []"
+          "  )"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["["
+          "]"]
+         ["["
+          " ]"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(foo"
+          ")"]
+         ["(foo"
+          " )"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(foo (bar (baz)))"]
+         ["(foo (bar (baz)))"]))
+    (is (reformats-to?
+         ["(deftest foo"
+          "  (testing \"testing foo\""
+          "    (let [a b]"
+          "      )))"]
+         ["(deftest foo"
+          "  (testing \"testing foo\""
+          "    (let [a b]"
+          "      )))"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(ns example"
+          "(:require [thing.core :as t]))"
+          ""
+          "(t/defn foo [x]"
+          "(+ x 1"
+          ";; empty block 1"
+          "))"
+          ""
+          "(defn foo [x]"
+          "(+ x 1"
+          ";; empty block 2"
+          "))"]
+         ["(ns example"
+          "    (:require [thing.core :as t]))"
+          ""
+          "(t/defn foo [x]"
+          "  (+ x 1"
+          ";; empty block 1"
+          "     ))"
+          ""
+          "(defn foo [x]"
+          "      (+ x 1"
+          ";; empty block 2"
+          "         ))"]
+         {:indents {'thing.core/defn [[:inner 0]]}
+          #?@(:cljs [:alias-map {"t" "thing.core"}])})
+        "empty blocks with custom indents"))
+
   (testing "letfn block"
     (is (reformats-to?
          ["(letfn [(f [x]"
