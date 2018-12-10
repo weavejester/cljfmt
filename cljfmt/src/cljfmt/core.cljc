@@ -240,10 +240,15 @@
       (or (zlinebreak? zloc) (comment? zloc)))
     true))
 
+(defn- codeless-block? [zloc]
+  (nil? (z/right zloc)))
+
 (defn- block-indent [zloc key idx alias-map]
   (if (or (indent-matches? key (fully-qualify-symbol (form-symbol zloc) alias-map))
           (indent-matches? key (remove-namespace (form-symbol zloc))))
-    (if (and (some-> zloc (nth-form (inc idx)) first-form-in-line?)
+    (if (and (or
+              (codeless-block? zloc)
+              (some-> zloc (nth-form (inc idx)) first-form-in-line?))
              (> (index-of zloc) idx))
       (inner-indent zloc key 0 nil alias-map)
       (list-indent zloc))))
