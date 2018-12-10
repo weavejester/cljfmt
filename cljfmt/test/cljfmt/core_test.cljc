@@ -627,7 +627,27 @@
         "(bar)"]
        ["(foo)"
         ""
-        "(bar)"])))
+        "(bar)"]))
+  (is (reformats-to?
+       ["(ns bad-reformat-diff.core"
+        "  (:require [clojure.test :refer :all]))"
+        ""
+        "(defn -main"
+        "  [& args]"
+        "  (println args))"
+        ""
+        ""
+        ""]
+       ["(ns bad-reformat-diff.core"
+        "  (:require [clojure.test :refer :all]))"
+        ""
+        "(defn -main"
+        "  [& args]"
+        "  (println args))"
+        ""
+        ""
+        ""])
+      "blank lines at end of string are not affected by :remove-consecutive-blank-lines?"))
 
 (deftest test-trailing-whitespace
   (testing "trailing-whitespace removed"
