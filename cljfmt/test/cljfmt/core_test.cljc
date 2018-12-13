@@ -468,6 +468,18 @@
           "  )"]
          {:remove-surrounding-whitespace? false}))
     (is (reformats-to?
+         ["(cond foo"
+          "  )"]
+         ["(cond foo"
+          "      )"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(cond foo"
+          "bar)"]
+         ["(cond foo"
+          "      bar)"]
+         {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
          ["["
           "]"]
          ["["

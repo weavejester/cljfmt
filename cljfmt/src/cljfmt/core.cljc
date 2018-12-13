@@ -234,24 +234,21 @@
           (repeat n z/right)))
 
 (defn- first-form-in-line? [zloc]
-  (if-let [zloc (zip/left zloc)]
-    (if (whitespace? zloc)
-      (recur zloc)
-      (or (zlinebreak? zloc) (comment? zloc)))
-    true))
-
-(defn- codeless-block? [zloc]
-  (nil? (z/right zloc)))
+  (and (some? zloc)
+       (if-let [zloc (zip/left zloc)]
+         (if (whitespace? zloc)
+           (recur zloc)
+           (or (zlinebreak? zloc) (comment? zloc)))
+         true)))
 
 (defn- block-indent [zloc key idx alias-map]
   (if (or (indent-matches? key (fully-qualify-symbol (form-symbol zloc) alias-map))
           (indent-matches? key (remove-namespace (form-symbol zloc))))
-    (if (and (or
-              (codeless-block? zloc)
-              (some-> zloc (nth-form (inc idx)) first-form-in-line?))
-             (> (index-of zloc) idx))
-      (inner-indent zloc key 0 nil alias-map)
-      (list-indent zloc))))
+    (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
+      (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
+               (> (index-of zloc) idx))
+        (inner-indent zloc key 0 nil alias-map)
+        (list-indent zloc)))))
 
 (def default-indents
   (merge (read-resource "cljfmt/indents/clojure.clj")
