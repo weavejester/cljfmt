@@ -32,7 +32,7 @@ The easiest way to get started with cljfmt is to add the lein-cljfmt
 plugin to your [Leiningen][] project map:
 
 ```clojure
-:plugins [[lein-cljfmt "0.6.2"]]
+:plugins [[lein-cljfmt "0.6.3"]]
 ```
 
 cljfmt has tested on Leiningen 2.5, but may not work on older
