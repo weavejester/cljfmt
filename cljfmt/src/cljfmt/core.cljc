@@ -247,7 +247,7 @@
   (if (or (indent-matches? key (fully-qualify-symbol (form-symbol zloc) alias-map))
           (indent-matches? key (remove-namespace (form-symbol zloc))))
     (if (and (or
-              (codeless-block? zloc)
+              (and (codeless-block? zloc) (not= idx 0))
               (some-> zloc (nth-form (inc idx)) first-form-in-line?))
              (> (index-of zloc) idx))
       (inner-indent zloc key 0 nil alias-map)
