@@ -418,7 +418,25 @@
           "[:foo x])"]
          ["(defelem foo [x]"
           "  [:foo x])"])
-        "^def fuzzy rule respected"))
+        "^def fuzzy rule respected")
+    (is (reformats-to?
+         ["(default foo"
+          "         bar)"]
+         ["(default foo"
+          "         bar)"])
+        "^def fuzzy rule does not alter 'default'")
+    (is (reformats-to?
+         ["(defer   foo"
+          "         bar)"]
+         ["(defer   foo"
+          "         bar)"])
+        "^def fuzzy rule does not alter 'defer'")
+    (is (reformats-to?
+         ["(deflate foo"
+          "         bar)"]
+         ["(deflate foo"
+          "         bar)"])
+        "^def fuzzy rule does not alter 'deflate'"))
 
   (testing "comment before ending bracket"
     (is (reformats-to?

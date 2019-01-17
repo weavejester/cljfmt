@@ -1,2 +1,2 @@
-{#"^def"   [[:inner 0]]
- #"^with-" [[:inner 0]]}
+{#"^def(?!ault)(?!late)(?!er)" [[:inner 0]]
+ #"^with-"                     [[:inner 0]]}
