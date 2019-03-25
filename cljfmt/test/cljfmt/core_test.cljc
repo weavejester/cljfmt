@@ -241,6 +241,20 @@
           #?@(:cljs [:alias-map {"t" "thing.core"}])})
         "applies custom indentation to namespaced defn")
     (is (reformats-to?
+         ["(comment)"
+          "(ns thing.core)"
+          ""
+          "(defthing foo [x]"
+          "(+ x 1))"]
+         ["(comment)"
+          "(ns thing.core)"
+          ""
+          "(defthing foo [x]"
+          "  (+ x 1))"]
+         {:indents {'thing.core/defthing [[:inner 0]]}
+          #?@(:cljs [:alias-map {}])})
+        "recognises the current namespace as part of a qualifed indent spec")
+    (is (reformats-to?
          ["(ns example"
           "(:require [thing.core :as t]))"
           ""
