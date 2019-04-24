@@ -7,7 +7,7 @@
                  [rewrite-clj.node :as n]
                  [rewrite-clj.parser :as p]
                  [rewrite-clj.zip :as z
-                  :refer [append-space edn skip whitespace-or-comment?]])
+                  :refer [append-space edn skip whitespace-or-comment? child-sexprs]])
        (:import java.util.regex.Pattern)]
       :cljs
       [(:require [cljs.reader :as reader]
@@ -16,7 +16,7 @@
                  [rewrite-clj.node :as n]
                  [rewrite-clj.parser :as p]
                  [rewrite-clj.zip :as z]
-                 [rewrite-clj.zip.base :as zb :refer [edn]]
+                 [rewrite-clj.zip.base :as zb :refer [edn child-sexprs]]
                  [rewrite-clj.zip.whitespace :as zw
                   :refer [append-space skip whitespace-or-comment?]])
        (:require-macros [cljfmt.core :refer [read-resource]])]))
@@ -55,8 +55,14 @@
   (and (p? zloc) (or (nil? (zip/left zloc))
                      (nil? (skip zip/right p? zloc)))))
 
+(defn root? [zloc]
+  (nil? (zip/up zloc)))
+
 (defn- top? [zloc]
   (and zloc (not= (z/node zloc) (z/root zloc))))
+
+(defn- top [zloc]
+  (if (root? zloc) zloc (recur (z/up zloc))))
 
 (defn- surrounding-whitespace? [zloc]
   (and (top? (z/up zloc))
@@ -192,6 +198,18 @@
 (defn pattern? [v]
   (instance? #?(:clj Pattern :cljs js/RegExp) v))
 
+(defn- top-level-form [zloc]
+  (->> zloc
+       (iterate z/up)
+       (take-while (complement root?))
+       last))
+
+(defn- ns-form? [zloc]
+  (some-> zloc child-sexprs first (= 'ns)))
+
+(defn- find-namespace [zloc]
+  (some-> zloc top (z/find z/next ns-form?) z/sexpr second))
+
 (defn- indent-matches? [key sym]
   (cond
     (symbol? key) (= key sym)
@@ -213,16 +231,24 @@
   (and (> depth 0)
        (= (inc idx) (index-of (nth (iterate z/up zloc) depth)))))
 
-(defn- fully-qualify-symbol [possible-sym alias-map]
-  (if-let [ns-string (and (symbol? possible-sym)
-                          (namespace possible-sym))]
-    (symbol (get alias-map ns-string ns-string)
-            (name possible-sym))
-    possible-sym))
+(defn- qualify-symbol-by-alias-map [possible-sym alias-map]
+  (when-let [ns-str (namespace possible-sym)]
+    (symbol (get alias-map ns-str ns-str) (name possible-sym))))
+
+(defn- qualify-symbol-by-ns-form [possible-sym zloc]
+  (when-let [ns-name (find-namespace zloc)]
+    (symbol (name ns-name) (name possible-sym))))
+
+(defn- fully-qualified-symbol [zloc alias-map]
+  (let [possible-sym (form-symbol zloc)]
+    (if (symbol? possible-sym)
+      (or (qualify-symbol-by-alias-map possible-sym alias-map)
+          (qualify-symbol-by-ns-form possible-sym zloc))
+      possible-sym)))
 
 (defn- inner-indent [zloc key depth idx alias-map]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (and (or (indent-matches? key (fully-qualify-symbol (form-symbol top) alias-map))
+    (if (and (or (indent-matches? key (fully-qualified-symbol zloc alias-map))
                  (indent-matches? key (remove-namespace (form-symbol top))))
              (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
@@ -242,7 +268,7 @@
          true)))
 
 (defn- block-indent [zloc key idx alias-map]
-  (if (or (indent-matches? key (fully-qualify-symbol (form-symbol zloc) alias-map))
+  (if (or (indent-matches? key (fully-qualified-symbol zloc alias-map))
           (indent-matches? key (remove-namespace (form-symbol zloc))))
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
@@ -313,9 +339,6 @@
   ([form indents alias-map]
    (indent (unindent form) indents alias-map)))
 
-(defn root? [zloc]
-  (nil? (zip/up zloc)))
-
 (defn final? [zloc]
   (and (nil? (zip/right zloc)) (root? (zip/up zloc))))
 
@@ -343,20 +366,10 @@
        (cond-> (:remove-trailing-whitespace? opts true)
          remove-trailing-whitespace))))
 
-(defn- top-level-form [zloc]
-  (->> zloc
-       (iterate z/up)
-       (take-while (complement root?))
-       last))
-
 #?(:clj
    (defn- ns-require-form? [zloc]
-     (and (some-> zloc
-                  top-level-form
-                  z/child-sexprs
-                  first
-                  (= 'ns))
-          (some-> zloc z/child-sexprs first (= :require)))))
+     (and (some-> zloc top-level-form ns-form?)
+          (some-> zloc child-sexprs first (= :require)))))
 
 #?(:clj
    (defn- as-keyword? [zloc]
