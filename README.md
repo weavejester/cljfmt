@@ -1,6 +1,7 @@
 # cljfmt
 
 [![Build Status](https://travis-ci.org/weavejester/cljfmt.svg?branch=master)](https://travis-ci.org/weavejester/cljfmt)
+[![Clojars Project](https://img.shields.io/clojars/v/cljfmt.svg)](https://clojars.org/cljfmt)
 
 cljfmt is a tool for formatting Clojure code [idiomatically][].
 
