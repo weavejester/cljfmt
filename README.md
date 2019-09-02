@@ -67,7 +67,7 @@ As with the `check` task, you can choose to fix a specific file:
 
 * [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
 * [CIDER 0.9+](https://github.com/clojure-emacs/cider)
-* [Calva Clojure Formatter](https://github.com/BetterThanTomorrow/calva-fmt) (VS Code)
+* [Calva](https://github.com/BetterThanTomorrow/calva) (VS Code)
 * [clojureVSCode](https://github.com/avli/clojureVSCode) (VS Code)
 
 ## Configuration
