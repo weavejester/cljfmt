@@ -609,7 +609,14 @@
           ":cljs bar)"]
          ["#?@(:clj foo"
           "    :cljs bar)"])
-        "splicing syntax")))
+        "splicing syntax"))
+
+  (testing "namespaced maps"
+    (is (reformats-to?
+         ["#:clj {:a :b"
+          ":c :d}"]
+         ["#:clj {:a :b"
+          "       :c :d}"]))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding whitespace removed"
