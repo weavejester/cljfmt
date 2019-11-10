@@ -107,6 +107,11 @@ selectively enabled or disabled:
 
 You can also configure the behavior of cljfmt:
 
+* `:paths` - determines which directories to include in the
+  scan. Arguments to `lein check` take precedence. If neither `:paths`
+  nor command line arguments are given, cljfmt uses the lein project's
+  `:source-paths` and `:test-paths`.
+
 * `:file-pattern` -
   determines which files to scan, `#”\.clj[csx]?$”` by default.
 
