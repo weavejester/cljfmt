@@ -5,8 +5,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/tools.cli "0.3.7"]
-                 [org.clojure/tools.reader "1.2.2"]
+                 [org.clojure/tools.cli "0.4.2"]
+                 [org.clojure/tools.reader "1.3.2"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [rewrite-clj "0.6.1"]
                  [rewrite-cljs "0.4.4"]]
@@ -22,4 +22,4 @@
               :test-commands
               {"dev" ["node" "target/out/tests.js"]}}
   :profiles
-  {:provided {:dependencies [[org.clojure/clojurescript "1.10.339"]]}})
+  {:provided {:dependencies [[org.clojure/clojurescript "1.10.520"]]}})
