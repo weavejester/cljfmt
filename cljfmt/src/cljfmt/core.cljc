@@ -77,9 +77,13 @@
 (defn- reader-macro? [zloc]
   (and zloc (= (n/tag (z/node zloc)) :reader-macro)))
 
+(defn- namespaced-map? [zloc]
+  (and zloc (= (n/tag (z/node zloc)) :namespaced-map)))
+
 (defn- missing-whitespace? [zloc]
   (and (element? zloc)
        (not (reader-macro? (zip/up zloc)))
+       (not (namespaced-map? (zip/up zloc)))
        (element? (zip/right zloc))))
 
 (defn insert-missing-whitespace [form]
@@ -146,7 +150,8 @@
   {:meta "^", :meta* "#^", :vector "[",       :map "{"
    :list "(", :eval "#=",  :uneval "#_",      :fn "#("
    :set "#{", :deref "@",  :reader-macro "#", :unquote "~"
-   :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"})
+   :var "#'", :quote "'",  :syntax-quote "`", :unquote-splicing "~@"
+   :namespaced-map "#"})
 
 (defn- prior-line-string [zloc]
   (loop [zloc     zloc
