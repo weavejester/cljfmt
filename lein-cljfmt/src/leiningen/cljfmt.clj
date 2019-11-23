@@ -21,8 +21,11 @@
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
   [project command & paths]
-  (let [paths   (or (seq paths) (format-paths project))
+  (let [paths   (or (seq paths)
+                    (-> project :cljfmt :paths)
+                    (format-paths project))
         options (-> (:cljfmt project)
+                    (dissoc :paths)
                     (assoc :project-root (:root project))
                     (cljfmt.main/merge-default-options))]
     (if leiningen.core.main/*info*
