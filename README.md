@@ -162,94 +162,303 @@ You can also configure the behavior of cljfmt:
            :alias-map {"me" "org.me"}}
   ```
 
-
 ### Indentation rules
 
-There are two types of indentation rule, `:inner` and `:block`.
+When we talk about how rules affect indentation of source code, we refer to
+<code>(foo arg<sub>1</sub> arg<sub>2</sub> ... arg<sub>n</sub>)</code> as a
+form, `foo` as a form symbol, and <code>arg<sub>1</sub> arg<sub>2</sub> ...
+arg<sub>n</sub></code> as form arguments.
+
+The default indentation rules are [encoded here](cljfmt/resources/cljfmt/).
+
+Rules affect indentation of form arguments. A form argument is eligible for
+indentation only when it is the first element on a line.
+
+An indentation rule specifies an indentation type and indentation type
+arguments. One or more rules can be applied to a form symbol.
+
+Indentation types are:
+* `:inner` - two character indentation applied to form arguments at a depth
+  relative to a form symbol
+* `:block` - first argument aligned indentation applied to form arguments at
+  form depth 0 for a symbol
+
+#### Form depth
+
+A rule for depth n affects indentation of form arguments relative to form symbol at depth n.
+
+Form depth is the nested depth of any element within the form.
+
+A contrived example will help to explain depth:
+
+```clojure
+(foo 
+ bar
+ (baz 
+  (qux plugh)
+  corge)
+ (grault  
+  waldo
+  (thud wubble flob)))
+```
+If we look a the example code as a tree, we can visualize the effect of different form depths
+relative to `foo`:
+
+![form depth 0 diagram](images/form-depth-0.png)
+![form depth 1 diagram](images/form-depth-1.png)
+![form depth 2 diagram](images/form-depth-2.png)
+
+#### Default behavior
+
+In the absence of indentation rules:
+
+```clojure
+(foo bar                           (foo bar
+baz            == formats to =>         baz
+bang)                                   bang)
+```
+
+```clojure
+(foo                               (foo
+bar            == formats to =>     bar
+bang)                               bang)
+```
 
 #### Inner rules
 
-An `:inner` rule will apply a constant indentation to all elements at
-a fixed depth. So an indent rule:
+The `:inner` rule applies an indentation of two spaces to all eligible form
+arguments of forms at a given form depth. It has 2 rule type arguments:
+
+* `form-depth` - apply inner indentation within forms at this depth
+* `limit-to-form-index` - optionally limit indentation formatting to a single form, by default
+  formatting is applied to all forms at `form-depth`
+
+Indent rule:
 
 ```clojure
 {foo [[:inner 0]]}
 ```
 
-Will indent all elements inside a `foo` form by two spaces:
+... will indent all arguments for symbol `foo` at depth `0` by two spaces:
 
 ```clojure
-(foo bar
-  baz
-  bang)
-  ```
+(foo bar                           (foo bar
+baz            == formats to =>      baz
+bang)                                bang)
+```
 
-While an indent rule like:
+Indent rule:
 
 ```clojure
 {foo [[:inner 1]]}
 ```
 
-Will indent all subforms one level in:
+... results in `:inner` indenting form arguments at depth `1`. Form `(bang...)`
+is at depth `1` so its arguments are affected:
 
 ```clojure
-(foo bar
- baz
- (bang
-   quz
-   qoz))
+(foo bar                           (foo bar
+baz                                     baz
+(bang          == formats to =>         (bang
+quz                                       quz
+qoz))                                     qoz))
 ```
 
-Sometimes it's useful to limit indentation to one argument of the
-surrounding form. For example, `letfn` uses inner indentation only in
-its binding vector:
+Because no rule was specified for depth 0, default indentation is applied to
+`bar` `baz` and `(bang...)`.
+
+#### Limiting inner indentation
+
+Sometimes it is useful to limit `:inner` indentation to one, rather than all,
+forms at the specified depth. For example, we'd like `letfn` to use inner
+indentation only in its binding vector.
+
+Let's look at `letfn` example in the absence of any indentation rules:
 
 ```clojure
 (letfn [(double [x]
-          (* x 2))]   ;; special indentation here
-  (let [y (double 2)
-        z (double 3)]
-    (println y
-             z)))     ;; but not here
+                (* x 2))] ;; want inner indentation here
+       (let [y (double 2)
+             z (double 3)]
+            (println y
+                     z))) ;; but not here
 ```
 
-To achieve this, an additional index argument may be used:
+Applying the rule:
+
+```clojure
+{letfn [[:inner 2]]}
+```
+
+... brings in the `letfn` function body to where we want it by affecting form
+`(double [x]...)`:
+
+```clojure
+(letfn [(double [x]
+          (* x 2))] ;; want inner indentation here
+       (let [y (double 2)
+             z (double 3)]
+            (println y
+              z))) ;; but not here
+```
+
+... but also affects all other forms at depth `2`. In this case, `(println...)`
+indentation is affected in an undesirable way. To limit formatting to `(double
+[x]...)`, the `0`th form at depth `2`, the `limit-to-form-index` rule type
+argument is added:
 
 ```clojure
 {letfn [[:inner 2 0]]}
 ```
 
-This will limit the inner indent to depth 2 in argument 0.
+... giving us:
+```clojure
+(letfn [(double [x]
+          (* x 2))] ;; want inner indentation here
+       (let [y (double 2)
+             z (double 3)]
+            (println y
+                     z))) ;; but not here
+```
+
+Remember than when calculating `limit-to-form-index`, all forms at the specified
+depth are included, even self-evaluating ones. Given:
+
+```clojure
+(foo a b c
+     (e f
+        g)
+     (h i
+        j))
+```
+
+To affect inner indentation within form `(e...)` only, we use a rule of:
+
+```clojure
+{foo [[:inner 1 3]]}
+```
+
+... which results in:
+
+```clojure
+(foo a b c
+     (e f
+       g)
+     (h i
+        j))
+```
+
+... because `(e...)` is the 4th (index `3`) at form depth `1`.
 
 #### Block rules
 
-A `:block` rule is a little smarter. This will act like an inner
-indent only if there's a line break before a certain number of
-arguments, otherwise it acts like a normal list form.
+The `:block` rule supports indenting to the first form argument. It has a single
+rule type argument:
 
-For example, an indent rule:
+* `line-arg-count-threshold` - when there are more than
+  `line-arg-count-threshold` form arguments on the same line as the form symbol,
+  eligible form arguments on subsequent lines are indented to align with the
+  first form argument. Otherwise, two space inner indentation is applied.
+
+For indent rule:
 
 ```clojure
 {foo [[:block 0]]}
 ```
 
-Indents like this, if there are more than 0 arguments on the same line
-as the symbol:
+... the single argument `bar` on the same line as `foo` breaks the treshold of
+`0` and indents eligible form arguments on subsequent lines to `bar`:
+
 
 ```clojure
-(foo bar
-     baz
-     bang)
+(foo bar                           (foo bar
+baz            == formats to =>         baz
+bang)                                   bang)
 ```
 
-But indents at a constant two spaces otherwise:
+... the two arguments `bar baz` on the same line as `foo` also breaks the
+threshold of `0` and invokes indentation to the first argument:
 
 ```clojure
-(foo
-  bar
-  baz
-  bang)
+(foo bar baz   == formats to =>    (foo bar baz
+bang)                                   bang)
 ```
+
+... no aguments on the same line as `foo` does not break the theshold of `0`, so
+2 space inner indentation is applied:
+
+```clojure
+(foo                               (foo
+bar            == formats to =>      bar
+baz                                  baz
+bang)                                bang)
+```
+
+For indent rule:
+
+```clojure
+{foo [[:block 1]]}
+```
+
+... the single arg `bar` on the same line as `foo` does not break the threshold
+of `1` so we get inner indentation:
+
+```clojure
+(foo bar                           (foo bar
+baz            == formats to =>      baz
+bang)                                bang)
+```
+
+... two args `bar baz` on the same line as `foo` breaks the threshold of `1` so
+we get first argument aligned indentation:
+
+```clojure
+(foo bar baz   == formats to =>    (foo bar baz
+bang)                                   bang)
+```
+
+#### Multiple rules
+
+Multiple rules can be specified. Picking up from our previous `letfn` example,
+the rule:
+
+```clojure
+{letfn [[:inner 2 0]]}
+```
+
+... gave us:
+
+```clojure
+(letfn [(double [x]
+          (* x 2))] ;; want inner indentation here
+       (let [y (double 2)
+             z (double 3)]
+            (println y
+                     z))) ;; but not here
+```
+
+Adding a `:block` rule:
+
+```clojure
+{letfn [[:block 1][:inner 2 0]]}
+```
+
+... matches the [current default rule for
+`letfn`](cljfmt/resources/cljfmt/indents/clojure.clj) and results in indenting
+the `(let...` to where we want it:
+
+```clojure
+(letfn [(double [x]
+          (* x 2))] ;; want inner indentation here
+  (let [y (double 2)
+        z (double 3)]
+       (println y
+                z))) ;; but not here
+```
+
+In this case, single form argument `[(double...)]` does not break the
+`line-arg-count-threshold` of `1` and we therefore get inner indentation for
+form argument `(let...)`.
 
 ## License
 
