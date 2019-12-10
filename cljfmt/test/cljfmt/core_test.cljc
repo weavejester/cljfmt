@@ -309,7 +309,16 @@
           "  ([x]"
           "   (foo)"
           "   (bar)))"])
-        "multiple arity function with only one arity defined"))
+        "multiple arity function with only one arity defined")
+    (is (reformats-to?
+         ["(fn"
+          "([x]"
+          "(foo)))"]
+         ["(fn"
+          "  ([x]"
+          "   (foo)))"]
+         {:indents {#".*" [[:inner 0]]}})
+        "forms starting without a symbol are treated correctly"))
 
   (testing "comments"
     (is (reformats-to?

@@ -216,15 +216,16 @@
   (some-> zloc top (z/find z/next ns-form?) z/sexpr second))
 
 (defn- indent-matches? [key sym]
-  (cond
-    (symbol? key) (= key sym)
-    (pattern? key) (re-find key (str sym))))
+  (if (symbol? sym)
+    (cond
+      (symbol? key)  (= key sym)
+      (pattern? key) (re-find key (str sym)))))
 
 (defn- token? [zloc]
   (= (z/tag zloc) :token))
 
 (defn- token-value [zloc]
-  (and (token? zloc) (z/sexpr zloc)))
+  (if (token? zloc) (z/sexpr zloc)))
 
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
