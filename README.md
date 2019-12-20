@@ -229,7 +229,7 @@ A contrived example will help to explain depth:
   waldo
   (thud wubble flob)))
 ```
-If we look a the example code as a tree, we can visualize the effect of different form depths
+If we look at the example code as a tree, we can visualize the effect of different form depths
 relative to `foo`:
 
 ![form depth 0 diagram](images/form-depth-0.png)
@@ -394,7 +394,7 @@ For indent rule:
 {foo [[:block 0]]}
 ```
 
-... the single argument `bar` on the same line as `foo` breaks the treshold of
+... the single argument `bar` on the same line as `foo` breaks the threshold of
 `0` and indents eligible form arguments on subsequent lines to `bar`:
 
 
@@ -412,7 +412,7 @@ threshold of `0` and invokes indentation to the first argument:
 bang)                                   bang)
 ```
 
-... no aguments on the same line as `foo` does not break the theshold of `0`, so
+... no arguments on the same line as `foo` does not break the threshold of `0`, so
 2 space inner indentation is applied:
 
 ```clojure
