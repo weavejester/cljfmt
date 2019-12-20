@@ -63,6 +63,34 @@ As with the `check` task, you can choose to fix a specific file:
 
     lein cljfmt fix src/foo/core.clj
 
+### deps.tools usage
+
+It is possible to execute `cljfmt` using the
+[Clojure CLI], without integrating with `lein`.
+
+[Clojure CLI]: https://clojure.org/guides/deps_and_cli
+
+```bash
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
+  -m cljfmt.main [check|fix]
+```
+
+Customizing the rules is possible passing `edn` formated files,
+using the same content used on lein profiles.
+
+As example, with the following content to the `indentation.edn`
+file, it is possible to customize the rules.
+
+```clojure
+{org.me/foo [[:inner 0]]}
+```
+
+```bash
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
+  -m cljfmt.main check \
+  --indents indentation.edn
+```
+
 ## Editor Support
 
 * [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
