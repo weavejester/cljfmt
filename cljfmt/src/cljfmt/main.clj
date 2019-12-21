@@ -94,7 +94,8 @@
     (when-not (zero? incorrect)
       (warn incorrect "file(s) formatted incorrectly"))
     (when (and (zero? incorrect) (zero? error))
-      (println "All source files formatted correctly"))))
+      (println "All source files formatted correctly"))
+    counts))
 
 (defn- merge-counts
   ([]    zero-counts)
@@ -107,16 +108,15 @@
   ([paths]
    (check paths {}))
   ([paths options]
-   (let [counts (transduce
-                 (comp (mapcat (partial find-files options))
-                       (map (partial check-one options))
-                       (map (fn [status]
-                              (print-file-status options status)
-                              (:counts status))))
-                 (completing merge-counts)
-                 paths)]
-     (print-final-count counts)
-     (exit counts))))
+   (let [files (mapcat (partial find-files options) paths)]
+     (->> (pmap (partial check-one options) files)
+          doall
+          (map (fn [status]
+                 (print-file-status options status)
+                 (:counts status)))
+          (reduce merge-counts)
+          print-final-count
+          exit))))
 
 (defn fix
   "Applies the formatting (as per `options`) to the Clojure files
@@ -125,16 +125,18 @@
    (fix paths {}))
   ([paths options]
    (let [files (mapcat (partial find-files options) paths)]
-     (doseq [^java.io.File f files]
-       (let [original (slurp f)]
-         (try
-           (let [revised (reformat-string options original)]
-             (when (not= original revised)
-               (println "Reformatting" (project-path options f))
-               (spit f revised)))
-           (catch Exception e
-             (warn "Failed to format file:" (project-path options f))
-             (print-stack-trace e))))))))
+     (-> (pmap (fn [^java.io.File f]
+                 (let [original (slurp f)]
+                   (try
+                     (let [revised (reformat-string options original)]
+                       (when (not= original revised)
+                         (println "Reformatting" (project-path options f))
+                         (spit f revised)))
+                     (catch Exception e
+                       (warn "Failed to format file:" (project-path options f))
+                       (print-stack-trace e)))))
+               files)
+         doall))))
 
 (def ^:private cli-file-reader
   (comp edn/read-string slurp diff/to-absolute-path))
@@ -204,4 +206,5 @@
         (case cmd
           "check" (check paths options)
           "fix"   (fix paths options)
-          (abort "Unknown cljfmt command:" cmd))))))
+          (abort "Unknown cljfmt command:" cmd))))
+    (shutdown-agents)))
