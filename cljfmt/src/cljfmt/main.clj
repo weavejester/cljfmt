@@ -3,10 +3,10 @@
   (:require [cljfmt.core :as cljfmt]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.stacktrace :as st]
+            [cljfmt.impl.stacktrace :as st]
             [clojure.tools.cli :as cli]
-            [cljfmt.diff :as diff]))
+            [cljfmt.diff :as diff])
+  (:gen-class))
 
 (defn- abort [& msg]
   (binding [*out* *err*]
@@ -18,7 +18,7 @@
   (binding [*out* *err*]
     (apply println args)))
 
-(defn- relative-path [dir file]
+(defn- relative-path [^java.io.File dir ^java.io.File file]
   (-> (.toAbsolutePath (.toPath dir))
       (.relativize (.toAbsolutePath (.toPath file)))
       (.toString)))

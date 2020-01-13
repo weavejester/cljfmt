@@ -10,7 +10,8 @@
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [rewrite-clj "0.6.1"]
                  [rewrite-cljs "0.4.4"]]
-  :plugins [[lein-cljsbuild "1.1.7"]]
+  :plugins [[lein-cljsbuild "1.1.7"]
+            [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds
               {"dev" {:source-paths ["src" "test"]
@@ -21,5 +22,24 @@
                                  :optimizations :none}}}
               :test-commands
               {"dev" ["node" "target/out/tests.js"]}}
+  :native-image
+  {:name "cljfmt"
+   :opts ["--verbose"
+          "-H:+ReportExceptionStackTraces"
+          "-J-Dclojure.spec.skip-macros=true"
+          "-J-Dclojure.compiler.direct-linking=true"
+          "-H:ReflectionConfigurationFiles=reflection.json"
+          "--initialize-at-build-time"
+          "-H:Log=registerResource:"
+          "--verbose"
+          "--no-fallback"
+          "--no-server"
+          "-J-Xmx3g"]}
   :profiles
-  {:provided {:dependencies [[org.clojure/clojurescript "1.10.520"]]}})
+  {:uberjar
+   {:main cljfmt.main
+    :aot :all
+    :native-image
+    {:jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                "-Dclojure.spec.skip-macros=true"]}}
+   :provided {:dependencies [[org.clojure/clojurescript "1.10.520"]]}})
