@@ -926,7 +926,15 @@
         " bar "
         " )"]
        {:remove-surrounding-whitespace? false
-        :remove-trailing-whitespace? false})))
+        :remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["#!/usr/bin/env bb"]
+       ["#!/usr/bin/env bb"]
+       {:ignore-shebang? true}))
+  (is (reformats-to?
+       ["#!/usr/bin/env bash"]
+       ["#!/usr/bin/env bash"]
+       {:ignore-shebang? true})))
 
 (deftest test-parsing
   (is (reformats-to?

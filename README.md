@@ -132,6 +132,8 @@ selectively enabled or disabled:
   true if cljfmt should collapse consecutive blank lines. This will
   convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
 
+* `ignore-shebangs?` -
+  true if cljfmt should ignore `#!` lines. Great for (https://github.com/borkdude/babashkababashka)[babashka]
 
 You can also configure the behavior of cljfmt:
 

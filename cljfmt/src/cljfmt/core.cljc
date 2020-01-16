@@ -372,6 +372,18 @@
        (cond-> (:remove-trailing-whitespace? opts true)
          remove-trailing-whitespace))))
 
+(defn is-shebang?
+  [str]
+  (str/starts-with? str "#!"))
+
+(defn ignore-form?
+  ([form]
+   (ignore-form? form {}))
+  ([form opts]
+   (let [ignore-filters (cond-> []
+                          (:ignore-shebang? opts true) (conj is-shebang?))]
+     (some true? (map #(%1 form) ignore-filters)))))
+
 #?(:clj
    (defn- ns-require-form? [zloc]
      (and (some-> zloc top-level-form ns-form?)
@@ -405,14 +417,16 @@
   ([form-string]
    (reformat-string form-string {}))
   ([form-string options]
-   (let [parsed-form (p/parse-string-all form-string)
-         alias-map   #?(:clj (or (:alias-map options)
-                                 (alias-map-for-form parsed-form))
-                        :cljs (:alias-map options))]
-     (-> parsed-form
-         (reformat-form (cond-> options
-                          alias-map (assoc :alias-map alias-map)))
-         (n/string)))))
+   (if (ignore-form? form-string options)
+     form-string
+     (let [parsed-form (p/parse-string-all form-string)
+           alias-map   #?(:clj (or (:alias-map options)
+                                   (alias-map-for-form parsed-form))
+                          :cljs (:alias-map options))]
+       (-> parsed-form
+           (reformat-form (cond-> options
+                            alias-map (assoc :alias-map alias-map)))
+           (n/string))))))
 
 (def default-line-separator
   #?(:clj (System/lineSeparator) :cljs \newline))
