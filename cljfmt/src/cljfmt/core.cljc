@@ -209,20 +209,24 @@
        (take-while (complement root?))
        last))
 
+(defn- token? [zloc]
+  (= (z/tag zloc) :token))
+
+(defn- ns-token? [zloc]
+  (and (token? zloc)
+       (= 'ns (z/sexpr zloc))))
+
 (defn- ns-form? [zloc]
-  (some-> zloc child-sexprs first (= 'ns)))
+  (some-> zloc z/down ns-token?))
 
 (defn- find-namespace [zloc]
-  (some-> zloc top (z/find z/next ns-form?) z/sexpr second))
+  (some-> zloc top (z/find z/next ns-form?) z/down z/next z/sexpr))
 
 (defn- indent-matches? [key sym]
   (if (symbol? sym)
     (cond
       (symbol? key)  (= key sym)
       (pattern? key) (re-find key (str sym)))))
-
-(defn- token? [zloc]
-  (= (z/tag zloc) :token))
 
 (defn- token-value [zloc]
   (if (token? zloc) (z/sexpr zloc)))
