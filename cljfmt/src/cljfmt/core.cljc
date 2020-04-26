@@ -179,8 +179,12 @@
 (defn- coll-indent [zloc]
   (-> zloc zip/leftmost margin))
 
+(defn- uneval? [zloc]
+  (= (z/tag zloc) :uneval))
+
 (defn- index-of [zloc]
   (->> (iterate z/left zloc)
+       (remove uneval?)
        (take-while identity)
        (count)
        (dec)))
@@ -341,6 +345,29 @@
   ([form indents alias-map]
    (transform form edit-all should-indent? #(indent-line % indents alias-map))))
 
+(defn- map-key? [zloc]
+  (and (z/map? (z/up zloc))
+       (even? (index-of zloc))
+       (not (uneval? zloc))
+       (not (whitespace-or-comment? zloc))))
+
+(defn- preceded-by-line-break? [zloc]
+  (loop [previous (zip/left zloc)]
+    (cond
+      (line-break? previous)
+      true
+      (whitespace-or-comment? previous)
+      (recur (zip/left previous)))))
+
+(defn- map-key-without-line-break? [zloc]
+  (and (map-key? zloc) (not (preceded-by-line-break? zloc))))
+
+(defn- insert-newline-left [zloc]
+  (zip/insert-left zloc (n/newlines 1)))
+
+(defn split-keypairs-over-multiple-lines [form]
+  (transform form edit-all map-key-without-line-break? insert-newline-left))
+
 (defn reindent
   ([form]
    (indent (unindent form)))
@@ -364,6 +391,8 @@
    (reformat-form form {}))
   ([form opts]
    (-> form
+       (cond-> (:split-keypairs-over-multiple-lines? opts false)
+         (split-keypairs-over-multiple-lines))
        (cond-> (:remove-consecutive-blank-lines? opts true)
          remove-consecutive-blank-lines)
        (cond-> (:remove-surrounding-whitespace? opts true)

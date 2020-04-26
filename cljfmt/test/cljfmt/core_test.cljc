@@ -926,7 +926,59 @@
         " bar "
         " )"]
        {:remove-surrounding-whitespace? false
-        :remove-trailing-whitespace? false})))
+        :remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["{:one two :three four}"]
+       ["{:one two"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["{:one two"
+        " :three four}"]
+       ["{:one two"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["{:one two"
+        ";comment"
+        ":three four}"]
+       ["{:one two"
+        ";comment"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["{:one two ;comment"
+        ":three four}"]
+       ["{:one two ;comment"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["{;comment"
+        ":one two"
+        ":three four}"]
+       ["{;comment"
+        " :one two"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["{:one two, :three four}"]
+       ["{:one two, "
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true
+        :remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["{:one two,"
+        " :three four}"]
+       ["{:one two,"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true
+        :remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["{:one two #_comment"
+        ":three four}"]
+       ["{:one two #_comment"
+        " :three four}"]
+       {:split-keypairs-over-multiple-lines? true})))
 
 (deftest test-parsing
   (is (reformats-to?
