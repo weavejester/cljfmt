@@ -34,7 +34,7 @@
       [f])))
 
 (defn- reformat-string [options s]
-  ((cljfmt/wrap-normalize-newlines #(cljfmt/reformat-string % options)) s))
+  ((cljfmt/wrap-normalize-newlines #(cljfmt/reformat-string % options) options) s))
 
 (defn- project-path [{:keys [project-root]} file]
   (-> project-root (or ".") io/file (relative-path (io/file file))))

@@ -430,7 +430,15 @@
 (defn find-line-separator [s]
   (or (re-find #"\r?\n" s) default-line-separator))
 
-(defn wrap-normalize-newlines [f]
-  (fn [s]
-    (let [sep (find-line-separator s)]
-      (-> s normalize-newlines f (replace-newlines sep)))))
+(defn add-more-newlines [s]
+  (str/replace s #"\n{2}" "\n\n\n"))
+
+(defn wrap-normalize-newlines
+  ([f]
+   (wrap-normalize-newlines f {}))
+  ([f options]
+   (fn [s]
+     (let [sep (find-line-separator s)
+           s   (-> s normalize-newlines f (replace-newlines sep))]
+       (cond-> s
+               (:more-newlines? options) add-more-newlines)))))
