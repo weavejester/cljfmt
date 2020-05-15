@@ -191,11 +191,14 @@
 (defn- command-name []
   (or (System/getProperty "sun.java.command") "cljfmt"))
 
+(defn- file-exists? [path]
+  (.exists (io/as-file path)))
+
 (defn -main [& args]
   (let [parsed-opts   (cli/parse-opts args cli-options)
         [cmd & paths] (:arguments parsed-opts)
         options       (merge-default-options (:options parsed-opts))
-        paths         (or (seq paths) default-paths)]
+        paths         (or (seq paths) (filter file-exists? default-paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
       (if (or (nil? cmd) (:help options))
