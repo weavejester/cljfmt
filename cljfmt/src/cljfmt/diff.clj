@@ -13,7 +13,7 @@
 
 (defn to-absolute-path [filename]
   (->> (str/split filename (re-pattern (Pattern/quote File/separator)))
-       (apply io/file)
+       ^java.io.File (apply io/file)
        .getCanonicalPath))
 
 (defn unified-diff
