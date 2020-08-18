@@ -88,7 +88,7 @@ file, it is possible to customize the rules.
 ```bash
 clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
   -m cljfmt.main check \
-  --indents indentation.edn
+  --indents indentation.clj
 ```
 
 ## Editor Support

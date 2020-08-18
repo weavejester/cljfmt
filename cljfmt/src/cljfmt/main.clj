@@ -1,6 +1,7 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
   (:require [cljfmt.core :as cljfmt]
+            [clojure.string :as str]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [cljfmt.impl.stacktrace :as st]
@@ -22,6 +23,9 @@
   (-> (.toAbsolutePath (.toPath dir))
       (.relativize (.toAbsolutePath (.toPath file)))
       (.toString)))
+
+(defn- filename-ext [filename]
+  (subs filename (inc (str/last-index-of filename "."))))
 
 (defn- grep [re dir]
   (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
@@ -136,8 +140,11 @@
              (warn "Failed to format file:" (project-path options f))
              (print-stack-trace e))))))))
 
-(def ^:private cli-file-reader
-  (comp edn/read-string slurp diff/to-absolute-path))
+(defn- cli-file-reader [filepath]
+  (let [contents (slurp filepath)]
+    (if (= (filename-ext filepath) "clj")
+      (read-string contents)
+      (edn/read-string contents))))
 
 (def default-options
   {:project-root "."
