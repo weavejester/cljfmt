@@ -627,6 +627,44 @@
          ["#:clj {:a :b"
           "       :c :d}"]))))
 
+(deftest test-remove-multiple-non-indenting-spaces
+  (let [opts {:remove-multiple-non-indenting-spaces? true}]
+    (is (reformats-to? ["[]"] ["[]"] opts))
+    (is (reformats-to? ["[   ]"] ["[]"] opts))
+    (is (reformats-to? ["{   }"] ["{}"] opts))
+    (is (reformats-to? ["#{ }"] ["#{}"] opts))
+    (is (reformats-to? ["[a     b]"] ["[a b]"]  opts))
+    (is (reformats-to? ["{a     b}"] ["{a b}"] opts))
+    (is (reformats-to? ["{a,     b}"] ["{a, b}"] opts))
+    (is (reformats-to? ["#{a     b}"] ["#{a b}"] opts))
+    (is (reformats-to? ["#{    }"] ["#{}"] opts))
+    (is (reformats-to? ["[a     b   c]"] ["[a b c]"] opts))
+    (is (reformats-to? ["#{a     b     }"] ["#{a b}"] opts))
+    (is (reformats-to? ["(do"
+                        ""
+                        "  something)"]
+                       ["(do"
+                        ""
+                        "  something)"]
+                       opts)
+        "non-comment newlines are respected")
+    (is (reformats-to? ["(cond truc"
+                        "      ;; foo"
+                        "      (bar? a    b) :baz)"]
+                       ["(cond truc"
+                        "      ;; foo"
+                        "      (bar? a b) :baz)"]
+                       opts)
+        "comments are respected")
+    (is (reformats-to? ["(cond truc"
+                        "             ;; foo"
+                        "   (bar? a    b) :baz)"]
+                       ["(cond truc"
+                        "             ;; foo"
+                        "   (bar? a b) :baz)"]
+                       (assoc opts :indentation? false))
+        "custom indentation is respected")))
+
 (deftest test-surrounding-whitespace
   (testing "surrounding whitespace removed"
     (is (reformats-to?
