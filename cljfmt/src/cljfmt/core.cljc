@@ -386,6 +386,15 @@
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? zip/remove))
 
+(defn- replace-with-one-space [zloc]
+  (zip/replace zloc (whitespace 1)))
+
+(defn- non-indenting-whitespace? [zloc]
+  (and (whitespace? zloc) (not (indentation? zloc))))
+
+(defn remove-multiple-non-indenting-spaces [form]
+  (transform form edit-all non-indenting-whitespace? replace-with-one-space))
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -399,6 +408,8 @@
          remove-surrounding-whitespace)
        (cond-> (:insert-missing-whitespace? opts true)
          insert-missing-whitespace)
+       (cond-> (:remove-multiple-non-indenting-spaces? opts false)
+         remove-multiple-non-indenting-spaces)
        (cond-> (:indentation? opts true)
          (reindent (:indents opts default-indents)
                    (:alias-map opts {})))
