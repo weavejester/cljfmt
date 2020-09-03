@@ -136,6 +136,10 @@ selectively enabled or disabled:
   true if cljfmt should break hashmaps onto multiple lines. This will
   convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
 
+* `:remove-multiple-non-indenting-spaces?` -
+  true if cljfmt should remove multiple non indenting spaces. This will convert
+  `{:a 1    :b 2}` to `{:a 1 :b 2}`. Defaults to false.
+
 You can also configure the behavior of cljfmt:
 
 * `:paths` - determines which directories to include in the
