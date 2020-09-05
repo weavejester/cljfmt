@@ -5,11 +5,11 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/tools.cli "0.4.2"]
-                 [org.clojure/tools.reader "1.3.2"]
+                 [org.clojure/tools.cli "1.0.194"]
+                 [org.clojure/tools.reader "1.3.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [rewrite-clj "0.6.1"]
-                 [rewrite-cljs "0.4.4"]]
+                 [rewrite-cljs "0.4.5"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
@@ -42,4 +42,4 @@
     :native-image
     {:jvm-opts ["-Dclojure.compiler.direct-linking=true"
                 "-Dclojure.spec.skip-macros=true"]}}
-   :provided {:dependencies [[org.clojure/clojurescript "1.10.520"]]}})
+   :provided {:dependencies [[org.clojure/clojurescript "1.10.773"]]}})
