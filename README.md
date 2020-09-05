@@ -195,28 +195,35 @@ You can also configure the behavior of cljfmt:
 
 ### Indentation rules
 
-When we talk about how rules affect indentation of source code, we refer to
-<code>(foo arg<sub>1</sub> arg<sub>2</sub> ... arg<sub>n</sub>)</code> as a
-form, `foo` as a form symbol, and <code>arg<sub>1</sub> arg<sub>2</sub> ...
-arg<sub>n</sub></code> as form arguments.
+When we talk about how rules affect indentation of source code, we
+refer to <code>(foo arg<sub>1</sub> arg<sub>2</sub>...
+arg<sub>n</sub>)</code> as a form, `foo` as a form symbol, and
+<code>arg<sub>1</sub> arg<sub>2</sub> ...  arg<sub>n</sub></code> as
+form arguments.
 
-The default indentation rules are [encoded here](cljfmt/resources/cljfmt/).
+The default indentation rules are encoded
+[here](cljfmt/resources/cljfmt/).
 
-Rules affect indentation of form arguments. A form argument is eligible for
-indentation only when it is the first element on a line.
+Rules affect indentation of form arguments. A form argument is
+eligible for indentation only when it is the first element on a line.
 
 An indentation rule specifies an indentation type and indentation type
 arguments. One or more rules can be applied to a form symbol.
 
 Indentation types are:
-* `:inner` - two character indentation applied to form arguments at a depth
-  relative to a form symbol
-* `:block` - first argument aligned indentation applied to form arguments at
-  form depth 0 for a symbol
+
+* `:inner` -
+  two character indentation applied to form arguments at a depth
+  relative to a form symbo
+  
+* `:block` -
+  first argument aligned indentation applied to form arguments at form
+  depth 0 for a symbol
 
 #### Form depth
 
-A rule for depth n affects indentation of form arguments relative to form symbol at depth n.
+A rule for depth n affects indentation of form arguments relative to
+form symbol at depth n.
 
 Form depth is the nested depth of any element within the form.
 
@@ -228,12 +235,13 @@ A contrived example will help to explain depth:
  (baz 
   (qux plugh)
   corge)
- (grault  
+ (grault
   waldo
   (thud wubble flob)))
 ```
-If we look at the example code as a tree, we can visualize the effect of different form depths
-relative to `foo`:
+
+If we look at the example code as a tree, we can visualize the effect
+of different form depths relative to `foo`:
 
 ![form depth 0 diagram](images/form-depth-0.png)
 ![form depth 1 diagram](images/form-depth-1.png)
@@ -257,11 +265,15 @@ bang)                               bang)
 
 #### Inner rules
 
-The `:inner` rule applies an indentation of two spaces to all eligible form
-arguments of forms at a given form depth. It has 2 rule type arguments:
+The `:inner` rule applies an indentation of two spaces to all eligible
+form arguments of forms at a given form depth. It has 2 rule type
+arguments:
 
-* `form-depth` - apply inner indentation within forms at this depth
-* `limit-to-form-index` - optionally limit indentation formatting to a single form, by default
+* `form-depth` -
+  apply inner indentation within forms at this depth
+
+* `limit-to-form-index` -
+  optionally limit indentation formatting to a single form, by default
   formatting is applied to all forms at `form-depth`
 
 Indent rule:
@@ -270,7 +282,7 @@ Indent rule:
 {foo [[:inner 0]]}
 ```
 
-... will indent all arguments for symbol `foo` at depth `0` by two spaces:
+Will indent all arguments for symbol `foo` at depth `0` by two spaces:
 
 ```clojure
 (foo bar                           (foo bar
@@ -284,8 +296,8 @@ Indent rule:
 {foo [[:inner 1]]}
 ```
 
-... results in `:inner` indenting form arguments at depth `1`. Form `(bang...)`
-is at depth `1` so its arguments are affected:
+Results in `:inner` indenting form arguments at depth `1`. Form
+`(bang...)` is at depth `1` so its arguments are affected:
 
 ```clojure
 (foo bar                           (foo bar
@@ -295,14 +307,14 @@ quz                                       quz
 qoz))                                     qoz))
 ```
 
-Because no rule was specified for depth 0, default indentation is applied to
-`bar` `baz` and `(bang...)`.
+Because no rule was specified for depth 0, default indentation is
+applied to `bar` `baz` and `(bang...)`.
 
 #### Limiting inner indentation
 
-Sometimes it is useful to limit `:inner` indentation to one, rather than all,
-forms at the specified depth. For example, we'd like `letfn` to use inner
-indentation only in its binding vector.
+Sometimes it is useful to limit `:inner` indentation to one, rather
+than all, forms at the specified depth. For example, we'd like `letfn`
+to use inner indentation only in its binding vector.
 
 Let's look at `letfn` example in the absence of any indentation rules:
 
@@ -321,8 +333,8 @@ Applying the rule:
 {letfn [[:inner 2]]}
 ```
 
-... brings in the `letfn` function body to where we want it by affecting form
-`(double [x]...)`:
+Brings in the `letfn` function body to where we want it by affecting
+form `(double [x]...)`:
 
 ```clojure
 (letfn [(double [x]
@@ -333,10 +345,10 @@ Applying the rule:
               z))) ;; but not here
 ```
 
-... but also affects all other forms at depth `2`. In this case, `(println...)`
-indentation is affected in an undesirable way. To limit formatting to `(double
-[x]...)`, the `0`th form at depth `2`, the `limit-to-form-index` rule type
-argument is added:
+But also affects all other forms at depth `2`. In this case,
+`(println...)` indentation is affected in an undesirable way. To limit
+formatting to `(double [x]...)`, the `0`th form at depth `2`, the
+`limit-to-form-index` rule type argument is added:
 
 ```clojure
 {letfn [[:inner 2 0]]}
@@ -352,8 +364,8 @@ argument is added:
                      z))) ;; but not here
 ```
 
-Remember than when calculating `limit-to-form-index`, all forms at the specified
-depth are included, even self-evaluating ones. Given:
+Remember that when calculating `limit-to-form-index`, all forms at the
+specified depth are included, even self-evaluating ones. Given:
 
 ```clojure
 (foo a b c
@@ -363,13 +375,14 @@ depth are included, even self-evaluating ones. Given:
         j))
 ```
 
-To affect inner indentation within form `(e...)` only, we use a rule of:
+To affect inner indentation within form `(e...)` only, we use a rule
+of:
 
 ```clojure
 {foo [[:inner 1 3]]}
 ```
 
-... which results in:
+Which results in:
 
 ```clojure
 (foo a b c
@@ -379,17 +392,18 @@ To affect inner indentation within form `(e...)` only, we use a rule of:
         j))
 ```
 
-... because `(e...)` is the 4th (index `3`) at form depth `1`.
+Because `(e...)` is the 4th (index `3`) at form depth `1`.
 
 #### Block rules
 
-The `:block` rule supports indenting to the first form argument. It has a single
-rule type argument:
+The `:block` rule supports indenting to the first form argument. It
+has a single rule type argument:
 
-* `line-arg-count-threshold` - when there are more than
-  `line-arg-count-threshold` form arguments on the same line as the form symbol,
-  eligible form arguments on subsequent lines are indented to align with the
-  first form argument. Otherwise, two space inner indentation is applied.
+* `line-arg-count-threshold` -
+  when there are more than this many form arguments on the same line
+  as the form symbol, eligible form arguments on subsequent lines are
+  indented to align with the first form argument. Otherwise, two space
+  inner indentation is applied.
 
 For indent rule:
 
@@ -397,8 +411,9 @@ For indent rule:
 {foo [[:block 0]]}
 ```
 
-... the single argument `bar` on the same line as `foo` breaks the threshold of
-`0` and indents eligible form arguments on subsequent lines to `bar`:
+The single argument `bar` on the same line as `foo` breaks the
+threshold of `0` and indents eligible form arguments on subsequent
+lines to `bar`:
 
 
 ```clojure
@@ -407,7 +422,7 @@ baz            == formats to =>         baz
 bang)                                   bang)
 ```
 
-... the two arguments `bar baz` on the same line as `foo` also breaks the
+The two arguments `bar baz` on the same line as `foo` also breaks the
 threshold of `0` and invokes indentation to the first argument:
 
 ```clojure
@@ -415,8 +430,8 @@ threshold of `0` and invokes indentation to the first argument:
 bang)                                   bang)
 ```
 
-... no arguments on the same line as `foo` does not break the threshold of `0`, so
-2 space inner indentation is applied:
+No arguments on the same line as `foo` does not break the threshold of
+`0`, so 2 space inner indentation is applied:
 
 ```clojure
 (foo                               (foo
@@ -431,8 +446,8 @@ For indent rule:
 {foo [[:block 1]]}
 ```
 
-... the single arg `bar` on the same line as `foo` does not break the threshold
-of `1` so we get inner indentation:
+The single arg `bar` on the same line as `foo` does not break the
+threshold of `1` so we get inner indentation:
 
 ```clojure
 (foo bar                           (foo bar
@@ -440,8 +455,8 @@ baz            == formats to =>      baz
 bang)                                bang)
 ```
 
-... two args `bar baz` on the same line as `foo` breaks the threshold of `1` so
-we get first argument aligned indentation:
+Two args `bar baz` on the same line as `foo` breaks the threshold of
+`1` so we get first argument aligned indentation:
 
 ```clojure
 (foo bar baz   == formats to =>    (foo bar baz
@@ -450,14 +465,14 @@ bang)                                   bang)
 
 #### Multiple rules
 
-Multiple rules can be specified. Picking up from our previous `letfn` example,
-the rule:
+Multiple rules can be specified. Picking up from our previous `letfn`
+example, the rule:
 
 ```clojure
 {letfn [[:inner 2 0]]}
 ```
 
-... gave us:
+Gave us:
 
 ```clojure
 (letfn [(double [x]
@@ -474,9 +489,8 @@ Adding a `:block` rule:
 {letfn [[:block 1][:inner 2 0]]}
 ```
 
-... matches the [current default rule for
-`letfn`](cljfmt/resources/cljfmt/indents/clojure.clj) and results in indenting
-the `(let...` to where we want it:
+Matches the [current default rule for `letfn`][default-rule] and
+results in indenting the `(let...` to where we want it:
 
 ```clojure
 (letfn [(double [x]
@@ -488,8 +502,10 @@ the `(let...` to where we want it:
 ```
 
 In this case, single form argument `[(double...)]` does not break the
-`line-arg-count-threshold` of `1` and we therefore get inner indentation for
-form argument `(let...)`.
+`line-arg-count-threshold` of `1` and we therefore get inner
+indentation for form argument `(let...)`.
+
+[default-rule]: cljfmt/resources/cljfmt/indents/clojure.clj
 
 ## License
 
