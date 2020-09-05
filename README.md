@@ -132,6 +132,10 @@ selectively enabled or disabled:
   true if cljfmt should collapse consecutive blank lines. This will
   convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
 
+* `:remove-multiple-non-indenting-spaces?` -
+  true if cljfmt should remove multiple non indenting spaces. This
+  will convert `{:a 1     :b 2}` to `{:a 1 :b 2}`. Defaults to false.
+
 * `:split-keypairs-over-multiple-lines?` -
   true if cljfmt should break hashmaps onto multiple lines. This will
   convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
