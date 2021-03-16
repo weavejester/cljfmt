@@ -4,12 +4,11 @@
   :scm {:dir ".."}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/tools.reader "1.3.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
-                 [rewrite-clj "0.6.1"]
-                 [rewrite-cljs "0.4.5"]]
+                 [rewrite-clj "1.0.594-alpha"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]

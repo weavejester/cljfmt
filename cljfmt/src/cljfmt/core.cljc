@@ -1,34 +1,15 @@
 (ns cljfmt.core
-  #?@(:clj
-      [(:refer-clojure :exclude [reader-conditional?])
-       (:require [clojure.java.io :as io]
-                 [clojure.string :as str]
-                 [clojure.zip :as zip]
-                 [rewrite-clj.node :as n]
-                 [rewrite-clj.parser :as p]
-                 [rewrite-clj.zip :as z
-                  :refer [append-space edn skip whitespace-or-comment? child-sexprs]])
-       (:import java.util.regex.Pattern)]
-      :cljs
-      [(:require [cljs.reader :as reader]
-                 [clojure.zip :as zip]
-                 [clojure.string :as str]
-                 [rewrite-clj.node :as n]
-                 [rewrite-clj.parser :as p]
-                 [rewrite-clj.zip :as z]
-                 [rewrite-clj.zip.base :as zb :refer [edn child-sexprs]]
-                 [rewrite-clj.zip.whitespace :as zw
-                  :refer [append-space skip whitespace-or-comment?]])
-       (:require-macros [cljfmt.core :refer [read-resource]])]))
+  #?(:clj (:refer-clojure :exclude [reader-conditional?]))
+  (:require #?(:clj [clojure.java.io :as io])
+            [clojure.string :as str]
+            [rewrite-clj.node :as n]
+            [rewrite-clj.parser :as p]
+            [rewrite-clj.zip :as z])
+  #?(:clj (:import java.util.regex.Pattern)
+     :cljs (:require-macros [cljfmt.core :refer [read-resource]])))
 
 #?(:clj (def read-resource* (comp read-string slurp io/resource)))
 #?(:clj (defmacro read-resource [path] `'~(read-resource* path)))
-
-(def zwhitespace?
-  #?(:clj z/whitespace? :cljs zw/whitespace?))
-
-(def zlinebreak?
-  #?(:clj z/linebreak? :cljs zw/linebreak?))
 
 (def includes?
   #?(:clj  (fn [^String a ^String b] (.contains a b))
@@ -37,26 +18,26 @@
 (defn- find-all [zloc p?]
   (loop [matches []
          zloc zloc]
-    (if-let [zloc (z/find-next zloc zip/next p?)]
+    (if-let [zloc (z/find-next zloc z/next* p?)]
       (recur (conj matches zloc)
-             (zip/next zloc))
+             (z/next* zloc))
       matches)))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
-    (if-let [zloc (z/find-next zloc zip/next p?)]
+    (if-let [zloc (z/find-next zloc z/next* p?)]
       (recur (f zloc))
       zloc)))
 
 (defn- transform [form zf & args]
-  (z/root (apply zf (edn form) args)))
+  (z/root (apply zf (z/edn form) args)))
 
 (defn- surrounding? [zloc p?]
-  (and (p? zloc) (or (nil? (zip/left zloc))
-                     (nil? (skip zip/right p? zloc)))))
+  (and (p? zloc) (or (nil? (z/left* zloc))
+                     (nil? (z/skip z/right* p? zloc)))))
 
 (defn root? [zloc]
-  (nil? (zip/up zloc)))
+  (nil? (z/up* zloc)))
 
 (defn- top? [zloc]
   (and zloc (not= (z/node zloc) (z/root zloc))))
@@ -66,13 +47,13 @@
 
 (defn- surrounding-whitespace? [zloc]
   (and (top? (z/up zloc))
-       (surrounding? zloc zwhitespace?)))
+       (surrounding? zloc z/whitespace?)))
 
 (defn remove-surrounding-whitespace [form]
-  (transform form edit-all surrounding-whitespace? zip/remove))
+  (transform form edit-all surrounding-whitespace? z/remove*))
 
 (defn- element? [zloc]
-  (and zloc (not (whitespace-or-comment? zloc))))
+  (and zloc (not (z/whitespace-or-comment? zloc))))
 
 (defn- reader-macro? [zloc]
   (and zloc (= (n/tag (z/node zloc)) :reader-macro)))
@@ -82,12 +63,12 @@
 
 (defn- missing-whitespace? [zloc]
   (and (element? zloc)
-       (not (reader-macro? (zip/up zloc)))
-       (not (namespaced-map? (zip/up zloc)))
-       (element? (zip/right zloc))))
+       (not (reader-macro? (z/up* zloc)))
+       (not (namespaced-map? (z/up* zloc)))
+       (element? (z/right* zloc))))
 
 (defn insert-missing-whitespace [form]
-  (transform form edit-all missing-whitespace? append-space))
+  (transform form edit-all missing-whitespace? z/append-space))
 
 (defn- whitespace? [zloc]
   (= (z/tag zloc) :whitespace))
@@ -96,15 +77,15 @@
   (some-> zloc z/node n/comment?))
 
 (defn- line-break? [zloc]
-  (or (zlinebreak? zloc) (comment? zloc)))
+  (or (z/linebreak? zloc) (comment? zloc)))
 
 (defn- skip-whitespace [zloc]
-  (skip zip/next whitespace? zloc))
+  (z/skip z/next* whitespace? zloc))
 
 (defn- count-newlines [zloc]
   (loop [zloc zloc, newlines 0]
-    (if (zlinebreak? zloc)
-      (recur (-> zloc zip/right skip-whitespace)
+    (if (z/linebreak? zloc)
+      (recur (-> zloc z/right* skip-whitespace)
              (-> zloc z/string count (+ newlines)))
       newlines)))
 
@@ -116,26 +97,26 @@
        (not (final-transform-element? zloc))))
 
 (defn- remove-whitespace-and-newlines [zloc]
-  (if (zwhitespace? zloc)
-    (recur (zip/remove zloc))
+  (if (z/whitespace? zloc)
+    (recur (z/remove* zloc))
     zloc))
 
 (defn- replace-consecutive-blank-lines [zloc]
   (-> zloc
       z/next
-      zip/prev
+      z/prev*
       remove-whitespace-and-newlines
       z/next
-      (zip/insert-left (n/newlines 2))))
+      (z/insert-left* (n/newlines 2))))
 
 (defn remove-consecutive-blank-lines [form]
   (transform form edit-all consecutive-blank-line? replace-consecutive-blank-lines))
 
 (defn- indentation? [zloc]
-  (and (line-break? (zip/prev zloc)) (whitespace? zloc)))
+  (and (line-break? (z/prev* zloc)) (whitespace? zloc)))
 
 (defn- comment-next? [zloc]
-  (-> zloc zip/next skip-whitespace comment?))
+  (-> zloc z/next* skip-whitespace comment?))
 
 (defn- should-indent? [zloc]
   (and (line-break? zloc) (not (comment-next? zloc))))
@@ -144,7 +125,7 @@
   (and (indentation? zloc) (not (comment-next? zloc))))
 
 (defn unindent [form]
-  (transform form edit-all should-unindent? zip/remove))
+  (transform form edit-all should-unindent? z/remove*))
 
 (def ^:private start-element
   {:meta "^", :meta* "#^", :vector "[",       :map "{"
@@ -156,13 +137,13 @@
 (defn- prior-line-string [zloc]
   (loop [zloc     zloc
          worklist '()]
-    (if-let [p (zip/left zloc)]
+    (if-let [p (z/left* zloc)]
       (let [s            (str (n/string (z/node p)))
             new-worklist (cons s worklist)]
         (if-not (includes? s "\n")
           (recur p new-worklist)
           (apply str new-worklist)))
-      (if-let [p (zip/up zloc)]
+      (if-let [p (z/up* zloc)]
         ;; newline cannot be introduced by start-element
         (recur p (cons (start-element (n/tag (z/node p))) worklist))
         (apply str worklist)))))
@@ -177,7 +158,7 @@
   (n/whitespace-node (apply str (repeat width " "))))
 
 (defn- coll-indent [zloc]
-  (-> zloc zip/leftmost margin))
+  (-> zloc z/leftmost* margin))
 
 (defn- uneval? [zloc]
   (= (z/tag zloc) :uneval))
@@ -191,7 +172,7 @@
 
 (defn- list-indent [zloc]
   (if (> (index-of zloc) 1)
-    (-> zloc zip/leftmost z/right margin)
+    (-> zloc z/leftmost* z/right margin)
     (coll-indent zloc)))
 
 (def indent-size 2)
@@ -275,10 +256,10 @@
 
 (defn- first-form-in-line? [zloc]
   (and (some? zloc)
-       (if-let [zloc (zip/left zloc)]
+       (if-let [zloc (z/left* zloc)]
          (if (whitespace? zloc)
            (recur zloc)
-           (or (zlinebreak? zloc) (comment? zloc)))
+           (or (z/linebreak? zloc) (comment? zloc)))
          true)))
 
 (defn- block-indent [zloc key idx alias-map]
@@ -334,7 +315,7 @@
 (defn- indent-line [zloc indents alias-map]
   (let [width (indent-amount zloc indents alias-map)]
     (if (> width 0)
-      (zip/insert-right zloc (whitespace width))
+      (z/insert-right* zloc (whitespace width))
       zloc)))
 
 (defn indent
@@ -349,21 +330,21 @@
   (and (z/map? (z/up zloc))
        (even? (index-of zloc))
        (not (uneval? zloc))
-       (not (whitespace-or-comment? zloc))))
+       (not (z/whitespace-or-comment? zloc))))
 
 (defn- preceded-by-line-break? [zloc]
-  (loop [previous (zip/left zloc)]
+  (loop [previous (z/left* zloc)]
     (cond
       (line-break? previous)
       true
-      (whitespace-or-comment? previous)
-      (recur (zip/left previous)))))
+      (z/whitespace-or-comment? previous)
+      (recur (z/left* previous)))))
 
 (defn- map-key-without-line-break? [zloc]
   (and (map-key? zloc) (not (preceded-by-line-break? zloc))))
 
 (defn- insert-newline-left [zloc]
-  (zip/insert-left zloc (n/newlines 1)))
+  (z/insert-left* zloc (n/newlines 1)))
 
 (defn split-keypairs-over-multiple-lines [form]
   (transform form edit-all map-key-without-line-break? insert-newline-left))
@@ -377,17 +358,17 @@
    (indent (unindent form) indents alias-map)))
 
 (defn final? [zloc]
-  (and (nil? (zip/right zloc)) (root? (zip/up zloc))))
+  (and (nil? (z/right* zloc)) (root? (z/up* zloc))))
 
 (defn- trailing-whitespace? [zloc]
   (and (whitespace? zloc)
-       (or (zlinebreak? (zip/right zloc)) (final? zloc))))
+       (or (z/linebreak? (z/right* zloc)) (final? zloc))))
 
 (defn remove-trailing-whitespace [form]
-  (transform form edit-all trailing-whitespace? zip/remove))
+  (transform form edit-all trailing-whitespace? z/remove*))
 
 (defn- replace-with-one-space [zloc]
-  (zip/replace zloc #?(:clj  (whitespace 1)
+  (z/replace* zloc #?(:clj  (whitespace 1)
                        :cljs (-> (z/string zloc)
                                  (str/replace #"\s+" " ")
                                  (n/whitespace-node)))))
@@ -422,7 +403,7 @@
 #?(:clj
    (defn- ns-require-form? [zloc]
      (and (some-> zloc top-level-form ns-form?)
-          (some-> zloc child-sexprs first (= :require)))))
+          (some-> zloc z/child-sexprs first (= :require)))))
 
 #?(:clj
    (defn- as-keyword? [zloc]
