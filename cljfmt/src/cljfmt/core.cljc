@@ -368,10 +368,7 @@
   (transform form edit-all trailing-whitespace? z/remove*))
 
 (defn- replace-with-one-space [zloc]
-  (z/replace* zloc #?(:clj  (whitespace 1)
-                       :cljs (-> (z/string zloc)
-                                 (str/replace #"\s+" " ")
-                                 (n/whitespace-node)))))
+  (z/replace* zloc (whitespace 1)))
 
 (defn- non-indenting-whitespace? [zloc]
   (and (whitespace? zloc) (not (indentation? zloc))))

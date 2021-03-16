@@ -640,6 +640,7 @@
     (is (reformats-to? ["#{    }"] ["#{}"] opts))
     (is (reformats-to? ["[a     b   c]"] ["[a b c]"] opts))
     (is (reformats-to? ["#{a     b     }"] ["#{a b}"] opts))
+    (is (reformats-to? ["[a   ,  b]"] ["[a , b]"] opts))
     (is (reformats-to? ["(do"
                         ""
                         "  something)"]
