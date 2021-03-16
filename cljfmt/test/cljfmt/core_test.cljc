@@ -1048,6 +1048,20 @@
          (reformat-string "#\"a\nb\""))
       "regular expression with embedded newline"))
 
+(deftest test-namespaced-keywords
+  (is (reformats-to? ["(ns myns.core)"
+                      ""
+                      ""
+                      "{::foo-bar (do (map)"
+                      "               (foo))}"]
+                     ["(ns myns.core)"
+                      ""
+                      "{::foo-bar (do (map)"
+                      "               (foo))}"]))
+  (is (reformats-to? ["(println (not (= ::result/foo 2)))"]
+                     ["(println (not (= ::result/foo 2)))"])))
+
+
 (deftest test-normalize-newlines
   (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
   (is (= (normalize-newlines "foo\r\nbar\r\nbaz") "foo\nbar\nbaz"))
