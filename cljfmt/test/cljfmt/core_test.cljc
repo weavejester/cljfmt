@@ -1046,7 +1046,10 @@
        ["#\"(?i)foo\""]))
   (is (= "#\"a\nb\""
          (reformat-string "#\"a\nb\""))
-      "regular expression with embedded newline"))
+      "regular expression with embedded newline")
+  (is (reformats-to? 
+       ["##Inf ##-Inf ##NaN"] 
+       ["##Inf ##-Inf ##NaN"])))
 
 (deftest test-namespaced-keywords
   (is (reformats-to? ["(ns myns.core)"
@@ -1060,7 +1063,6 @@
                       "               (foo))}"]))
   (is (reformats-to? ["(println (not (= ::result/foo 2)))"]
                      ["(println (not (= ::result/foo 2)))"])))
-
 
 (deftest test-normalize-newlines
   (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
