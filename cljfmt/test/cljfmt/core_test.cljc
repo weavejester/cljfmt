@@ -1068,6 +1068,20 @@
   (is (reformats-to? ["(println (not (= ::result/foo 2)))"]
                      ["(println (not (= ::result/foo 2)))"])))
 
+(deftest test-namespaced-maps
+  (is (reformats-to?
+       ["#:my-prefix    {:a 1}"]
+       ["#:my-prefix    {:a 1}"]))
+  (is (reformats-to?
+       ["#:my-prefix{:a 1}"]
+       ["#:my-prefix{:a 1}"]))
+  (is (reformats-to?
+       ["#::{:b 2}"]
+       ["#::{:b 2}"]))
+  (is (reformats-to?
+       ["#::my-alias{:c 3}"]
+       ["#::my-alias{:c 3}"])))
+
 (deftest test-normalize-newlines
   (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
   (is (= (normalize-newlines "foo\r\nbar\r\nbaz") "foo\nbar\nbaz"))
