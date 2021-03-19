@@ -1049,7 +1049,11 @@
       "regular expression with embedded newline")
   (is (reformats-to? 
        ["##Inf ##-Inf ##NaN"] 
-       ["##Inf ##-Inf ##NaN"])))
+       ["##Inf ##-Inf ##NaN"]))
+  (is (reformats-to?
+       [":&::before"]
+       [":&::before"])
+      "garden library style selector"))
 
 (deftest test-namespaced-keywords
   (is (reformats-to? ["(ns myns.core)"
