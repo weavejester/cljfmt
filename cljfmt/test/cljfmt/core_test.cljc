@@ -754,6 +754,13 @@
         "(bar)"]))
   (is (reformats-to?
        ["(foo)"
+        ","
+        "(bar)"]
+       ["(foo)"
+        ","
+        "(bar)"]))
+  (is (reformats-to?
+       ["(foo)"
         ""
         ""
         " (bar)"]
@@ -795,6 +802,93 @@
        ["(foo)"
         ""
         ";bar"
+        ""
+        "(baz)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        ""
+        ";bar"
+        "(baz)"]
+       ["(foo)"
+        ""
+        ";bar"
+        "(baz)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        ""
+        ";bar"
+        ""
+        ""
+        ""
+        ""
+        "(baz)"]
+       ["(foo)"
+        ""
+        ";bar"
+        ""
+        "(baz)"]))
+  (is (reformats-to?
+       ["(foo)"
+        ""
+        ""
+        ""
+        ";bar"
+        ""
+        ""
+        ""
+        ""
+        ";moo"
+        ""
+        ""
+        ""
+        ""
+        "(baz)"
+        ]
+       ["(foo)"
+        ""
+        ";bar"
+        ""
+        ";moo"
+        ""
+        "(baz)"]))
+  (is (reformats-to?
+       [";foo"
+        ""
+        ""
+        ";bar"
+        ""
+        ""
+        ";moo"
+        ""
+        ""
+        ";baz"]
+       [";foo"
+        ""
+        ";bar"
+        ""
+        ";moo"
+        ""
+        ";baz"]))
+  (is (reformats-to?
+       ["(foo)"
+        ","
+        ","
+        ";bar"
+        ","
+        ""
+        ";moo"
+        ","
+        "   ,,,,,  "
+        "(baz)"]
+       ["(foo)"
+        ""
+        ";bar"
+        ""
+        ";moo"
         ""
         "(baz)"]))
   (is (reformats-to?
