@@ -640,6 +640,7 @@
     (is (reformats-to? ["#{    }"] ["#{}"] opts))
     (is (reformats-to? ["[a     b   c]"] ["[a b c]"] opts))
     (is (reformats-to? ["#{a     b     }"] ["#{a b}"] opts))
+    (is (reformats-to? ["[a   ,  b]"] ["[a , b]"] opts))
     (is (reformats-to? ["(do"
                         ""
                         "  something)"]
@@ -1045,7 +1046,41 @@
        ["#\"(?i)foo\""]))
   (is (= "#\"a\nb\""
          (reformat-string "#\"a\nb\""))
-      "regular expression with embedded newline"))
+      "regular expression with embedded newline")
+  (is (reformats-to? 
+       ["##Inf ##-Inf ##NaN"] 
+       ["##Inf ##-Inf ##NaN"]))
+  (is (reformats-to?
+       [":&::before"]
+       [":&::before"])
+      "garden library style selector"))
+
+(deftest test-namespaced-keywords
+  (is (reformats-to? ["(ns myns.core)"
+                      ""
+                      ""
+                      "{::foo-bar (do (map)"
+                      "               (foo))}"]
+                     ["(ns myns.core)"
+                      ""
+                      "{::foo-bar (do (map)"
+                      "               (foo))}"]))
+  (is (reformats-to? ["(println (not (= ::result/foo 2)))"]
+                     ["(println (not (= ::result/foo 2)))"])))
+
+(deftest test-namespaced-maps
+  (is (reformats-to?
+       ["#:my-prefix    {:a 1}"]
+       ["#:my-prefix    {:a 1}"]))
+  (is (reformats-to?
+       ["#:my-prefix{:a 1}"]
+       ["#:my-prefix{:a 1}"]))
+  (is (reformats-to?
+       ["#::{:b 2}"]
+       ["#::{:b 2}"]))
+  (is (reformats-to?
+       ["#::my-alias{:c 3}"]
+       ["#::my-alias{:c 3}"])))
 
 (deftest test-normalize-newlines
   (is (= (normalize-newlines "foo\nbar\nbaz") "foo\nbar\nbaz"))
