@@ -29,6 +29,7 @@
           "-J-Dclojure.compiler.direct-linking=true"
           "-H:ReflectionConfigurationFiles=reflection.json"
           "--initialize-at-build-time"
+          "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
           "--verbose"
           "--no-fallback"
