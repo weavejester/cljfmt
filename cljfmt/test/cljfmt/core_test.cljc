@@ -403,6 +403,13 @@
           "  )"])
         "indentation should not be lost after comment line"))
 
+  (testing "shebang comment"
+    (is (reformats-to?
+         ["#!/usr/bin/env bb"
+          "(def x 1)"]
+         ["#!/usr/bin/env bb"
+          "(def x 1)"])))
+
   (testing "metadata"
     (is (reformats-to?
          ["(defonce ^{:doc \"foo\"}"
