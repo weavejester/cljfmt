@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [cljfmt.impl.stacktrace :as st]
+            [clojure.stacktrace :as st]
             [clojure.tools.cli :as cli]
             [cljfmt.diff :as diff])
   (:gen-class))
