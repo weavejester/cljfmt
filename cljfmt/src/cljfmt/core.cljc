@@ -45,9 +45,12 @@
 (defn- top [zloc]
   (if (root? zloc) zloc (recur (z/up zloc))))
 
+(defn- clojure-whitespace? [zloc]
+  (z/whitespace? zloc))
+
 (defn- surrounding-whitespace? [zloc]
   (and (top? (z/up zloc))
-       (surrounding? zloc z/whitespace?)))
+       (surrounding? zloc clojure-whitespace?)))
 
 (defn remove-surrounding-whitespace [form]
   (transform form edit-all surrounding-whitespace? z/remove*))
@@ -70,50 +73,63 @@
 (defn insert-missing-whitespace [form]
   (transform form edit-all missing-whitespace? z/append-space))
 
-(defn- whitespace? [zloc]
+(defn- space? [zloc]
   (= (z/tag zloc) :whitespace))
 
 (defn- comment? [zloc]
   (some-> zloc z/node n/comment?))
 
+(defn- comma? [zloc]
+  (some-> zloc z/node n/comma?))
+
 (defn- line-break? [zloc]
   (or (z/linebreak? zloc) (comment? zloc)))
 
 (defn- skip-whitespace [zloc]
-  (z/skip z/next* whitespace? zloc))
+  (z/skip z/next* space? zloc))
+
+(defn- skip-whitespace-and-commas [zloc]
+  (z/skip z/next* #(or (space? %) (comma? %)) zloc)) 
+
+(defn- skip-clojure-whitespace
+  ([zloc] (skip-clojure-whitespace zloc z/next*))
+  ([zloc f] (z/skip f clojure-whitespace? zloc)))
 
 (defn- count-newlines [zloc]
-  (loop [zloc zloc, newlines 0]
-    (if (z/linebreak? zloc)
-      (recur (-> zloc z/right* skip-whitespace)
-             (-> zloc z/string count (+ newlines)))
-      newlines)))
+  (loop [zloc' zloc, newlines 0]
+    (if (z/linebreak? zloc')
+      (recur (-> zloc' z/right* skip-whitespace-and-commas)
+             (-> zloc' z/string count (+ newlines)))
+      (if (comment? (skip-clojure-whitespace zloc z/left*)) 
+        (inc newlines)
+        newlines))))
 
 (defn- final-transform-element? [zloc]
-  (= (z/next zloc) zloc))
+  (nil? (skip-clojure-whitespace (z/next* zloc))))
 
 (defn- consecutive-blank-line? [zloc]
   (and (> (count-newlines zloc) 2)
        (not (final-transform-element? zloc))))
 
-(defn- remove-whitespace-and-newlines [zloc]
-  (if (z/whitespace? zloc)
+(defn- remove-clojure-whitespace [zloc]
+  (if (clojure-whitespace? zloc)
     (recur (z/remove* zloc))
     zloc))
 
 (defn- replace-consecutive-blank-lines [zloc]
-  (-> zloc
-      z/next
-      z/prev*
-      remove-whitespace-and-newlines
-      z/next
-      (z/insert-left* (n/newlines 2))))
+  (let [zloc-elem-before (-> zloc
+                             skip-clojure-whitespace
+                             z/prev*
+                             remove-clojure-whitespace)]
+    (-> zloc-elem-before
+        z/next*
+        (z/insert-left* (n/newlines (if (comment? zloc-elem-before) 1 2))))))
 
 (defn remove-consecutive-blank-lines [form]
   (transform form edit-all consecutive-blank-line? replace-consecutive-blank-lines))
 
 (defn- indentation? [zloc]
-  (and (line-break? (z/prev* zloc)) (whitespace? zloc)))
+  (and (line-break? (z/prev* zloc)) (space? zloc)))
 
 (defn- comment-next? [zloc]
   (-> zloc z/next* skip-whitespace comment?))
@@ -257,7 +273,7 @@
 (defn- first-form-in-line? [zloc]
   (and (some? zloc)
        (if-let [zloc (z/left* zloc)]
-         (if (whitespace? zloc)
+         (if (space? zloc)
            (recur zloc)
            (or (z/linebreak? zloc) (comment? zloc)))
          true)))
@@ -361,7 +377,7 @@
   (and (nil? (z/right* zloc)) (root? (z/up* zloc))))
 
 (defn- trailing-whitespace? [zloc]
-  (and (whitespace? zloc)
+  (and (space? zloc)
        (or (z/linebreak? (z/right* zloc)) (final? zloc))))
 
 (defn remove-trailing-whitespace [form]
@@ -371,7 +387,7 @@
   (z/replace* zloc (whitespace 1)))
 
 (defn- non-indenting-whitespace? [zloc]
-  (and (whitespace? zloc) (not (indentation? zloc))))
+  (and (space? zloc) (not (indentation? zloc))))
 
 (defn remove-multiple-non-indenting-spaces [form]
   (transform form edit-all non-indenting-whitespace? replace-with-one-space))
