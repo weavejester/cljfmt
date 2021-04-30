@@ -218,7 +218,7 @@ Indentation types are:
 
 * `:inner` -
   two character indentation applied to form arguments at a depth
-  relative to a form symbo
+  relative to a form symbol
   
 * `:block` -
   first argument aligned indentation applied to form arguments at form
