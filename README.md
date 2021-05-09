@@ -71,7 +71,7 @@ It is possible to execute `cljfmt` using the
 [Clojure CLI]: https://clojure.org/guides/deps_and_cli
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.7.0"}}}' \
   -m cljfmt.main [check|fix]
 ```
 
@@ -86,7 +86,7 @@ file, it is possible to customize the rules.
 ```
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.7.0"}}}' \
   -m cljfmt.main check \
   --indents indentation.clj
 ```
