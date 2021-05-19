@@ -71,8 +71,8 @@ It is possible to execute `cljfmt` using the
 [Clojure CLI]: https://clojure.org/guides/deps_and_cli
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.6.4"}}}' \
-  -m cljfmt.main [check|fix]
+clojure -Sdeps '{:deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}}' \
+  -M -m cljfmt.main [check|fix]
 ```
 
 Customizing the rules is possible passing `edn` formated files,
@@ -219,7 +219,7 @@ Indentation types are:
 * `:inner` -
   two character indentation applied to form arguments at a depth
   relative to a form symbol
-  
+
 * `:block` -
   first argument aligned indentation applied to form arguments at form
   depth 0 for a symbol
@@ -234,9 +234,9 @@ Form depth is the nested depth of any element within the form.
 A contrived example will help to explain depth:
 
 ```clojure
-(foo 
+(foo
  bar
- (baz 
+ (baz
   (qux plugh)
   corge)
  (grault

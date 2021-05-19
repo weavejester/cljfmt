@@ -1,104 +1,49 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
+  (:gen-class)
   (:require [cljfmt.core :as cljfmt]
-            [clojure.string :as str]
+            [cljfmt.diff :as diff]
+            [cljfmt.files :as files]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.stacktrace :as st]
-            [clojure.tools.cli :as cli]
-            [cljfmt.diff :as diff])
-  (:gen-class))
-
-(defn- abort [& msg]
-  (binding [*out* *err*]
-    (when (seq msg)
-      (apply println msg))
-    (System/exit 1)))
+            [clojure.pprint :as pprint]
+            [clojure.string :as str]
+            [clojure.tools.cli :as cli]))
 
 (defn- warn [& args]
   (binding [*out* *err*]
     (apply println args)))
 
-(defn- relative-path [^java.io.File dir ^java.io.File file]
-  (-> (.toAbsolutePath (.toPath dir))
-      (.relativize (.toAbsolutePath (.toPath file)))
-      (.toString)))
-
-(defn- filename-ext [filename]
-  (subs filename (inc (str/last-index-of filename "."))))
-
-(defn- grep [re dir]
-  (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
-
-(defn- find-files [{:keys [file-pattern]} f]
-  (let [f (io/file f)]
-    (when-not (.exists f) (abort "No such file:" (str f)))
-    (if (.isDirectory f)
-      (grep file-pattern f)
-      [f])))
-
-(defn- reformat-string [options s]
-  ((cljfmt/wrap-normalize-newlines #(cljfmt/reformat-string % options)) s))
-
-(defn- project-path [{:keys [project-root]} file]
-  (-> project-root (or ".") io/file (relative-path (io/file file))))
-
 (defn- format-diff
-  ([options file]
-   (let [original (slurp (io/file file))]
-     (format-diff options file original (reformat-string options original))))
-  ([options file original revised]
-   (let [filename (project-path options file)
-         diff     (diff/unified-diff filename original revised)]
-     (if (:ansi? options)
-       (diff/colorize-diff diff)
-       diff))))
+  [options project-filename original revised]
+  (let [diff (diff/unified-diff project-filename original revised)]
+    (if (:ansi? options)
+      (diff/colorize-diff diff)
+      diff)))
 
 (def ^:private zero-counts {:okay 0, :incorrect 0, :error 0})
 
-(defn- check-one [options file]
-  (let [original (slurp file)
-        status   {:counts zero-counts :file file}]
-    (try
-      (let [revised (reformat-string options original)]
-        (if (not= original revised)
-          (-> status
-              (assoc-in [:counts :incorrect] 1)
-              (assoc :diff (format-diff options file original revised)))
-          (assoc-in status [:counts :okay] 1)))
-      (catch Exception ex
-        (-> status
-            (assoc-in [:counts :error] 1)
-            (assoc :exception ex))))))
+(defn- check-one [options {:keys [file project-filename original revised error], :as info}]
+  (let [info (assoc info :counts zero-counts)]
+    (cond
+      error
+      (assoc-in info [:counts :error] 1)
 
-(defn- print-stack-trace [ex]
-  (binding [*out* *err*]
-    (st/print-stack-trace ex)))
+      (= original revised)
+      (assoc-in info [:counts :okay] 1)
 
-(defn- print-file-status [options status]
-  (let [path (project-path options (:file status))]
-    (when-let [ex (:exception status)]
-      (warn "Failed to format file:" path)
-      (print-stack-trace ex))
-    (when-let [diff (:diff status)]
-      (warn path "has incorrect formatting")
-      (warn diff))))
+      :else
+      (-> info
+          (assoc-in [:counts :incorrect] 1)
+          (assoc :diff (format-diff options project-filename original revised))))))
 
-(defn- exit [counts]
-  (when-not (zero? (:error counts 0))
-    (System/exit 2))
-  (when-not (zero? (:incorrect counts 0))
-    (System/exit 1)))
-
-(defn- print-final-count [counts]
-  (let [error     (:error counts 0)
-        incorrect (:incorrect counts 0)]
-    (when-not (zero? error)
-      (warn error "file(s) could not be parsed for formatting"))
-    (when-not (zero? incorrect)
-      (warn incorrect "file(s) formatted incorrectly"))
-    (when (and (zero? incorrect) (zero? error))
-      (println "All source files formatted correctly"))))
+(defn- print-file-status [project-filename {:keys [error project-filename diff]}]
+  (when error
+    (warn "Failed to format file:" project-filename)
+    (pprint/pprint (Throwable->map error)))
+  (when diff
+    (warn project-filename "has incorrect formatting")
+    (warn diff)))
 
 (defn- merge-counts
   ([]    zero-counts)
@@ -112,15 +57,33 @@
    (check paths {}))
   ([paths options]
    (let [counts (transduce
-                 (comp (mapcat (partial find-files options))
-                       (map (partial check-one options))
-                       (map (fn [status]
-                              (print-file-status options status)
-                              (:counts status))))
+                 (comp
+                  (map (partial check-one options))
+                  (map (fn [{:keys [counts], :as info}]
+                         (print-file-status options info)
+                         counts)))
                  (completing merge-counts)
-                 paths)]
-     (print-final-count counts)
-     (exit counts))))
+                 (files/reducible-files paths options))]
+     (let [error     (:error counts 0)
+           incorrect (:incorrect counts 0)]
+       (when-not (zero? error)
+         (throw (ex-info (format "%d file(s) could not be parsed for formatting." (:error counts))
+                         {:counts counts, ::expected? true})))
+       (when-not (zero? incorrect)
+           (throw (ex-info (format "%d file(s) formatted incorrectly." (:incorrect counts))
+                           {:counts counts, ::expected? true})))
+       (println "All source files formatted correctly.")
+       :ok))))
+
+(defn- fix-one [{:keys [file project-filename error original revised], :as info} options]
+  (when error
+    (throw (ex-info (format "Failed to format file %s: %s" project-filename (ex-message error))
+                    info
+                    error)))
+  (when-not (= original revised)
+    (println "Reformatting" project-filename)
+    (spit file revised)
+    1))
 
 (defn fix
   "Applies the formatting (as per `options`) to the Clojure files
@@ -128,17 +91,16 @@
   ([paths]
    (fix paths {}))
   ([paths options]
-   (let [files (mapcat (partial find-files options) paths)]
-     (doseq [^java.io.File f files]
-       (let [original (slurp f)]
-         (try
-           (let [revised (reformat-string options original)]
-             (when (not= original revised)
-               (println "Reformatting" (project-path options f))
-               (spit f revised)))
-           (catch Exception e
-             (warn "Failed to format file:" (project-path options f))
-             (print-stack-trace e))))))))
+   (let [fixed-count (transduce
+                      (map #(fix-one % options))
+                      (completing (fnil + 0 0))
+                      0
+                      (files/reducible-files paths options))]
+     (println (format "Fixed %d files." fixed-count))
+     fixed-count)))
+
+(defn- filename-ext [filename]
+  (subs filename (inc (str/last-index-of filename "."))))
 
 (defn- cli-file-reader [filepath]
   (let [contents (slurp filepath)]
@@ -199,9 +161,6 @@
     :default (:remove-consecutive-blank-lines? default-options)
     :id :remove-consecutive-blank-lines?]])
 
-(defn- command-name []
-  (or (System/getProperty "sun.java.command") "cljfmt"))
-
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
 
@@ -210,12 +169,27 @@
         [cmd & paths] (:arguments parsed-opts)
         options       (merge-default-options (:options parsed-opts))
         paths         (or (seq paths) (filter file-exists? default-paths))]
-    (if (:errors parsed-opts)
-      (abort (:errors parsed-opts))
-      (if (or (nil? cmd) (:help options))
-        (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
-            (println (:summary parsed-opts)))
-        (case cmd
-          "check" (check paths options)
-          "fix"   (fix paths options)
-          (abort "Unknown cljfmt command:" cmd))))))
+    (when-let [errors (not-empty (:errors parsed-opts))]
+      (binding [*out* *err*]
+        (println "Errors parsing command-line arguments:")
+        (doseq [error errors]
+          (println error)))
+      (System/exit 1))
+    (when (or (nil? cmd) (:help options))
+      (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
+      (println (:summary parsed-opts))
+      (System/exit 0))
+    (let [f (case cmd
+              "check" check
+              "fix"   fix
+              (binding [*out* *err*]
+                (println "Unknown cljfmt cmd:" cmd)
+                (System/exit 1)))]
+      (try
+        (f paths options)
+        (System/exit 0)
+        (catch Throwable e
+          (println (ex-message e))
+          (when-not (::expected? (ex-data e))
+            (pprint/pprint (Throwable->map e)))
+          (System/exit 1))))))
