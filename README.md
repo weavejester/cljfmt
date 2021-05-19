@@ -116,12 +116,12 @@ selectively enabled or disabled:
 
 * `:remove-surrounding-whitespace?` -
   true if cljfmt should remove whitespace surrounding inner
-  forms. This will convert `(  foo  )` to `(foo)`.
+  forms. This will convert <code>(&nbsp;&nbsp;foo&nbsp;&nbsp;)</code> to `(foo)`.
   Defaults to true.
 
 * `:remove-trailing-whitespace?` -
   true if cljfmt should remove trailing whitespace in lines. This will
-  convert `(foo)   \n` to `(foo)\n`. Defaults to true.
+  convert <code>(foo)&nbsp;&nbsp;&nbsp;\n</code> to `(foo)\n`. Defaults to true.
 
 * `:insert-missing-whitespace?` -
   true if cljfmt should insert whitespace missing from between
@@ -134,7 +134,7 @@ selectively enabled or disabled:
 
 * `:remove-multiple-non-indenting-spaces?` -
   true if cljfmt should remove multiple non indenting spaces. This
-  will convert `{:a 1     :b 2}` to `{:a 1 :b 2}`. Defaults to false.
+  will convert <code>{:a 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:b 2}</code> to `{:a 1 :b 2}`. Defaults to false.
 
 * `:split-keypairs-over-multiple-lines?` -
   true if cljfmt should break hashmaps onto multiple lines. This will
