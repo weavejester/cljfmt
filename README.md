@@ -42,6 +42,8 @@ versions, particularly versions prior to Leiningen 2.4.
 
 ## Usage
 
+### Leiningen
+
 To check the formatting of your source files, use:
 
     lein cljfmt check
@@ -63,12 +65,12 @@ As with the `check` task, you can choose to fix a specific file:
 
     lein cljfmt fix src/foo/core.clj
 
-### deps.tools usage
+### tools.deps
 
-It is possible to execute `cljfmt` using the
-[Clojure CLI], without integrating with `lein`.
+It is also possible to use the [clojure][] command-line tool to check
+your project's files:
 
-[Clojure CLI]: https://clojure.org/guides/deps_and_cli
+[clojure]: https://clojure.org/guides/deps_and_cli
 
 ```bash
 clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.7.0"}}}' \
