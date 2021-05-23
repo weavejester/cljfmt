@@ -1,15 +1,16 @@
 (ns cljfmt.test-util.common
   (:require [clojure.string :as str]
-            [cljfmt.core :refer [reformat-string]]))
+            [cljfmt.core :as cljfmt]))
 
-(defn assert-reformats-to
-  ([msg in-lines expected-lines]
-   (assert-reformats-to msg in-lines expected-lines {}))
-  ([msg in-lines expected-lines options]
-   (let [input        (str/join "\n" in-lines)
-         actual       (reformat-string input options)
-         actual-lines (str/split actual #"\n" -1)]
-     {:type (if (= expected-lines actual-lines) :pass :fail)
-      :message  msg
-      :expected expected-lines
-      :actual   actual-lines})))
+(defmacro reformats-to-event [msg form]
+  `(let [in-lines# ~(nth form 1)
+         expected-lines# ~(nth form 2)
+         options# ~(nth form 3 {})
+         actual-lines# (-> (str/join "\n" in-lines#)
+                           (cljfmt/reformat-string options#)
+                           (str/split #"\n" -1))
+         result# (= expected-lines# actual-lines#)]
+     {:type (if result# :pass :fail)
+      :message ~msg
+      :expected expected-lines#
+      :actual actual-lines#}))
