@@ -1,0 +1,3 @@
+{:config-paths ^:replace ["rewrite-clj/rewrite-clj"]
+ :linters {:missing-else-branch {:level :off}
+           :unresolved-symbol {:exclude [reformats-to?]}}}
