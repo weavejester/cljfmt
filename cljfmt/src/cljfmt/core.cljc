@@ -293,6 +293,7 @@
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
 (defmulti ^:private indenter-fn
+   #_{:clj-kondo/ignore [:unused-binding]}
   (fn [sym alias-map [type & args]] type))
 
 (defmethod indenter-fn :inner [sym alias-map [_ depth idx]]
