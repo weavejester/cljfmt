@@ -71,7 +71,7 @@
        (element? (z/right* zloc))))
 
 (defn insert-missing-whitespace [form]
-  (transform form edit-all missing-whitespace? z/append-space))
+  (transform form edit-all missing-whitespace? z/insert-space-right))
 
 (defn- space? [zloc]
   (= (z/tag zloc) :whitespace))
