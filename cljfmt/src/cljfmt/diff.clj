@@ -1,5 +1,5 @@
 (ns cljfmt.diff
-  (:import [difflib DiffUtils Delta$TYPE]
+  (:import [difflib DiffUtils]
            [java.io File]
            [java.util.regex Pattern])
   (:require [clojure.java.io :as io]

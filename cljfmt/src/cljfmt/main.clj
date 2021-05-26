@@ -199,9 +199,6 @@
     :default (:remove-consecutive-blank-lines? default-options)
     :id :remove-consecutive-blank-lines?]])
 
-(defn- command-name []
-  (or (System/getProperty "sun.java.command") "cljfmt"))
-
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
 

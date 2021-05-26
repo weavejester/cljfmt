@@ -15,13 +15,14 @@
   #?(:clj  (fn [^String a ^String b] (.contains a b))
      :cljs str/includes?))
 
-(defn- find-all [zloc p?]
-  (loop [matches []
-         zloc zloc]
-    (if-let [zloc (z/find-next zloc z/next* p?)]
-      (recur (conj matches zloc)
-             (z/next* zloc))
-      matches)))
+#?(:clj 
+   (defn- find-all [zloc p?]
+     (loop [matches []
+            zloc zloc]
+       (if-let [zloc (z/find-next zloc z/next* p?)]
+         (recur (conj matches zloc)
+                (z/next* zloc))
+         matches))))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
@@ -71,7 +72,7 @@
        (element? (z/right* zloc))))
 
 (defn insert-missing-whitespace [form]
-  (transform form edit-all missing-whitespace? z/append-space))
+  (transform form edit-all missing-whitespace? z/insert-space-right))
 
 (defn- space? [zloc]
   (= (z/tag zloc) :whitespace))
@@ -204,11 +205,12 @@
 (defn pattern? [v]
   (instance? #?(:clj Pattern :cljs js/RegExp) v))
 
-(defn- top-level-form [zloc]
-  (->> zloc
-       (iterate z/up)
-       (take-while (complement root?))
-       last))
+#?(:clj
+   (defn- top-level-form [zloc]
+     (->> zloc
+          (iterate z/up)
+          (take-while (complement root?))
+          last)))
 
 (defn- token? [zloc]
   (= (z/tag zloc) :token))
@@ -293,6 +295,7 @@
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
 (defmulti ^:private indenter-fn
+   #_{:clj-kondo/ignore [:unused-binding]}
   (fn [sym alias-map [type & args]] type))
 
 (defmethod indenter-fn :inner [sym alias-map [_ depth idx]]
