@@ -4,7 +4,7 @@
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines]]
-            [cljfmt.test-util.common :as common]
+            [cljfmt.test-util.common]
             #?(:clj [cljfmt.test-util.clojure]))
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
