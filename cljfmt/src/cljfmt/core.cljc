@@ -15,13 +15,14 @@
   #?(:clj  (fn [^String a ^String b] (.contains a b))
      :cljs str/includes?))
 
-(defn- find-all [zloc p?]
-  (loop [matches []
-         zloc zloc]
-    (if-let [zloc (z/find-next zloc z/next* p?)]
-      (recur (conj matches zloc)
-             (z/next* zloc))
-      matches)))
+#?(:clj 
+   (defn- find-all [zloc p?]
+     (loop [matches []
+            zloc zloc]
+       (if-let [zloc (z/find-next zloc z/next* p?)]
+         (recur (conj matches zloc)
+                (z/next* zloc))
+         matches))))
 
 (defn- edit-all [zloc p? f]
   (loop [zloc (if (p? zloc) (f zloc) zloc)]
@@ -204,11 +205,12 @@
 (defn pattern? [v]
   (instance? #?(:clj Pattern :cljs js/RegExp) v))
 
-(defn- top-level-form [zloc]
-  (->> zloc
-       (iterate z/up)
-       (take-while (complement root?))
-       last))
+#?(:clj
+   (defn- top-level-form [zloc]
+     (->> zloc
+          (iterate z/up)
+          (take-while (complement root?))
+          last)))
 
 (defn- token? [zloc]
   (= (z/tag zloc) :token))
