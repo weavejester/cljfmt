@@ -77,15 +77,14 @@ clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.7.0"}}}' \
   -m cljfmt.main [check|fix]
 ```
 
-Customizing the rules is possible passing `edn` formated files,
-using the same content used on lein profiles.
-
-As example, with the following content to the `indentation.edn`
-file, it is possible to customize the rules.
+Customizing the indentation rules is possible by supplying a custom
+indentation file. For example, `indentation.clj`:
 
 ```clojure
 {org.me/foo [[:inner 0]]}
 ```
+
+You can then specify this file when running cljfmt:
 
 ```bash
 clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.7.0"}}}' \
