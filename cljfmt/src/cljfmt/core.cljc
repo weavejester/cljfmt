@@ -312,7 +312,7 @@
 (defn- custom-indent [zloc indents context]
   (if (empty? indents)
     (list-indent zloc)
-    (let [indenter (->> (sort-by indent-order indents)
+    (let [indenter (->> indents
                         (map #(make-indenter % context))
                         (apply some-fn))]
       (or (indenter zloc)
@@ -342,10 +342,11 @@
   ([form indents]
    (indent form indents {}))
   ([form indents alias-map]
-   (let [ns-name (find-namespace (z/edn form))]
+   (let [ns-name (find-namespace (z/edn form))
+         sorted-indents (sort-by indent-order indents)]
      (transform form edit-all should-indent? 
-                #(indent-line % indents {:alias-map alias-map 
-                                         :ns-name ns-name})))))
+                #(indent-line % sorted-indents {:alias-map alias-map
+                                                :ns-name ns-name})))))
 
 (defn- map-key? [zloc]
   (and (z/map? (z/up zloc))
