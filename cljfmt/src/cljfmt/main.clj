@@ -156,6 +156,7 @@
    :remove-surrounding-whitespace?        true
    :remove-trailing-whitespace?           true
    :remove-consecutive-blank-lines?       true
+   :split-keypairs-over-multiple-lines?   false
    :indents   cljfmt/default-indents
    :alias-map {}})
 
@@ -197,7 +198,10 @@
     :id :insert-missing-whitespace?]
    [nil "--[no-]remove-consecutive-blank-lines"
     :default (:remove-consecutive-blank-lines? default-options)
-    :id :remove-consecutive-blank-lines?]])
+    :id :remove-consecutive-blank-lines?]
+   [nil "--[no-]split-keypairs-over-multiple-lines"
+    :default (:split-keypairs-over-multiple-lines? default-options)
+    :id :split-keypairs-over-multiple-lines?]])
 
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
