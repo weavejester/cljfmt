@@ -23,6 +23,7 @@
  defstruct       [[:block 1]]
  deftest         [[:inner 0]]
  deftype         [[:block 2] [:inner 1]]
+ delay           [[:block 0]]
  do              [[:block 0]]
  doseq           [[:block 1]]
  dotimes         [[:block 1]]
