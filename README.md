@@ -401,25 +401,23 @@ Because `(e...)` is the 4th (index `3`) at form depth `1`.
 
 #### Block rules
 
-The `:block` rule supports indenting to the first form argument. It
-has a single rule type argument:
+The `:block` rule works like the `:inner` rule under some
+circumstances, and like a normal list form under others. It takes one
+argument:
 
-* `line-arg-count-threshold` -
-  when there are more than this many form arguments on the same line
-  as the form symbol, eligible form arguments on subsequent lines are
-  indented to align with the first form argument. Otherwise, two space
-  inner indentation is applied.
+* `line-threshold-index` -
+  if the argument at this index starts a new line, all following lines
+  will be indented by a constant 2 spaces. Any other lines are
+  indented normally.
 
-For indent rule:
+For example:
 
 ```clojure
 {foo [[:block 0]]}
 ```
 
-The single argument `bar` on the same line as `foo` breaks the
-threshold of `0` and indents eligible form arguments on subsequent
-lines to `bar`:
-
+If the argument at index 0 (the first argument) does not start a new
+line, the form is indented as normal:
 
 ```clojure
 (foo bar                           (foo bar
@@ -427,16 +425,7 @@ baz            == formats to =>         baz
 bang)                                   bang)
 ```
 
-The two arguments `bar baz` on the same line as `foo` also breaks the
-threshold of `0` and invokes indentation to the first argument:
-
-```clojure
-(foo bar baz   == formats to =>    (foo bar baz
-bang)                                   bang)
-```
-
-No arguments on the same line as `foo` does not break the threshold of
-`0`, so 2 space inner indentation is applied:
+If it does, the lines are indented with a constant 2 spaces:
 
 ```clojure
 (foo                               (foo
@@ -445,14 +434,14 @@ baz                                  baz
 bang)                                bang)
 ```
 
-For indent rule:
+To give another example
 
 ```clojure
 {foo [[:block 1]]}
 ```
 
-The single arg `bar` on the same line as `foo` does not break the
-threshold of `1` so we get inner indentation:
+This time we're looking at the argument at index 1 (the second
+argument). If it starts a new line, the indent is constant:
 
 ```clojure
 (foo bar                           (foo bar
@@ -460,12 +449,21 @@ baz            == formats to =>      baz
 bang)                                bang)
 ```
 
-Two args `bar baz` on the same line as `foo` breaks the threshold of
-`1` so we get first argument aligned indentation:
+But if it does not, start a new line, normal indentation rules are
+used instead:
 
 ```clojure
 (foo bar baz   == formats to =>    (foo bar baz
 bang)                                   bang)
+```
+
+Any lines before the threshold are always indented normally:
+
+```clojure
+(foo                               (foo
+bar                                 bar
+baz            == formats to =>      baz
+bang)                                bang)
 ```
 
 #### Multiple rules
