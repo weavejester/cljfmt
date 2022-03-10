@@ -15,7 +15,7 @@
   #?(:clj  (fn [^String a ^String b] (.contains a b))
      :cljs str/includes?))
 
-#?(:clj 
+#?(:clj
    (defn- find-all [zloc p?]
      (loop [matches []
             zloc zloc]
@@ -90,7 +90,7 @@
   (z/skip z/next* space? zloc))
 
 (defn- skip-whitespace-and-commas [zloc]
-  (z/skip z/next* #(or (space? %) (comma? %)) zloc)) 
+  (z/skip z/next* #(or (space? %) (comma? %)) zloc))
 
 (defn- skip-clojure-whitespace
   ([zloc] (skip-clojure-whitespace zloc z/next*))
@@ -101,7 +101,7 @@
     (if (z/linebreak? zloc')
       (recur (-> zloc' z/right* skip-whitespace-and-commas)
              (-> zloc' z/string count (+ newlines)))
-      (if (comment? (skip-clojure-whitespace zloc z/left*)) 
+      (if (comment? (skip-clojure-whitespace zloc z/left*))
         (inc newlines)
         newlines))))
 
@@ -344,7 +344,7 @@
   ([form indents alias-map]
    (let [ns-name (find-namespace (z/edn form))
          sorted-indents (sort-by indent-order indents)]
-     (transform form edit-all should-indent? 
+     (transform form edit-all should-indent?
                 #(indent-line % sorted-indents {:alias-map alias-map
                                                 :ns-name ns-name})))))
 

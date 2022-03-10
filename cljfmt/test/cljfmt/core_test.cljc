@@ -846,8 +846,7 @@
         ""
         ""
         ""
-        "(baz)"
-        ]
+        "(baz)"]
        ["(foo)"
         ""
         ";bar"
@@ -1148,8 +1147,8 @@
   (is (= "#\"a\nb\""
          (reformat-string "#\"a\nb\""))
       "regular expression with embedded newline")
-  (is (reformats-to? 
-       ["##Inf ##-Inf ##NaN"] 
+  (is (reformats-to?
+       ["##Inf ##-Inf ##NaN"]
        ["##Inf ##-Inf ##NaN"]))
   (is (reformats-to?
        [":&::before"]
