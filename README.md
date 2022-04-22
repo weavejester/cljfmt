@@ -65,6 +65,11 @@ As with the `check` task, you can choose to fix a specific file:
 
     lein cljfmt fix src/foo/core.clj
 
+By specifying the special file `-` you can check/fix data read from stdin, in
+the case of fix the result is written to stdout.
+
+    lein cljfmt fix - < src/foo/core.clj > fixed.clj
+
 ### tools.deps
 
 It is also possible to use the [clojure][] command-line tool to check
