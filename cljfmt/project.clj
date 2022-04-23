@@ -27,6 +27,7 @@
           "-H:+ReportExceptionStackTraces"
           "-H:ReflectionConfigurationFiles=reflection.json"
           "--initialize-at-build-time"
+          "--diagnostics-mode"
           "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
           "--no-fallback"
