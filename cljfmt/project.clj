@@ -25,15 +25,11 @@
   {:name "cljfmt"
    :opts ["--verbose"
           "-H:+ReportExceptionStackTraces"
-          "-J-Dclojure.spec.skip-macros=true"
-          "-J-Dclojure.compiler.direct-linking=true"
           "-H:ReflectionConfigurationFiles=reflection.json"
           "--initialize-at-build-time"
           "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
-          "--verbose"
           "--no-fallback"
-          "--no-server"
           "-J-Xmx3g"]}
   :main cljfmt.main
   :profiles
