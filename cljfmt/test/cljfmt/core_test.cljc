@@ -281,7 +281,33 @@
           "                  (prn x)))"]
          {:indents {'thing.core/defrecord [[:inner 0]]}
           #?@(:cljs [:alias-map {"t" "thing.core"}])})
-        "applies custom indentation to namespaced defrecord"))
+        "applies custom indentation to namespaced defrecord")
+    (is (reformats-to?
+         ["(let [ns subs]"
+          "  (ns \"string\"))"
+          ""
+          "(ns thing.core)"
+          ""
+          "(defthing foo [x]"
+          "(+ x 1))"]
+         ["(let [ns subs]"
+          "  (ns \"string\"))"
+          ""
+          "(ns thing.core)"
+          ""
+          "(defthing foo [x]"
+          "  (+ x 1))"]
+         {:indents {'thing.core/defthing [[:inner 0]]
+                    'let [[:inner 0]]}
+          #?@(:cljs [:alias-map {}])})
+        "recognises the current namespace as part of a qualifed indent spec, even if preceded by a local var named ns")
+    (is (reformats-to?
+         ["(let [ns (range 10)]"
+          "  (reduce + ns"
+          "          ))"]
+         ["(let [ns (range 10)]"
+          "  (reduce + ns))"]
+         "doesn't throw with local vars named ns bound to expressions")))
 
   (testing "function #() syntax"
     (is (reformats-to?

@@ -41,16 +41,16 @@
   (nil? (z/up* zloc)))
 
 (defn- top? [zloc]
-  (and zloc (not= (z/node zloc) (z/root zloc))))
+  (some-> zloc z/up root?))
 
-(defn- top [zloc]
+(defn- root [zloc]
   (if (root? zloc) zloc (recur (z/up zloc))))
 
 (defn- clojure-whitespace? [zloc]
   (z/whitespace? zloc))
 
 (defn- surrounding-whitespace? [zloc]
-  (and (top? (z/up zloc))
+  (and (not (top? zloc))
        (surrounding? zloc clojure-whitespace?)))
 
 (defn remove-surrounding-whitespace [form]
@@ -220,7 +220,9 @@
        (= 'ns (z/sexpr zloc))))
 
 (defn- ns-form? [zloc]
-  (some-> zloc z/down ns-token?))
+  (and (top? zloc)
+       (= (z/tag zloc) :list)
+       (some-> zloc z/down ns-token?)))
 
 (defn- indent-matches? [key sym]
   (if (symbol? sym)
@@ -334,7 +336,7 @@
       zloc)))
 
 (defn- find-namespace [zloc]
-  (some-> zloc top (z/find z/next ns-form?) z/down z/next z/sexpr))
+  (some-> zloc root (z/find z/next ns-form?) z/down z/next z/sexpr))
 
 (defn indent
   ([form]
