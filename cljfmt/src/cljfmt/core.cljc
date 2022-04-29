@@ -336,7 +336,7 @@
       zloc)))
 
 (defn- find-namespace [zloc]
-  (some-> zloc root (z/find z/next ns-form?) z/down z/next z/sexpr))
+  (some-> zloc root z/down (z/find z/right ns-form?) z/down z/next z/sexpr))
 
 (defn indent
   ([form]
