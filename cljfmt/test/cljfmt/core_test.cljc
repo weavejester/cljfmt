@@ -1143,7 +1143,19 @@
         ":three four}"]
        ["{:one two #_comment"
         " :three four}"]
-       {:split-keypairs-over-multiple-lines? true})))
+       {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require c b a))"]
+       ["(ns foo.bar"
+        "  (:require c b a))"]
+       {}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require c b a))"]
+       ["(ns foo.bar"
+        "  (:require a b c))"]
+       {:sort-ns-references? true})))
 
 (deftest test-parsing
   (is (reformats-to?
@@ -1236,3 +1248,153 @@
   (is (= ((wrap-normalize-newlines identity) "foo\nbar\nbaz") "foo\nbar\nbaz"))
   (is (= ((wrap-normalize-newlines identity) "foo\r\nbar\r\nbaz") "foo\r\nbar\r\nbaz"))
   (is (= ((wrap-normalize-newlines identity) "foobarbaz") "foobarbaz")))
+
+(deftest test-sort-ns-references
+  (is (reformats-to?
+       ["(ns foo"
+        "  (:require b c a))"]
+       ["(ns foo"
+        "  (:require a b c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo"
+        "  (:require b"
+        "            c"
+        "            a))"]
+       ["(ns foo"
+        "  (:require a"
+        "            b"
+        "            c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   c"
+        "   \"d\""
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   \"d\""
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]"
+        "   c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require c"
+        "            [a.b :as b] ;; comment behind"
+        "            ;; comment above"
+        "            [b]"
+        "            \"d\"))"]
+       ["(ns foo.bar"
+        "  (:require \"d\""
+        "            [a.b :as b] ;; comment behind"
+        "            ;; comment above"
+        "            [b]"
+        "            c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require [c]"
+        "            [a.b :as b] ;; aabb"
+        "            ;; bbb"
+        "            b))"]
+       ["(ns foo.bar"
+        "  (:require [a.b :as b] ;; aabb"
+        "            ;; bbb"
+        "            b"
+        "            [c]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [foo]c"
+        "   [a.b :as b]))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   [a.b :as b] c"
+        "   [foo]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [foo]"
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]"
+        "   [foo]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [foo]"
+        "   c"
+        "   #?(:clj [clojure.java.io :as io])"
+        "   #?(:clj [a.b.c])"
+        "   ^:keep"
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   #?(:clj [a.b.c])"
+        "   #?(:clj [clojure.java.io :as io])"
+        "   ^:keep"
+        "   [a.b :as b] ;; comment behind"
+        "   ;; comment above"
+        "   [b]"
+        "   c"
+        "   [foo]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require [foo] c [a.b :as b] #_[a.d] [b]))"]
+       ["(ns foo.bar"
+        "  (:require [a.b :as b] #_[a.d] [b] c [foo]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (;; foobar"
+        "   :require [foo] c))"]
+       ["(ns foo.bar"
+        "  (;; foobar"
+        "   :require c [foo]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [c]"
+        "   [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "   b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "   b"
+        "   [c]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   ^{:foo :bar"
+        "     :bar :foo}"
+        "   [c]"
+        "   [a.b :as b]"
+        "   b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   [a.b :as b]"
+        "   b"
+        "   ^{:foo :bar"
+        "     :bar :foo}"
+        "   [c]))"]
+       {:sort-ns-references? true})))

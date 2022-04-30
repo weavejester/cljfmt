@@ -158,7 +158,17 @@
   {:project-root "."
    :file-pattern #"\.clj[csx]?$"
    :ansi?        true
-   :parallel?    false})
+   :parallel?    false
+   :indentation? true
+   :insert-missing-whitespace?            true
+   :remove-multiple-non-indenting-spaces? false
+   :remove-surrounding-whitespace?        true
+   :remove-trailing-whitespace?           true
+   :remove-consecutive-blank-lines?       true
+   :sort-ns-references?                   false
+   :split-keypairs-over-multiple-lines?   false
+   :indents   cljfmt/default-indents
+   :alias-map {}})
 
 (defn merge-default-options [options]
   (-> (merge default-options options)
@@ -201,6 +211,9 @@
    [nil "--[no-]remove-consecutive-blank-lines"
     :default (:remove-consecutive-blank-lines? cljfmt/default-options)
     :id :remove-consecutive-blank-lines?]
+   [nil "--[no-]sort-ns-references"
+    :default (:sort-ns-references? default-options)
+    :id :sort-ns-references?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
     :default (:split-keypairs-over-multiple-lines? cljfmt/default-options)
     :id :split-keypairs-over-multiple-lines?]])

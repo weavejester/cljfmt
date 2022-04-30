@@ -141,6 +141,11 @@ selectively enabled or disabled:
   true if cljfmt should break hashmaps onto multiple lines. This will
   convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
 
+* `:sort-ns-references?` -
+  true if cljfmt should sort `ns` blocks `:require`, `:require-macros`, `:use`,
+  and `:import` by namespace. This will convert `(ns (:require [c] b [a.b.c]))`
+  to `(ns (:require [a.b.c] b [c]))`. Defaults to false.
+
 You can also configure the behavior of cljfmt:
 
 * `:paths` - determines which directories to include in the
@@ -220,7 +225,7 @@ Indentation types are:
 * `:inner` -
   two character indentation applied to form arguments at a depth
   relative to a form symbol
-  
+
 * `:block` -
   first argument aligned indentation applied to form arguments at form
   depth 0 for a symbol
@@ -235,9 +240,9 @@ Form depth is the nested depth of any element within the form.
 A contrived example will help to explain depth:
 
 ```clojure
-(foo 
+(foo
  bar
- (baz 
+ (baz
   (qux plugh)
   corge)
  (grault
