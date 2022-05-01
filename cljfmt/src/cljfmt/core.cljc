@@ -400,26 +400,37 @@
 (defn remove-multiple-non-indenting-spaces [form]
   (transform form edit-all non-indenting-whitespace? replace-with-one-space))
 
+(def default-options
+  {:indentation?                          true
+   :insert-missing-whitespace?            true
+   :remove-consecutive-blank-lines?       true
+   :remove-multiple-non-indenting-spaces? false
+   :remove-surrounding-whitespace?        true
+   :remove-trailing-whitespace?           true
+   :split-keypairs-over-multiple-lines?   false
+   :indents   default-indents
+   :alias-map {}})
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
   ([form opts]
-   (-> form
-       (cond-> (:split-keypairs-over-multiple-lines? opts false)
-         (split-keypairs-over-multiple-lines))
-       (cond-> (:remove-consecutive-blank-lines? opts true)
-         remove-consecutive-blank-lines)
-       (cond-> (:remove-surrounding-whitespace? opts true)
-         remove-surrounding-whitespace)
-       (cond-> (:insert-missing-whitespace? opts true)
-         insert-missing-whitespace)
-       (cond-> (:remove-multiple-non-indenting-spaces? opts false)
-         remove-multiple-non-indenting-spaces)
-       (cond-> (:indentation? opts true)
-         (reindent (:indents opts default-indents)
-                   (:alias-map opts {})))
-       (cond-> (:remove-trailing-whitespace? opts true)
-         remove-trailing-whitespace))))
+   (let [opts (merge default-options opts)]
+     (-> form
+         (cond-> (:split-keypairs-over-multiple-lines? opts)
+           (split-keypairs-over-multiple-lines))
+         (cond-> (:remove-consecutive-blank-lines? opts)
+           remove-consecutive-blank-lines)
+         (cond-> (:remove-surrounding-whitespace? opts)
+           remove-surrounding-whitespace)
+         (cond-> (:insert-missing-whitespace? opts)
+           insert-missing-whitespace)
+         (cond-> (:remove-multiple-non-indenting-spaces? opts)
+           remove-multiple-non-indenting-spaces)
+         (cond-> (:indentation? opts)
+           (reindent (:indents opts) (:alias-map opts)))
+         (cond-> (:remove-trailing-whitespace? opts)
+           remove-trailing-whitespace)))))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
