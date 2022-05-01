@@ -404,22 +404,27 @@
   ([form]
    (reformat-form form {}))
   ([form opts]
-   (-> form
-       (cond-> (:split-keypairs-over-multiple-lines? opts false)
-         (split-keypairs-over-multiple-lines))
-       (cond-> (:remove-consecutive-blank-lines? opts true)
-         remove-consecutive-blank-lines)
-       (cond-> (:remove-surrounding-whitespace? opts true)
-         remove-surrounding-whitespace)
-       (cond-> (:insert-missing-whitespace? opts true)
-         insert-missing-whitespace)
-       (cond-> (:remove-multiple-non-indenting-spaces? opts false)
-         remove-multiple-non-indenting-spaces)
-       (cond-> (:indentation? opts true)
-         (reindent (:indents opts default-indents)
-                   (:alias-map opts {})))
-       (cond-> (:remove-trailing-whitespace? opts true)
-         remove-trailing-whitespace))))
+   (cond-> form
+     (:split-keypairs-over-multiple-lines? opts false)
+     split-keypairs-over-multiple-lines
+
+     (:remove-consecutive-blank-lines? opts true)
+     remove-consecutive-blank-lines
+
+     (:remove-surrounding-whitespace? opts true)
+     remove-surrounding-whitespace
+
+     (:insert-missing-whitespace? opts true)
+     insert-missing-whitespace
+
+     (:remove-multiple-non-indenting-spaces? opts false) remove-multiple-non-indenting-spaces
+
+     (:indentation? opts true)
+     (reindent (:indents opts default-indents)
+               (:alias-map opts {}))
+
+     (:remove-trailing-whitespace? opts true)
+     remove-trailing-whitespace)))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
