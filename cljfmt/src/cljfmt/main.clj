@@ -80,6 +80,8 @@
     (when-let [ex (:exception status)]
       (warn "Failed to format file:" path)
       (print-stack-trace ex))
+    (when (:reformatted status)
+      (println "Reformatting" path))
     (when-let [diff (:diff status)]
       (warn path "has incorrect formatting")
       (warn diff))))
@@ -111,16 +113,27 @@
   ([paths]
    (check paths {}))
   ([paths options]
-   (let [counts (transduce
-                 (comp (mapcat (partial find-files options))
-                       (map (partial check-one options))
-                       (map (fn [status]
-                              (print-file-status options status)
-                              (:counts status))))
-                 (completing merge-counts)
-                 paths)]
+   (let [map*   (if (:parallel? options) pmap map)
+         counts (->> paths
+                     (mapcat (partial find-files options))
+                     (map* (partial check-one options))
+                     (map (fn [status]
+                            (print-file-status options status)
+                            (:counts status)))
+                     (reduce merge-counts))]
      (print-final-count counts)
      (exit counts))))
+
+(defn- fix-one [options file]
+  (let [original (slurp file)]
+    (try
+      (let [revised (reformat-string options original)]
+        (if (not= original revised)
+          (do (spit file revised)
+              {:file file :reformatted true})
+          {:file file}))
+      (catch Exception e
+        {:file file :exception e}))))
 
 (defn fix
   "Applies the formatting (as per `options`) to the Clojure files
@@ -128,17 +141,12 @@
   ([paths]
    (fix paths {}))
   ([paths options]
-   (let [files (mapcat (partial find-files options) paths)]
-     (doseq [^java.io.File f files]
-       (let [original (slurp f)]
-         (try
-           (let [revised (reformat-string options original)]
-             (when (not= original revised)
-               (println "Reformatting" (project-path options f))
-               (spit f revised)))
-           (catch Exception e
-             (warn "Failed to format file:" (project-path options f))
-             (print-stack-trace e))))))))
+   (let [map* (if (:parallel? options) pmap map)]
+     (->> paths
+          (mapcat (partial find-files options))
+          (map* (partial fix-one options))
+          (map (partial print-file-status options))
+          dorun))))
 
 (defn- cli-file-reader [filepath]
   (let [contents (slurp filepath)]
@@ -149,7 +157,8 @@
 (def default-options
   {:project-root "."
    :file-pattern #"\.clj[csx]?$"
-   :ansi?        true})
+   :ansi?        true
+   :parallel?    false})
 
 (defn merge-default-options [options]
   (-> (merge default-options options)
@@ -160,6 +169,8 @@
 
 (def ^:private cli-options
   [[nil "--help"]
+   [nil "--parallel"
+    :id :parallel?]
    [nil "--file-pattern FILE_PATTERN"
     :default (:file-pattern default-options)
     :parse-fn re-pattern]
@@ -207,7 +218,9 @@
       (if (or (nil? cmd) (:help options))
         (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
             (println (:summary parsed-opts)))
-        (case cmd
-          "check" (check paths options)
-          "fix"   (fix paths options)
-          (abort "Unknown cljfmt command:" cmd))))))
+        (do (case cmd
+              "check" (check paths options)
+              "fix"   (fix paths options)
+              (abort "Unknown cljfmt command:" cmd))
+            (when (:parallel? options)
+              (shutdown-agents)))))))
