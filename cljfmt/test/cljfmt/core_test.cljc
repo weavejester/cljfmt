@@ -307,7 +307,21 @@
           "          ))"]
          ["(let [ns (range 10)]"
           "  (reduce + ns))"])
-        "doesn't throw with local vars named ns bound to expressions"))
+        "doesn't throw with local vars named ns bound to expressions")
+    (is (reformats-to?
+         ["(foo.bar/my-letfn [(f [x]"
+          "x)]"
+          "(let [x (f 1)]"
+          "(str x 2"
+          "3 4)))"]
+         ["(foo.bar/my-letfn [(f [x]"
+          "                     x)]"
+          "  (let [x (f 1)]"
+          "    (str x 2"
+          "         3 4)))"]
+         {:indents {'let [[:block 1]]
+                    'foo.bar/my-letfn [[:block 1] [:inner 2 0]]}})
+        "matches qualified parent form symbol"))
 
   (testing "function #() syntax"
     (is (reformats-to?

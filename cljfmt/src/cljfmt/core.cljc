@@ -260,7 +260,7 @@
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
-    (when (and (or (indent-matches? key (fully-qualified-symbol zloc context))
+    (when (and (or (indent-matches? key (fully-qualified-symbol top context))
                    (indent-matches? key (remove-namespace (form-symbol top))))
                (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
