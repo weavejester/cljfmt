@@ -224,12 +224,6 @@
        (= (z/tag zloc) :list)
        (some-> zloc z/down ns-token?)))
 
-(defn- indent-matches? [key sym]
-  (when (symbol? sym)
-    (cond
-      (symbol? key)  (= key sym)
-      (pattern? key) (re-find key (str sym)))))
-
 (defn- token-value [zloc]
   (when (token? zloc) (z/sexpr zloc)))
 
@@ -251,20 +245,16 @@
   (when ns-name
     (symbol (name ns-name) (name possible-sym))))
 
-(defn- fully-qualified-symbol [zloc context]
-  (let [possible-sym (form-symbol zloc)]
-    (if (symbol? possible-sym)
-      (or (qualify-symbol-by-alias-map possible-sym (:alias-map context))
-          (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
-      possible-sym)))
+(defn- fully-qualified-symbol [possible-sym context]
+  (if (symbol? possible-sym)
+    (or (qualify-symbol-by-alias-map possible-sym (:alias-map context))
+        (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
+    possible-sym))
 
-(defn- inner-indent [zloc key depth idx context]
-  (let [top (nth (iterate z/up zloc) depth)]
-    (when (and (or (indent-matches? key (fully-qualified-symbol top context))
-                   (indent-matches? key (remove-namespace (form-symbol top))))
-               (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
-      (let [zup (z/up zloc)]
-        (+ (margin zup) (indent-width zup))))))
+(defn- inner-indent [depth idx zloc]
+  (when (or (nil? idx) (index-matches-top-argument? zloc depth idx))
+    (let [zup (z/up zloc)]
+      (+ (margin zup) (indent-width zup)))))
 
 (defn- nth-form [zloc n]
   (reduce (fn [z f] (when z (f z)))
@@ -279,46 +269,76 @@
            (or (z/linebreak? zloc) (comment? zloc)))
          true)))
 
-(defn- block-indent [zloc key idx context]
-  (when (or (indent-matches? key (fully-qualified-symbol zloc context))
-            (indent-matches? key (remove-namespace (form-symbol zloc))))
+(defn- block-indent [idx zloc]
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
                (> (index-of zloc) idx))
-        (inner-indent zloc key 0 nil context)
-        (list-indent zloc)))))
+        (inner-indent 0 nil zloc)
+        (list-indent zloc))))
 
 (def default-indents
   (merge (read-resource "cljfmt/indents/clojure.clj")
          (read-resource "cljfmt/indents/compojure.clj")
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
-(defmulti ^:private indenter-fn
-  (fn [sym context [type & args]] type))
+(defmulti ^:private indenter-fn first)
 
-(defmethod indenter-fn :inner [sym context [_ depth idx]]
-  (fn [zloc] (inner-indent zloc sym depth idx context)))
+(defmethod indenter-fn :inner [[_ depth idx]]
+  (partial inner-indent depth idx))
 
-(defmethod indenter-fn :block [sym context [_ idx]]
-  (fn [zloc] (block-indent zloc sym idx context)))
+(defmethod indenter-fn :block [[_ idx]]
+  (partial block-indent idx))
 
-(defn- make-indenter [[key opts] context]
-  (apply some-fn (map (partial indenter-fn key context) opts)))
+(defmulti ^:private lookup-indent-rules-for-form-symbols
+  (fn [symbols [section indent-map]] section))
 
-(defn- indent-order [[key _]]
-  (cond
-    (and (symbol? key) (namespace key)) (str 0 key)
-    (symbol? key) (str 1 key)
-    (pattern? key) (str 2 key)))
+(defmethod lookup-indent-rules-for-form-symbols :by-symbol [symbols [_ indent-map]]
+  (mapcat (partial get indent-map) symbols))
+
+(defmethod lookup-indent-rules-for-form-symbols :by-pattern [symbols [_ indent-map]]
+  (mapcat (fn [sym]
+            (->> indent-map
+                 (filter (fn [[pattern rules]]
+                           (re-find pattern (str sym))))
+                 (mapcat second)))
+          symbols))
+
+(defn- applicable-indent-rules [zloc indents context]
+  (let [form-symbol-parents (->> zloc (iterate z/up) (map form-symbol))
+        qualified-form-symbol-parents (map #(fully-qualified-symbol % context) form-symbol-parents)
+        unqualified-form-symbol-parents (map remove-namespace form-symbol-parents)
+        relevant-symbols-at-depth (map (fn [depth]
+                                         (->> [(nth qualified-form-symbol-parents depth)
+                                               (nth unqualified-form-symbol-parents depth)]
+                                              (filter symbol?)
+                                              set))
+                                       (range))]
+    (mapcat
+     (fn [[depth sections]]
+       (mapcat
+        (partial lookup-indent-rules-for-form-symbols (nth relevant-symbols-at-depth depth))
+        sections))
+     indents)))
+
+(defn- indent-order [{:keys [key-type key rule-index]}]
+  ;; TODO: this preserves the behaviour so far, but it might be better to take
+  ;; depth into account as well
+  [(case key-type
+     :namespaced-symbol 0
+     :symbol 1
+     :pattern 2)
+   (str key)
+   rule-index])
+
+(defn- applicable-indenter-fns [zloc indents context]
+  (->> (applicable-indent-rules zloc indents context)
+       (sort-by indent-order)
+       (map (comp indenter-fn :rule))))
 
 (defn- custom-indent [zloc indents context]
-  (if (empty? indents)
-    (list-indent zloc)
-    (let [indenter (->> indents
-                        (map #(make-indenter % context))
-                        (apply some-fn))]
-      (or (indenter zloc)
-          (list-indent zloc)))))
+  (let [fns (concat (applicable-indenter-fns zloc indents context)
+                    [list-indent])]
+    ((apply some-fn fns) zloc)))
 
 (defn- indent-amount [zloc indents context]
   (let [tag (-> zloc z/up z/tag)
@@ -338,6 +358,64 @@
 (defn- find-namespace [zloc]
   (some-> zloc root z/down (z/find z/right ns-form?) z/down z/next z/sexpr))
 
+(defn- indent-rule-key-type [key]
+  (cond
+    (and (symbol? key) (namespace key)) :namespaced-symbol
+    (symbol? key) :symbol
+    :else :pattern))
+
+(defn- build-indent-rule-map [indents]
+  ;; prepare look up maps for various depths, based on what indent rules will
+  ;; need to be matched, e.g.
+  ;; {'defprotocol [[:block 1] [:inner 1]]
+  ;;  'defstruct   [[:block 1]]
+  ;;  'deftest     [[:inner 0]]
+  ;;  #"^with-"    [[:inner 0]]}
+  ;; will become
+  ;; {0 {:by-symbol {'defprotocol ({:depth 0,
+  ;;                                :key-type :symbol,
+  ;;                                :key 'defprotocol,
+  ;;                                :rule-index 0,
+  ;;                                :rule [:block 1]}),
+  ;;                 'defstruct   ({:depth 0,
+  ;;                                :key-type :symbol,
+  ;;                                :key 'defstruct,
+  ;;                                :rule-index 0,
+  ;;                                :rule [:block 1]}),
+  ;;                 'deftest     ({:depth 0,
+  ;;                                :key-type :symbol,
+  ;;                                :key 'deftest,
+  ;;                                :rule-index 0,
+  ;;                                :rule [:inner 0]}) }
+  ;;     :by-pattern {#"^with-" ({:depth 0,
+  ;;                              :key-type :patrule-tern,
+  ;;                              :key #"^wirule-th-",
+  ;;                              :rule-indrule-ex 0,
+  ;;                              :rule [:inner 0]})}},
+  ;;  1 {:by-symbol {'defprotocol ({:depth 1,
+  ;;                                :key-type :symbol,
+  ;;                                :key 'defprotocol,
+  ;;                                :rule-index 1,
+  ;;                                :rule [:inner 1]})}}}
+  ;; which allows finding rules for a given symbol and depth efficiently
+  (->> (for [[key rules] indents
+             [rule-index rule] (map-indexed vector rules)]
+         [key rule-index rule])
+       (reduce (fn [result [key rule-index [type :as rule]]]
+                 (let [key-type (indent-rule-key-type key)
+                       depth (case type
+                               :inner (second rule)
+                               :block 0)]
+                   (update-in result
+                              [depth (if (= key-type :pattern) :by-pattern :by-symbol) key]
+                              conj
+                              {:depth depth
+                               :key-type key-type
+                               :key key
+                               :rule-index rule-index
+                               :rule rule})))
+               {})))
+
 (defn indent
   ([form]
    (indent form default-indents {}))
@@ -345,10 +423,10 @@
    (indent form indents {}))
   ([form indents alias-map]
    (let [ns-name (find-namespace (z/edn form))
-         sorted-indents (sort-by indent-order indents)]
+         prepared-indents (build-indent-rule-map indents)]
      (transform form edit-all should-indent?
-                #(indent-line % sorted-indents {:alias-map alias-map
-                                                :ns-name ns-name})))))
+                #(indent-line % prepared-indents {:alias-map alias-map
+                                                  :ns-name ns-name})))))
 
 (defn- map-key? [zloc]
   (and (z/map? (z/up zloc))
