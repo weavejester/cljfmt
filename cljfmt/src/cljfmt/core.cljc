@@ -225,13 +225,13 @@
        (some-> zloc z/down ns-token?)))
 
 (defn- indent-matches? [key sym]
-  (if (symbol? sym)
+  (when (symbol? sym)
     (cond
       (symbol? key)  (= key sym)
       (pattern? key) (re-find key (str sym)))))
 
 (defn- token-value [zloc]
-  (if (token? zloc) (z/sexpr zloc)))
+  (when (token? zloc) (z/sexpr zloc)))
 
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
@@ -260,14 +260,14 @@
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
-    (if (and (or (indent-matches? key (fully-qualified-symbol zloc context))
-                 (indent-matches? key (remove-namespace (form-symbol top))))
-             (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
+    (when (and (or (indent-matches? key (fully-qualified-symbol zloc context))
+                   (indent-matches? key (remove-namespace (form-symbol top))))
+               (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
 (defn- nth-form [zloc n]
-  (reduce (fn [z f] (if z (f z)))
+  (reduce (fn [z f] (when z (f z)))
           (z/leftmost zloc)
           (repeat n z/right)))
 
@@ -280,8 +280,8 @@
          true)))
 
 (defn- block-indent [zloc key idx context]
-  (if (or (indent-matches? key (fully-qualified-symbol zloc context))
-          (indent-matches? key (remove-namespace (form-symbol zloc))))
+  (when (or (indent-matches? key (fully-qualified-symbol zloc context))
+            (indent-matches? key (remove-namespace (form-symbol zloc))))
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
                (> (index-of zloc) idx))
