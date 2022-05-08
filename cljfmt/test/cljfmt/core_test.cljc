@@ -306,8 +306,8 @@
           "  (reduce + ns"
           "          ))"]
          ["(let [ns (range 10)]"
-          "  (reduce + ns))"]
-         "doesn't throw with local vars named ns bound to expressions")))
+          "  (reduce + ns))"])
+        "doesn't throw with local vars named ns bound to expressions"))
 
   (testing "function #() syntax"
     (is (reformats-to?
