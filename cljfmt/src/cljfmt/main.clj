@@ -149,16 +149,7 @@
 (def default-options
   {:project-root "."
    :file-pattern #"\.clj[csx]?$"
-   :ansi?        true
-   :indentation? true
-   :insert-missing-whitespace?            true
-   :remove-multiple-non-indenting-spaces? false
-   :remove-surrounding-whitespace?        true
-   :remove-trailing-whitespace?           true
-   :remove-consecutive-blank-lines?       true
-   :split-keypairs-over-multiple-lines?   false
-   :indents   cljfmt/default-indents
-   :alias-map {}})
+   :ansi?        true})
 
 (defn merge-default-options [options]
   (-> (merge default-options options)
@@ -182,25 +173,25 @@
     :default (:ansi? default-options)
     :id :ansi?]
    [nil "--[no-]indentation"
-    :default (:indentation? default-options)
+    :default (:indentation? cljfmt/default-options)
     :id :indentation?]
    [nil "--[no-]remove-multiple-non-indenting-spaces"
-    :default (:remove-multiple-non-indenting-spaces? default-options)
+    :default (:remove-multiple-non-indenting-spaces? cljfmt/default-options)
     :id :remove-multiple-non-indenting-spaces?]
    [nil "--[no-]remove-surrounding-whitespace"
-    :default (:remove-surrounding-whitespace? default-options)
+    :default (:remove-surrounding-whitespace? cljfmt/default-options)
     :id :remove-surrounding-whitespace?]
    [nil "--[no-]remove-trailing-whitespace"
-    :default (:remove-trailing-whitespace? default-options)
+    :default (:remove-trailing-whitespace? cljfmt/default-options)
     :id :remove-trailing-whitespace?]
    [nil "--[no-]insert-missing-whitespace"
-    :default (:insert-missing-whitespace? default-options)
+    :default (:insert-missing-whitespace? cljfmt/default-options)
     :id :insert-missing-whitespace?]
    [nil "--[no-]remove-consecutive-blank-lines"
-    :default (:remove-consecutive-blank-lines? default-options)
+    :default (:remove-consecutive-blank-lines? cljfmt/default-options)
     :id :remove-consecutive-blank-lines?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
-    :default (:split-keypairs-over-multiple-lines? default-options)
+    :default (:split-keypairs-over-multiple-lines? cljfmt/default-options)
     :id :split-keypairs-over-multiple-lines?]])
 
 (defn- file-exists? [path]
