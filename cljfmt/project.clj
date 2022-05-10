@@ -35,11 +35,11 @@
           "--no-fallback"
           "--no-server"
           "-J-Xmx3g"]}
+  :main cljfmt.main
   :profiles
   {:uberjar
-   {:main cljfmt.main
-    :aot :all
-    :native-image
+   {:aot :all
+    :native-profile
     {:jvm-opts ["-Dclojure.compiler.direct-linking=true"
                 "-Dclojure.spec.skip-macros=true"]}}
    :provided {:dependencies [[org.clojure/clojurescript "1.10.866"]]}})
