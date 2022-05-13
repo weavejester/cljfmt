@@ -25,21 +25,17 @@
   {:name "cljfmt"
    :opts ["--verbose"
           "-H:+ReportExceptionStackTraces"
-          "-J-Dclojure.spec.skip-macros=true"
-          "-J-Dclojure.compiler.direct-linking=true"
           "-H:ReflectionConfigurationFiles=reflection.json"
           "--initialize-at-build-time"
+          "--diagnostics-mode"
           "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
-          "--verbose"
           "--no-fallback"
-          "--no-server"
           "-J-Xmx3g"]}
+  :main cljfmt.main
   :profiles
-  {:uberjar
-   {:main cljfmt.main
-    :aot :all
-    :native-image
-    {:jvm-opts ["-Dclojure.compiler.direct-linking=true"
-                "-Dclojure.spec.skip-macros=true"]}}
+  {:uberjar {:aot :all}
+   :native-image {:aot :all
+                  :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                             "-Dclojure.spec.skip-macros=true"]}
    :provided {:dependencies [[org.clojure/clojurescript "1.10.866"]]}})
