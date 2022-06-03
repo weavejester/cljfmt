@@ -400,6 +400,79 @@
 (defn remove-multiple-non-indenting-spaces [form]
   (transform form edit-all non-indenting-whitespace? replace-with-one-space))
 
+(def ^:private ns-reference-symbols
+  #{:import :require :require-macros :use})
+
+(defn- ns-reference? [zloc]
+  (and (z/list? zloc)
+       (some-> zloc z/up ns-form?)
+       (-> zloc z/sexpr first ns-reference-symbols)))
+
+(defn- re-seq-matcher [re charmap coll]
+  {:pre (every? charmap coll)}
+  (let [s (apply str (map charmap coll))
+        v (vec coll)
+        m (re-matcher re s)]
+    (letfn [(next-match []
+              (when (.find m)
+                {:value (subvec v (.start m) (.end m))
+                 :start  (.start m)
+                 :end    (.end m)}))]
+      (take-while some? (repeatedly next-match)))))
+
+(defn- find-elements-with-comments [nodes]
+  (re-seq-matcher #"(CNS*)*E(S*C)?"
+                  #(case (n/tag %)
+                     (:whitespace :comma) \S
+                     :comment \C
+                     :newline \N
+                     \E)
+                  nodes))
+
+(defn- splice-into [coll splices]
+  (letfn [(splice [v i splices]
+            (when-let [[{:keys [value start end]} & splices] (seq splices)]
+              (lazy-cat (subvec v i start) value (splice v end splices))))]
+    (splice (vec coll) 0 splices)))
+
+(defn- add-newlines-after-comments [nodes]
+  (mapcat #(if (n/comment? %) [% (n/newlines 1)] [%]) nodes))
+
+(defn- remove-newlines-after-comments [nodes]
+  (mapcat #(when-not (and %1 (n/comment? %1) (n/linebreak? %2)) [%2])
+          (cons nil nodes)
+          nodes))
+
+(defn- sort-node-arguments-by [f nodes]
+  (let [nodes  (add-newlines-after-comments nodes)
+        args   (rest (find-elements-with-comments nodes))
+        sorted (sort-by f (map :value args))]
+    (->> sorted
+         (map #(assoc %1 :value %2) args)
+         (splice-into nodes)
+         (remove-newlines-after-comments))))
+
+(defn- update-children [zloc f]
+  (let [node (z/node zloc)]
+    (z/replace zloc (n/replace-children node (f (n/children node))))))
+
+(defn- nodes-string [nodes]
+  (apply str (map n/string nodes)))
+
+(defn- flatten-nodes [nodes]
+  (mapcat #(if (n/inner? %) (flatten-nodes (n/children %)) [%]) nodes))
+
+(defn- node-sort-string [nodes]
+  (->> (flatten-nodes nodes)
+       (remove (some-fn n/comment? n/whitespace?))
+       (nodes-string)))
+
+(defn sort-arguments [zloc]
+  (update-children zloc #(sort-node-arguments-by node-sort-string %)))
+
+(defn sort-ns-references [form]
+  (transform form edit-all ns-reference? sort-arguments))
+
 (def default-options
   {:indentation?                          true
    :insert-missing-whitespace?            true
@@ -408,6 +481,7 @@
    :remove-surrounding-whitespace?        true
    :remove-trailing-whitespace?           true
    :split-keypairs-over-multiple-lines?   false
+   :sort-ns-references?                   false
    :indents   default-indents
    :alias-map {}})
 
@@ -430,7 +504,9 @@
          (cond-> (:indentation? opts)
            (reindent (:indents opts) (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
-           remove-trailing-whitespace)))))
+           remove-trailing-whitespace)
+         (cond-> (:sort-ns-references? opts)
+           sort-ns-references)))))
 
 #?(:clj
    (defn- ns-require-form? [zloc]

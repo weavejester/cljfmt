@@ -1236,3 +1236,47 @@
   (is (= ((wrap-normalize-newlines identity) "foo\nbar\nbaz") "foo\nbar\nbaz"))
   (is (= ((wrap-normalize-newlines identity) "foo\r\nbar\r\nbaz") "foo\r\nbar\r\nbaz"))
   (is (= ((wrap-normalize-newlines identity) "foobarbaz") "foobarbaz")))
+
+(deftest test-sort-ns-references
+  (is (reformats-to?
+       ["(ns foo"
+        "  (:require b c a))"]
+       ["(ns foo"
+        "  (:require a b c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo"
+        "  (:require b"
+        "            c"
+        "            a))"]
+       ["(ns foo"
+        "  (:require a"
+        "            b"
+        "            c))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require [c]"
+        "            [a.b :as b] ;; aabb"
+        "            ;; bbb"
+        "            b))"]
+       ["(ns foo.bar"
+        "  (:require [a.b :as b] ;; aabb"
+        "            ;; bbb"
+        "            b"
+        "            [c]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [c]"
+        "   [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "   b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "   b"
+        "   [c]))"]
+       {:sort-ns-references? true})))
