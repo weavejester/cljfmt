@@ -497,6 +497,8 @@
   ([form opts]
    (let [opts (merge default-options opts)]
      (-> form
+         (cond-> (:sort-ns-references? opts)
+           sort-ns-references)
          (cond-> (:split-keypairs-over-multiple-lines? opts)
            (split-keypairs-over-multiple-lines))
          (cond-> (:remove-consecutive-blank-lines? opts)
@@ -510,9 +512,7 @@
          (cond-> (:indentation? opts)
            (reindent (:indents opts) (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
-           remove-trailing-whitespace)
-         (cond-> (:sort-ns-references? opts)
-           sort-ns-references)))))
+           remove-trailing-whitespace)))))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
