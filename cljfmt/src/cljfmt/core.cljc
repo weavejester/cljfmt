@@ -408,17 +408,23 @@
        (some-> zloc z/up ns-form?)
        (-> zloc z/sexpr first ns-reference-symbols)))
 
+(defn- re-indexes [re s]
+  (let [matcher    #?(:clj  (re-matcher re s)
+                      :cljs (js/RegExp. (.-source re) "g"))
+        next-match #?(:clj  #(when (.find matcher)
+                               [(.start matcher) (.end matcher)])
+                      :cljs #(when-let [result (.exec matcher s)]
+                               [(.-index result) (.-lastIndex matcher)]))]
+    (take-while some? (repeatedly next-match))))
+
 (defn- re-seq-matcher [re charmap coll]
   {:pre (every? charmap coll)}
   (let [s (apply str (map charmap coll))
-        v (vec coll)
-        m (re-matcher re s)]
-    (letfn [(next-match []
-              (when (.find m)
-                {:value (subvec v (.start m) (.end m))
-                 :start  (.start m)
-                 :end    (.end m)}))]
-      (take-while some? (repeatedly next-match)))))
+        v (vec coll)]
+    (for [[start end] (re-indexes re s)]
+      {:value (subvec v start end)
+       :start start
+       :end   end})))
 
 (defn- find-elements-with-comments [nodes]
   (re-seq-matcher #"(CNS*)*E(S*C)?"
