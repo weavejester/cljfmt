@@ -465,13 +465,18 @@
 (defn- nodes-string [nodes]
   (apply str (map n/string nodes)))
 
-(defn- flatten-nodes [nodes]
-  (mapcat #(if (n/inner? %) (flatten-nodes (n/children %)) [%]) nodes))
+(defn- remove-node-metadata [nodes]
+  (mapcat #(if (= (n/tag %) :meta)
+             (rest (n/children %))
+             [%])
+          nodes))
 
 (defn- node-sort-string [nodes]
-  (->> (flatten-nodes nodes)
-       (remove (some-fn n/comment? n/whitespace?))
-       (nodes-string)))
+  (-> (remove (some-fn n/comment? n/whitespace?) nodes)
+      (remove-node-metadata)
+      (nodes-string)
+      (str/replace #"[\[\]\(\)\{\}]" "")
+      (str/trim)))
 
 (defn sort-arguments [zloc]
   (update-children zloc #(sort-node-arguments-by node-sort-string %)))

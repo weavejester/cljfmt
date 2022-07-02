@@ -1255,6 +1255,16 @@
         "            c))"]
        {:sort-ns-references? true}))
   (is (reformats-to?
+       ["(ns foo"
+        "  (:require b"
+        "            [c :as d]"
+        "            a))"]
+       ["(ns foo"
+        "  (:require a"
+        "            b"
+        "            [c :as d]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
        ["(ns foo.bar"
         "  (:require [c]"
         "            [a.b :as b] ;; aabb"
@@ -1277,6 +1287,20 @@
         "  (:require"
         "   [a.b :as b] ;; aabb"
         "   ;; bbb"
+        "   b"
+        "   [c]))"]
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [c]"
+        "   ^:keep a"
+        "   #?(:clj d)"
+        "   b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "   #?(:clj d)"
+        "   ^:keep a"
         "   b"
         "   [c]))"]
        {:sort-ns-references? true})))
