@@ -38,4 +38,4 @@
    :native-image {:aot :all
                   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
                              "-Dclojure.spec.skip-macros=true"]}
-   :provided {:dependencies [[org.clojure/clojurescript "1.10.866"]]}})
+   :provided {:dependencies [[org.clojure/clojurescript "1.11.4"]]}})
