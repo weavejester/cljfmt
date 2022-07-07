@@ -32,7 +32,7 @@ The easiest way to get started with cljfmt is to add the lein-cljfmt
 plugin to your [Leiningen][] project map:
 
 ```clojure
-:plugins [[lein-cljfmt "0.8.1"]]
+:plugins [[lein-cljfmt "0.8.2"]]
 ```
 
 cljfmt has tested on Leiningen 2.5, but may not work on older
@@ -73,7 +73,7 @@ your project's files:
 [clojure]: https://clojure.org/guides/deps_and_cli
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.8.1"}}}' \
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.8.2"}}}' \
   -m cljfmt.main [check|fix]
 ```
 
@@ -87,7 +87,7 @@ indentation file. For example, `indentation.clj`:
 You can then specify this file when running cljfmt:
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.8.1"}}}' \
+clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.8.2"}}}' \
   -m cljfmt.main check \
   --indents indentation.clj
 ```
