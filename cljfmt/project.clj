@@ -32,9 +32,9 @@
           "-H:Log=registerResource:"
           "--no-fallback"
           "-J-Xmx3g"]}
-  :main cljfmt.main
   :profiles
-  {:uberjar {:aot :all}
+  {:uberjar {:main cljfmt.main
+             :aot :all}
    :native-image {:aot :all
                   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
                              "-Dclojure.spec.skip-macros=true"]}
