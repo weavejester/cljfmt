@@ -155,10 +155,11 @@
       (edn/read-string contents))))
 
 (def default-options
-  {:project-root "."
-   :file-pattern #"\.clj[csx]?$"
-   :ansi?        true
-   :parallel?    false})
+  (merge cljfmt/default-options
+         {:project-root "."
+          :file-pattern #"\.clj[csx]?$"
+          :ansi?        true
+          :parallel?    false}))
 
 (defn merge-default-options [options]
   (-> (merge default-options options)
