@@ -1296,11 +1296,11 @@
         "   [c]"
         "   ^:keep a"
         "   #?(:clj d)"
-        "   b))"]
+        "   ^{:x 1} b))"]
        ["(ns foo.bar"
         "  (:require"
         "   #?(:clj d)"
         "   ^:keep a"
-        "   b"
+        "   ^{:x 1} b"
         "   [c]))"]
        {:sort-ns-references? true})))
