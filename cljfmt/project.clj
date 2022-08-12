@@ -36,6 +36,7 @@
   {:uberjar {:main cljfmt.main
              :aot :all}
    :native-image {:aot :all
+                  :main cljfmt.main
                   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
                              "-Dclojure.spec.skip-macros=true"]}
    :provided {:dependencies [[org.clojure/clojurescript "1.11.4"]]}})
