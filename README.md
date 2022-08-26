@@ -141,6 +141,11 @@ selectively enabled or disabled:
   true if cljfmt should break hashmaps onto multiple lines. This will
   convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
 
+* `:sort-ns-references?` -
+  true if cljfmt should alphanumerically sort the requires, imports and
+  other references in the `ns` forms at the top of your namespaces.
+  Defaults to false.
+
 You can also configure the behavior of cljfmt:
 
 * `:paths` - determines which directories to include in the
