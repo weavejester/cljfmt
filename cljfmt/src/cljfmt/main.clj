@@ -204,7 +204,10 @@
     :id :remove-consecutive-blank-lines?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
     :default (:split-keypairs-over-multiple-lines? cljfmt/default-options)
-    :id :split-keypairs-over-multiple-lines?]])
+    :id :split-keypairs-over-multiple-lines?]
+   [nil "--[no-]sort-ns-references"
+    :default (:sort-ns-references? cljfmt/default-options)
+    :id :sort-ns-references?]])
 
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
