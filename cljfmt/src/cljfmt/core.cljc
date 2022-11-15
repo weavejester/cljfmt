@@ -350,6 +350,59 @@
                 #(indent-line % sorted-indents {:alias-map alias-map
                                                 :ns-name ns-name})))))
 
+(defn aliased-keyword? [zloc]
+  (let [node (z/node zloc)
+        ret (and (= :token (z/tag zloc))
+                 (n/keyword-node? node)
+                 (qualified-keyword? (n/sexpr node)))]
+    (and (= :token (z/tag zloc))
+         (n/keyword-node? node)
+         (qualified-keyword? (n/sexpr node)))))
+
+(defn- ns-require-form? [zloc]
+  (and (some-> zloc top-level-form ns-form?)
+       (some-> zloc z/child-sexprs first (= :require))))
+
+(defn- as-keyword? [zloc]
+  (and (= :token (z/tag zloc))
+       (= :as (z/sexpr zloc))))
+
+(defn- as-zloc->alias-mapping [as-zloc]
+  (let [alias (some-> as-zloc z/right z/sexpr)
+        current-namespace (some-> as-zloc z/leftmost z/sexpr)
+        grandparent-node (some-> as-zloc z/up z/up)
+        parent-namespace (when-not (ns-require-form? grandparent-node)
+                           (first (z/child-sexprs grandparent-node)))]
+    (when (and (symbol? alias) (symbol? current-namespace))
+      {(str alias) (if parent-namespace
+                     (str parent-namespace "." current-namespace)
+                     (str current-namespace))})))
+
+(defn- alias-map-for-form [form]
+  (when-let [require-zloc (-> form z/edn (z/find z/next ns-require-form?))]
+    (->> (find-all require-zloc as-keyword?)
+         (map as-zloc->alias-mapping)
+         (apply merge))))
+
+(defn expand-aliased-keyword [zloc alias-map]
+  (z/replace zloc (n/sexpr (z/node zloc) {:auto-resolve alias-map})))
+
+(defn expand-aliased-keywords [form]
+  (let [ns-name (find-namespace (z/edn form))
+        alias-map (->> (alias-map-for-form form)
+                       (into {:current ns-name}
+                             (map (fn [[k v]] [(symbol k) (symbol v)]))))]
+
+    (transform form
+               edit-all
+               aliased-keyword?
+               #(expand-aliased-keyword % alias-map))))
+
+(expand-aliased-keywords
+ (p/parse-string-all
+  "(ns foo.bar (:require [foo.bar :as baz] [a.b :as c])(do stuff ::baz/bazzz ::foo ;; #::foo{:bar}
+))"))
+
 (defn- map-key? [zloc]
   (and (z/map? (z/up zloc))
        (even? (index-of zloc))
@@ -517,36 +570,9 @@
          (cond-> (:indentation? opts)
            (reindent (:indents opts) (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
-           remove-trailing-whitespace)))))
-
-#?(:clj
-   (defn- ns-require-form? [zloc]
-     (and (some-> zloc top-level-form ns-form?)
-          (some-> zloc z/child-sexprs first (= :require)))))
-
-#?(:clj
-   (defn- as-keyword? [zloc]
-     (and (= :token (z/tag zloc))
-          (= :as (z/sexpr zloc)))))
-
-#?(:clj
-   (defn- as-zloc->alias-mapping [as-zloc]
-     (let [alias             (some-> as-zloc z/right z/sexpr)
-           current-namespace (some-> as-zloc z/leftmost z/sexpr)
-           grandparent-node  (some-> as-zloc z/up z/up)
-           parent-namespace  (when-not (ns-require-form? grandparent-node)
-                               (first (z/child-sexprs grandparent-node)))]
-       (when (and (symbol? alias) (symbol? current-namespace))
-         {(str alias) (if parent-namespace
-                        (format "%s.%s" parent-namespace current-namespace)
-                        (str current-namespace))}))))
-
-#?(:clj
-   (defn- alias-map-for-form [form]
-     (when-let [require-zloc (-> form z/edn (z/find z/next ns-require-form?))]
-       (->> (find-all require-zloc as-keyword?)
-            (map as-zloc->alias-mapping)
-            (apply merge)))))
+           remove-trailing-whitespace)
+         (cond-> (:expand-aliased-keywords? opts)
+           expand-aliased-keywords)))))
 
 (defn reformat-string
   ([form-string]
