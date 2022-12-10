@@ -9,8 +9,11 @@
                       (:test-paths project))]
     (if (empty? paths)
       (leiningen.core.main/abort "No source or test paths defined in project map")
-      (->> (map io/file paths)
-           (filter #(and (.exists %) (.isDirectory %)))))))
+      (->> (conj paths "project.clj")
+           (map io/file)
+           (filter #(and (.exists %)
+                         (or (.isDirectory %)
+                             (= "project.clj" (.getName %)))))))))
 
 (defn- execute-command [command options paths]
   (case command
