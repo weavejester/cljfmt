@@ -172,6 +172,8 @@
   [[nil "--help"]
    [nil "--parallel"
     :id :parallel?]
+   [nil "--project-root PROJECT_ROOT"
+    :default (:project-root default-options)]
    [nil "--file-pattern FILE_PATTERN"
     :default (:file-pattern default-options)
     :parse-fn re-pattern]
@@ -179,8 +181,6 @@
     :parse-fn cli-file-reader]
    [nil "--alias-map ALIAS_MAP_PATH"
     :parse-fn cli-file-reader]
-   [nil "--project-root PROJECT_ROOT"
-    :default (:project-root default-options)]
    [nil "--[no-]ansi"
     :default (:ansi? default-options)
     :id :ansi?]
