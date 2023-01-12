@@ -1,12 +1,12 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
   (:require [cljfmt.core :as cljfmt]
-            [clojure.string :as str]
+            [cljfmt.diff :as diff]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.stacktrace :as st]
-            [clojure.tools.cli :as cli]
-            [cljfmt.diff :as diff])
+            [clojure.string :as str]
+            [clojure.tools.cli :as cli])
   (:gen-class))
 
 (defn- abort [& msg]
@@ -154,68 +154,89 @@
       (read-string contents)
       (edn/read-string contents))))
 
-(def default-options
+(defn- parent-dirs [^String root]
+  (->> (.getAbsoluteFile (io/file root))
+       (iterate #(.getParentFile ^java.io.File %))
+       (take-while some?)))
+
+(defn- find-file-in-dir ^java.io.File [^java.io.File dir ^String name]
+  (let [f (io/file dir name)]
+    (when (.exists f) f)))
+
+(defn- find-config-file-in-dir ^java.io.File [^java.io.File dir]
+  (or (find-file-in-dir dir ".cljfmt.edn")
+      (find-file-in-dir dir ".cljfmt.clj")))
+
+(defn- load-configuration []
+  (some->> (parent-dirs "")
+           (some find-config-file-in-dir)
+           (#(.getPath ^java.io.File %))
+           cli-file-reader))
+
+(defn- load-default-options []
   (merge cljfmt/default-options
          {:project-root "."
           :file-pattern #"\.clj[csx]?$"
           :ansi?        true
-          :parallel?    false}))
+          :parallel?    false}
+         (load-configuration)))
 
-(defn merge-default-options [options]
-  (-> (merge default-options options)
-      (assoc :indents (merge (:indents default-options)
+(defn merge-default-options [defaults options]
+  (-> (merge defaults options)
+      (assoc :indents (merge (:indents defaults)
                              (:indents options {})))))
 
 (def default-paths ["src" "test" "project.clj"])
 
-(def ^:private cli-options
+(defn- cli-options [defaults]
   [[nil "--help"]
    [nil "--parallel"
     :id :parallel?]
    [nil "--project-root PROJECT_ROOT"
-    :default (:project-root default-options)]
+    :default (:project-root defaults)]
    [nil "--file-pattern FILE_PATTERN"
-    :default (:file-pattern default-options)
+    :default (:file-pattern defaults)
     :parse-fn re-pattern]
    [nil "--indents INDENTS_PATH"
     :parse-fn cli-file-reader]
    [nil "--alias-map ALIAS_MAP_PATH"
     :parse-fn cli-file-reader]
    [nil "--[no-]ansi"
-    :default (:ansi? default-options)
+    :default (:ansi? defaults)
     :id :ansi?]
    [nil "--[no-]indentation"
-    :default (:indentation? cljfmt/default-options)
+    :default (:indentation? defaults)
     :id :indentation?]
    [nil "--[no-]remove-multiple-non-indenting-spaces"
-    :default (:remove-multiple-non-indenting-spaces? cljfmt/default-options)
+    :default (:remove-multiple-non-indenting-spaces? defaults)
     :id :remove-multiple-non-indenting-spaces?]
    [nil "--[no-]remove-surrounding-whitespace"
-    :default (:remove-surrounding-whitespace? cljfmt/default-options)
+    :default (:remove-surrounding-whitespace? defaults)
     :id :remove-surrounding-whitespace?]
    [nil "--[no-]remove-trailing-whitespace"
-    :default (:remove-trailing-whitespace? cljfmt/default-options)
+    :default (:remove-trailing-whitespace? defaults)
     :id :remove-trailing-whitespace?]
    [nil "--[no-]insert-missing-whitespace"
-    :default (:insert-missing-whitespace? cljfmt/default-options)
+    :default (:insert-missing-whitespace? defaults)
     :id :insert-missing-whitespace?]
    [nil "--[no-]remove-consecutive-blank-lines"
-    :default (:remove-consecutive-blank-lines? cljfmt/default-options)
+    :default (:remove-consecutive-blank-lines? defaults)
     :id :remove-consecutive-blank-lines?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
-    :default (:split-keypairs-over-multiple-lines? cljfmt/default-options)
+    :default (:split-keypairs-over-multiple-lines? defaults)
     :id :split-keypairs-over-multiple-lines?]
    [nil "--[no-]sort-ns-references"
-    :default (:sort-ns-references? cljfmt/default-options)
+    :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]])
 
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
 
 (defn -main [& args]
-  (let [parsed-opts   (cli/parse-opts args cli-options)
+  (let [defaults      (load-default-options)
+        parsed-opts   (cli/parse-opts args (cli-options defaults))
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge-default-options (:options parsed-opts))
+        options       (merge-default-options defaults (:options parsed-opts))
         paths         (or (seq paths) (filter file-exists? default-paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))

@@ -101,6 +101,7 @@ clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.9.0"}}}' \
 
 ## Configuration
 
+### Leiningen
 You can configure lein-cljfmt by adding a `:cljfmt` map to your
 project:
 
@@ -108,6 +109,13 @@ project:
 :cljfmt {}
 ```
 
+### Command line
+You can configure `cljfmt` by placing a `.cljfmt.edn` or `.cljfmt.clj`
+file in the directory where you run the command, or any parent
+directory. The first file in the hierarchy will be used, files in
+higher up parent directories are ignored.
+
+### Rules
 cljfmt has several different formatting rules, and these can be
 selectively enabled or disabled:
 
