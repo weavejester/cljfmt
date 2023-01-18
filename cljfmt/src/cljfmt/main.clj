@@ -173,18 +173,18 @@
            (#(.getPath ^java.io.File %))
            cli-file-reader))
 
-(defn- load-default-options []
+(def default-options
   (merge cljfmt/default-options
          {:project-root "."
           :file-pattern #"\.clj[csx]?$"
           :ansi?        true
-          :parallel?    false}
-         (load-configuration)))
+          :parallel?    false}))
 
-(defn merge-default-options [defaults options]
-  (-> (merge defaults options)
-      (assoc :indents (merge (:indents defaults)
-                             (:indents options {})))))
+(defn merge-options
+  "Merge two maps of cljfmt options together."
+  [a b]
+  (-> (merge a b)
+      (assoc :indents (merge (:indents a {}) (:indents b)))))
 
 (def default-paths ["src" "test" "project.clj"])
 
@@ -233,10 +233,10 @@
   (.exists (io/as-file path)))
 
 (defn -main [& args]
-  (let [defaults      (load-default-options)
+  (let [defaults      (merge-options default-options (load-configuration))
         parsed-opts   (cli/parse-opts args (cli-options defaults))
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge-default-options defaults (:options parsed-opts))
+        options       (merge-options defaults (:options parsed-opts))
         paths         (or (seq paths) (filter file-exists? default-paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))

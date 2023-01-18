@@ -1,6 +1,6 @@
 (ns leiningen.cljfmt
   (:require [cljfmt.core :as cljfmt]
-            [cljfmt.main]
+            [cljfmt.main :as main]
             [clojure.java.io :as io]
             [leiningen.core.main]))
 
@@ -18,6 +18,9 @@
     "fix"   (cljfmt.main/fix paths options)
     (leiningen.core.main/abort "Unknown cljfmt command:" command)))
 
+(defn- merge-default-options [options]
+  (main/merge-options main/default-options options))
+
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files"
   [project command & paths]
@@ -27,7 +30,7 @@
         options (-> (:cljfmt project)
                     (dissoc :paths)
                     (assoc :project-root (:root project))
-                    (cljfmt.main/merge-default-options))]
+                    (merge-default-options))]
     (if leiningen.core.main/*info*
       (execute-command command options paths)
       (with-out-str
