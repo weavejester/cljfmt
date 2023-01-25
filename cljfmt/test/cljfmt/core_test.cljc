@@ -1143,7 +1143,39 @@
         ":three four}"]
        ["{:one two #_comment"
         " :three four}"]
-       {:split-keypairs-over-multiple-lines? true})))
+       {:split-keypairs-over-multiple-lines? true}))
+  #?(:clj
+     (is (reformats-to?
+          ["(ns foo.bar"
+           "  (:require"
+           "   [some.lib :as lib]"
+           "   [other.lib :as other]))"
+           "(lib/block2 1 2"
+           "      3 4)"
+           "(other/block1 1"
+           "     2"
+           "        3 4)"
+           "(other/overridden 1"
+           "  2"
+           "  3 4)"]
+          ["(ns foo.bar"
+           "    (:require"
+           "     [other.lib :as other]"
+           "     [some.lib :as lib]))"
+           "(lib/block2 1 2"
+           "  3 4)"
+           "(other/block1 1"
+           "  2"
+           "  3 4)"
+           "(other/overridden 1"
+           "  2"
+           "  3 4)"]
+          {:alias-map {"other" "another.lib"}
+           :sort-ns-references? true
+           :indents   {'block1                 [[:block 1]]
+                       'other.lib/overridden   [[:block 2]] ;; This one is ignored
+                       'another.lib/overridden [[:block 1]] ;; As this one overrides.
+                       'some.lib/block2        [[:block 2]]}}))))
 
 (deftest test-parsing
   (is (reformats-to?
