@@ -1,2 +1,0 @@
-language: clojure
-before_install: yes | sudo lein upgrade && cd cljfmt
