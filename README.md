@@ -1,6 +1,7 @@
 # cljfmt
 
 ![Build Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)
+[![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
 cljfmt is a tool for formatting Clojure code [idiomatically][].
 
