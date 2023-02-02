@@ -17,7 +17,12 @@ jobs:
         uses: DeLaGuardo/setup-clojure@10.1
         with:
           lein: 2.9.10
+          bb: latest
 
       - name: Execute tests
         working-directory: ./cljfmt
         run: lein test
+
+      - name: Execute babashka tests
+        working-directory: ./cljfmt
+        run: bb test
