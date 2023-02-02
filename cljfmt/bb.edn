@@ -3,12 +3,9 @@
  {test {:doc "Run babashka tests"
         :extra-deps {eftest/eftest {:mvn/version "0.6.0"}}
         :extra-paths ["test"]
-        :requires ([eftest.runner :refer [find-tests run-tests]])
-        :task (let [{:keys [fail error]} (run-tests
-                                          (find-tests "test")
-                                          (when-not (System/console)
-                                            ;; better output in github actions
-                                            {:report clojure.test/report}))]
+        :requires ([clojure.test :as t]
+                   [cljfmt.core-test])
+        :task (let [{:keys [fail error]} (t/run-tests 'cljfmt.core-test)]
                 (when (or (pos? fail)
                           (pos? error))
                   (throw (ex-info "Tests failed" {:babashka/exit 1}))))}}}
