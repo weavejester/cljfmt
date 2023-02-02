@@ -1,5 +1,5 @@
 (ns cljfmt.test-util.cljs
-  (:require [cljs.test :as test]
+  (:require [clojure.test :as test]
             [cljfmt.test-util.common :as common]))
 
 #?(:clj
