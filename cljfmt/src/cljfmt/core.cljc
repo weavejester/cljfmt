@@ -224,12 +224,6 @@
        (= (z/tag zloc) :list)
        (some-> zloc z/down ns-token?)))
 
-(defn- indent-matches? [key sym]
-  (when (symbol? sym)
-    (cond
-      (symbol? key)  (= key sym)
-      (pattern? key) (re-find key (str sym)))))
-
 (defn- token-value [zloc]
   (when (token? zloc) (z/sexpr zloc)))
 
@@ -251,17 +245,26 @@
   (when ns-name
     (symbol (name ns-name) (name possible-sym))))
 
-(defn- fully-qualified-symbol [zloc context]
+(defn- fully-qualified-symbol [possible-sym context]
+  (if (symbol? possible-sym)
+    (or (qualify-symbol-by-alias-map possible-sym (:alias-map context))
+        (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
+    possible-sym))
+
+(defn- symbol-matches-key? [sym key]
+  (when (symbol? sym)
+    (cond
+      (symbol? key)  (= key sym)
+      (pattern? key) (re-find key (str sym)))))
+
+(defn form-matches-key? [zloc key context]
   (let [possible-sym (form-symbol zloc)]
-    (if (symbol? possible-sym)
-      (or (qualify-symbol-by-alias-map possible-sym (:alias-map context))
-          (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
-      possible-sym)))
+    (or (symbol-matches-key? (fully-qualified-symbol possible-sym context) key)
+        (symbol-matches-key? (remove-namespace possible-sym) key))))
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
-    (when (and (or (indent-matches? key (fully-qualified-symbol zloc context))
-                   (indent-matches? key (remove-namespace (form-symbol top))))
+    (when (and (form-matches-key? top key context)
                (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
@@ -280,8 +283,7 @@
          true)))
 
 (defn- block-indent [zloc key idx context]
-  (when (or (indent-matches? key (fully-qualified-symbol zloc context))
-            (indent-matches? key (remove-namespace (form-symbol zloc))))
+  (when (form-matches-key? zloc key context)
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
                (> (index-of zloc) idx))
