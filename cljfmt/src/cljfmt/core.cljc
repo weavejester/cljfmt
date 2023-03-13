@@ -31,7 +31,7 @@
       zloc)))
 
 (defn- transform [form zf & args]
-  (z/root (apply zf (z/edn form) args)))
+  (z/root (apply zf (z/of-node form) args)))
 
 (defn- surrounding? [zloc p?]
   (and (p? zloc) (or (nil? (z/left* zloc))
@@ -346,7 +346,7 @@
   ([form indents]
    (indent form indents {}))
   ([form indents alias-map]
-   (let [ns-name (find-namespace (z/edn form))
+   (let [ns-name (find-namespace (z/of-node form))
          sorted-indents (sort-by indent-order indents)]
      (transform form edit-all should-indent?
                 #(indent-line % sorted-indents {:alias-map alias-map
@@ -545,8 +545,8 @@
 
 #?(:clj
    (defn- alias-map-for-form [form]
-     (when-let [require-zloc (-> form z/edn (z/find z/next ns-require-form?))]
-       (->> (find-all require-zloc as-keyword?)
+     (when-let [req-zloc (-> form z/of-node (z/find z/next ns-require-form?))]
+       (->> (find-all req-zloc as-keyword?)
             (map as-zloc->alias-mapping)
             (apply merge)))))
 
