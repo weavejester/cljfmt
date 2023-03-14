@@ -296,7 +296,7 @@
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
 (defmulti ^:private indenter-fn
-  (fn [sym context [type & args]] type))
+  (fn [_sym _context [type & _args]] type))
 
 (defmethod indenter-fn :inner [sym context [_ depth idx]]
   (fn [zloc] (inner-indent zloc sym depth idx context)))
@@ -507,7 +507,7 @@
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
          (cond-> (:split-keypairs-over-multiple-lines? opts)
-           (split-keypairs-over-multiple-lines))
+           split-keypairs-over-multiple-lines)
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
          (cond-> (:remove-surrounding-whitespace? opts)
