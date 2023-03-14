@@ -225,6 +225,10 @@ In order to load the standard configuration file from Leiningen, add the
 
 ### Formatting Options
 
+* `:align-map-columns?` -
+  true if cljfmt should align the keys and values of maps such that they
+  line up in columns. Defaults to false.
+
 * `:indentation?` -
   true if cljfmt should correct the indentation of your code.
   Defaults to true.
