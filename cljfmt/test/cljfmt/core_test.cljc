@@ -4,7 +4,8 @@
                  :cljs (cljs.test :refer-macros)) [deftest testing is are]]
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
-                                 replace-newlines wrap-normalize-newlines]])
+                                 replace-newlines wrap-normalize-newlines]]
+            [cljfmt.test-util.common :as common])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
@@ -1844,6 +1845,75 @@
 
 (deftest test-clojure-12-syntax
   (is (reformats-to? ["^Long/1 a"] ["^Long/1 a"])))
+
+(deftest test-align-forms
+  (testing "straightforward test cases"
+    (testing "sanity"
+      (is (reformats-to?
+           ["(def x 1)"]
+           ["(def x 1)"]
+           {:align-forms? true})))
+    (testing "no op 2"
+      (is (reformats-to?
+           ["(let [x 1"
+            "      y 2])"]
+           ["(let [x 1"
+            "      y 2])"]
+           {:align-forms? true})))
+    (testing "no op 1"
+      (is (reformats-to?
+           ["(let [x 1])"]
+           ["(let [x 1])"]
+           {:align-forms? true})))
+    (testing "empty"
+      (is (reformats-to?
+           ["(let [])"]
+           ["(let [])"]
+           {:align-forms? true})))
+    (testing "simple"
+      (is (reformats-to?
+           ["(let [x 1"
+            "      longer 2])"]
+           ["(let [x      1"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "nested align"
+      (is (reformats-to?
+           ["(let [x (let [x 1"
+            "     longer 2])"
+            " longer 2])"]
+           ["(let [x      (let [x      1"
+            "                   longer 2])"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "preserves comments"
+      (is (reformats-to?
+           ["(let [a 1 ;; comment"
+            "      longer 2])"]
+           ["(let [a      1 ;; comment"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "align args"
+      (testing "simple"
+        (is (reformats-to?
+             ["(special something [a 1"
+              "                    longer 2])"]
+             ["(special something [a      1"
+              "                    longer 2])"]
+             {:align-forms? true
+              :aligns       {'special #{1}}})))
+      (testing "don't mixup args"
+        (is (reformats-to?
+             ["(special [a 1"
+              "          longer 2]"
+              "         [a 1"
+              "          longer 2])"]
+             ["(special [a 1"
+              "          longer 2]"
+              "         [a      1"
+              "          longer 2])"]
+             {:align-forms? true
+              :aligns {'special #{1}}}))))))
 
 (deftest test-align-maps
   (testing "straightforward test cases"

@@ -346,10 +346,11 @@
    :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
    :function-arguments-indentation        :community
-   :indents       default-indents
-   :extra-indents {}
+   :indents                               default-indents
+   :extra-indents                         {}
    :align-maps?                           false
-   :alias-map     {}})
+   :align-forms?                          false
+   :alias-map                             {}})
 
 (defmulti ^:private indenter-fn
   (fn [_sym _context [type & _args]] type))
@@ -640,6 +641,20 @@
 (defn align-maps [form]
   (transform form edit-all z/map? align-form-columns))
 
+(def ^:private default-aligns
+  (read-resource "cljfmt/align/clojure.clj"))
+
+(defn alignable? [aligns form]
+  (let [zloc (-> form z/of-node first)]
+    (when (and (not (z/whitespace-or-comment? zloc))
+               (z/list? (z/up zloc)))
+      (let [form-type (some-> zloc z/up z/down z/string symbol)]
+        (when-let [alignable-indices (aligns form-type)]
+          (contains? alignable-indices (-> zloc index-of dec)))))))
+
+(defn align-forms [form aligns]
+  (transform form edit-all (partial alignable? aligns) align-form-columns))
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -660,6 +675,8 @@
            remove-multiple-non-indenting-spaces)
          (cond-> (:align-maps? opts)
            align-maps)
+         (cond-> (:align-forms? opts)
+           (align-forms (:aligns opts)))
          (cond-> (:indentation? opts)
            (reindent (merge (:indents opts) (:extra-indents opts))
                      (:alias-map opts)

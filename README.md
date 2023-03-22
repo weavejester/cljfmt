@@ -303,6 +303,21 @@ In order to load the standard configuration file from Leiningen, add the
   ```
   Defaults to `false`.
 
+* `:align-forms?` -
+  true if cljfmt should left align the values of specified forms
+  This will convert:
+  ```clojure
+  (let [foo 1
+        barbaz 2])
+  ```
+  To:
+  ```clojure
+  (let [foo    1
+        barbaz 2])
+  ```
+
+  Defaults to false.
+
 You can also configure the behavior of cljfmt:
 
 [indents.md]: docs/INDENTS.md
@@ -326,9 +341,39 @@ You can also configure the behavior of cljfmt:
   Paths can also be passed as command line arguments. If the path is
   `-`, then the input is STDIN, and the output STDOUT.
 
+* `:aligns` -
+  a map of var symbols to arguments' positions that require alignment
+  i.e. `{myform #{1 2}}` will align `[a 1]` and `[b 2]` forms like `(myform 0 [a 1] [b 2])`.
+  Argument positions 0-indexed.
+  See the next section for a detailed explanation.
+
+  Unqualified symbols in the align map will apply to any symbol with a
+  matching "name" - so `foo` would apply to both `org.me/foo` and
+  `com.them/foo`. If you want finer-grained control, you can use a fully
+  qualified symbol in the aligns map to configure form alignment that
+  applies only to `org.me/foo`:
+
+  ```clojure
+  :cljfmt {:aligns {org.me/foo #{2 3}}
+  ```
+
+  Configured this way, `org.me/foo` will align only argument positions 2 3 (starting from 0).
+
+  Note that `cljfmt` currently doesn't resolve symbols brought into a
+  namespace using `:refer` or `:use` - they can only be controlled by an
+  unqualified align rule.
+
+  As with Leiningen profiles, you can add metadata hints. If you want to
+  override all existing aligns, instead of just supplying new aligns
+  that are merged with the defaults, you can use the `:replace` hint:
+
+  ```clojure
+  :cljfmt {:aligns ^:replace {#".*" #{0}}
+  ```
+
 ## License
 
-Copyright © 2024 James Reeves
+Copyright © 2025 James Reeves
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
