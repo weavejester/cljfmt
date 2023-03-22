@@ -486,6 +486,83 @@
 (defn sort-ns-references [form]
   (transform form edit-all ns-reference? sort-arguments))
 
+(defn- node-width [zloc]
+  (-> zloc z/node n/string count))
+
+(defn- node-column [zloc]
+  (loop [zloc (z/left* zloc), n 0]
+    (if (or (nil? zloc) (line-break? zloc))
+      n
+      (recur (z/left* zloc)
+             (if (clojure-whitespace? zloc) n (inc n))))))
+
+(defn- comma-after? [zloc]
+  (let [right (z/right* zloc)]
+    (or (comma? right)
+        (and (z/whitespace? right) (comma? (z/right* right))))))
+
+(defn- max-column-widths [zloc]
+  (loop [zloc (z/down zloc), max-widths {}]
+    (if (nil? zloc)
+      max-widths
+      (let [width  (if (comma-after? zloc)
+                     (inc (node-width zloc))
+                     (node-width zloc))
+            column (node-column zloc)]
+        (recur (z/right zloc)
+               (update max-widths column (fnil max 0) width))))))
+
+(defn- remove-space-right [zloc]
+  (let [right (z/right* zloc)]
+    (if (space? right) (z/remove* right) zloc)))
+
+(defn- insert-space-right [zloc n]
+  (let [right (z/right* zloc)]
+    (if (comma? right)
+      (insert-space-right (remove-space-right right) (dec n))
+      (z/insert-space-right zloc n))))
+
+(defn- set-spacing-right [zloc n]
+  (-> zloc (remove-space-right) (insert-space-right n)))
+
+(defn- map-children [zloc f]
+  (if-let [zloc (z/down zloc)]
+    (loop [zloc zloc]
+      (let [zloc (f zloc)]
+        (if-let [zloc (z/right zloc)]
+          (recur zloc)
+          (z/up zloc))))
+    zloc))
+
+(defn- pad-node [zloc width]
+  (set-spacing-right zloc (- width (node-width zloc))))
+
+(defn- end-of-line? [zloc]
+  (line-break? (skip-whitespace-and-commas (z/right* zloc))))
+
+(defn- align-form-columns [zloc]
+  (let [max-widths (max-column-widths zloc)]
+    (map-children zloc #(cond-> %
+                          (and (z/right %) (not (end-of-line? %)))
+                          (pad-node (inc (max-widths (node-column %))))))))
+
+(defn align-maps [form]
+  (transform form edit-all z/map? align-form-columns))
+
+(def ^:private default-aligns
+  (read-resource "cljfmt/align/clojure.clj"))
+
+(defn alignable? [aligns form]
+  (let [zloc (-> form z/of-node first)]
+    (when (and (not (z/whitespace-or-comment? zloc))
+               (z/list? (z/up zloc)))
+      (let [form-type (some-> zloc z/up z/down z/string symbol)]
+        (when-let [alignable-indices (aligns form-type)]
+          (contains? alignable-indices (-> zloc index-of dec)))))))
+
+(defn align-forms [form aligns]
+  (transform form edit-all (partial alignable? aligns) align-form-columns))
+
 (def default-options
   {:indentation?                          true
    :insert-missing-whitespace?            true
@@ -495,6 +572,9 @@
    :remove-trailing-whitespace?           true
    :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
+   :align-maps?                           false
+   :align-forms?                          false
+   :aligns    default-aligns
    :indents   default-indents
    :alias-map {}})
 
@@ -516,6 +596,10 @@
            insert-missing-whitespace)
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
            remove-multiple-non-indenting-spaces)
+         (cond-> (:align-maps? opts)
+           align-maps)
+         (cond-> (:align-forms? opts)
+           (align-forms (:aligns opts)))
          (cond-> (:indentation? opts)
            (reindent (:indents opts) (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)

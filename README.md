@@ -154,6 +154,17 @@ selectively enabled or disabled:
   other references in the `ns` forms at the top of your namespaces.
   Defaults to false.
 
+* `:align-maps?` -
+  true if cljfmt should left align the values of maps
+  This will convert `{:foo 1\n:barbaz 2}` to `{:foo    1\n :barbaz 2}`
+  Defaults to false.
+
+* `:align-forms?` -
+  true if cljfmt should left align the values of specified forms
+  This will convert `(let [foo 1\n barbaz 2])` to `(let [foo    1\n      barbaz 2])`.
+
+  Defaults to false.
+
 You can also configure the behavior of cljfmt:
 
 * `:paths` - determines which directories to include in the
@@ -191,6 +202,36 @@ You can also configure the behavior of cljfmt:
 
   ```clojure
   :cljfmt {:indents ^:replace {#".*" [[:inner 0]]}}
+  ```
+
+* `:aligns` -
+  a map of var symbols to arguments' positions that require alignment
+  i.e. `{myform #{1 2}}` will align `[a 1]` and `[b 2]` forms like `(myform 0 [a 1] [b 2])`.
+  Argument positions 0-indexed.
+  See the next section for a detailed explanation.
+
+  Unqualified symbols in the align map will apply to any symbol with a
+  matching "name" - so `foo` would apply to both `org.me/foo` and
+  `com.them/foo`. If you want finer-grained control, you can use a fully
+  qualified symbol in the aligns map to configure form alignment that
+  applies only to `org.me/foo`:
+
+  ```clojure
+  :cljfmt {:aligns {org.me/foo #{2 3}}
+  ```
+
+  Configured this way, `org.me/foo` will align only argument positions 2 3 (starting from 0).
+
+  Note that `cljfmt` currently doesn't resolve symbols brought into a
+  namespace using `:refer` or `:use` - they can only be controlled by an
+  unqualified align rule.
+
+  As with Leiningen profiles, you can add metadata hints. If you want to
+  override all existing aligns, instead of just supplying new aligns
+  that are merged with the defaults, you can use the `:replace` hint:
+
+  ```clojure
+  :cljfmt {:aligns ^:replace {#".*" #{0}}
   ```
 
 * `:alias-map` -

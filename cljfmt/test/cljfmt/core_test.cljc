@@ -1336,3 +1336,214 @@
         "   ^{:x 1} b"
         "   [c]))"]
        {:sort-ns-references? true})))
+
+(deftest test-align-forms
+  (testing "straightforward test cases"
+    (testing "sanity"
+      (is (reformats-to?
+           ["(def x 1)"]
+           ["(def x 1)"]
+           {:align-forms? true})))
+    (testing "no op 2"
+      (is (reformats-to?
+           ["(let [x 1"
+            "      y 2])"]
+           ["(let [x 1"
+            "      y 2])"]
+           {:align-forms? true})))
+    (testing "no op 1"
+      (is (reformats-to?
+           ["(let [x 1])"]
+           ["(let [x 1])"]
+           {:align-forms? true})))
+    (testing "empty"
+      (is (reformats-to?
+           ["(let [])"]
+           ["(let [])"]
+           {:align-forms? true})))
+    (testing "simple"
+      (is (reformats-to?
+           ["(let [x 1"
+            "      longer 2])"]
+           ["(let [x      1"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "nested align"
+      (is (reformats-to?
+           ["(let [x (let [x 1"
+            "     longer 2])"
+            " longer 2])"]
+           ["(let [x      (let [x      1"
+            "                   longer 2])"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "preserves comments"
+      (is (reformats-to?
+           ["(let [a 1 ;; comment"
+            "      longer 2])"]
+           ["(let [a      1 ;; comment"
+            "      longer 2])"]
+           {:align-forms? true})))
+    (testing "align args"
+      (testing "simple"
+        (is (reformats-to?
+             ["(special something [a 1"
+              "                    longer 2])"]
+             ["(special something [a      1"
+              "                    longer 2])"]
+             {:align-forms? true
+              :aligns       {'special #{1}}})))
+      (testing "don't mixup args"
+        (is (reformats-to?
+             ["(special [a 1"
+              "          longer 2]"
+              "         [a 1"
+              "          longer 2])"]
+             ["(special [a 1"
+              "          longer 2]"
+              "         [a      1"
+              "          longer 2])"]
+             {:align-forms? true
+              :aligns {'special #{1}}}))))))
+
+(deftest test-align-maps
+  (testing "straightforward test cases"
+    (testing "sanity"
+      (is (reformats-to?
+           ["(def x 1)"]
+           ["(def x 1)"]
+           {:align-maps? true})))
+    (testing "no op 1"
+      (is (reformats-to?
+           ["{:a 1}"]
+           ["{:a 1}"]
+           {:align-maps? true})))
+    (testing "no op 2"
+      (is (reformats-to?
+           ["{:a 1"
+            " :b 2}"]
+           ["{:a 1"
+            " :b 2}"]
+           {:align-maps? true})))
+    (testing "empty"
+      (is (reformats-to?
+           ["{}"]
+           ["{}"]
+           {:align-maps? true})))
+    (testing "simple"
+      (is (reformats-to?
+           ["{:x 1"
+            " :longer 2}"]
+           ["{:x      1"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "nested simple"
+      (is (reformats-to?
+           ["{:x {:x 1}"
+            " :longer 2}"]
+           ["{:x      {:x 1}"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "nested align"
+      (is (reformats-to?
+           ["{:x {:x 1"
+            "     :longer 2}"
+            " :longer 2}"]
+           ["{:x      {:x      1"
+            "          :longer 2}"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "align many"
+      (is (reformats-to?
+           ["{:a 1"
+            " :longer 2"
+            " :b 3}"]
+           ["{:a      1"
+            " :longer 2"
+            " :b      3}"]
+           {:align-maps? true})))
+    (testing "preserves comments"
+      (is (reformats-to?
+           ["{:a 1 ;; comment"
+            " :longer 2}"]
+           ["{:a      1 ;; comment"
+            " :longer 2}"]
+           {:align-maps? true})))))
+
+(deftest test-align-associative-non-trivial
+  (testing "idnentation after align"
+    (is (reformats-to?
+          ["(def m {{:a 1"
+           ":b 2} [x"
+           "y]"
+           ":d [z]})"]
+          ["(def m {{:a 1"
+           "         :b 2} [x"
+           "                y]"
+           "        :d [z]})"])))
+  (testing "cljs map values"
+    (is (reformats-to?
+          ["{:indents {'thing.core/defthing [[:inner 0]]"
+           "'let [[:inner 0]]}"
+           "#?@(:cljs [:alias-map {}])}"]
+          ["{:indents                   {'thing.core/defthing [[:inner 0]]"
+           "                             'let                 [[:inner 0]]}"
+           " #?@(:cljs [:alias-map {}])}"]
+          {:align-maps? true})))
+  (testing "indentation off #1"
+    (is (reformats-to?
+          ["{  :a 1"
+           " :longer 2}"]
+          ["{:a      1"
+           " :longer 2}"]
+          {:align-maps? true})))
+  (testing "indentation off #2"
+    (is (reformats-to?
+          ["{  :a     1"
+           " :longer 2}"]
+          ["{:a      1"
+           " :longer 2}"]
+          {:align-maps? true})))
+  (testing "indentation off #3"
+    (is (reformats-to?
+          ["{:a           1"
+           " :longer 2}"]
+          ["{:a      1"
+           " :longer 2}"]
+          {:align-maps? true})))
+  (testing "columns"
+    (testing "multi-value line"
+      (is (reformats-to?
+            ["{:a 1 :b 2"
+             " :longer 3}"]
+            ["{:a      1 :b 2"
+             " :longer 3}"]
+            {:align-maps? true})))
+    (testing "multi-value line"
+      (is (reformats-to?
+            ["{:a 1 :longer-a 2"
+             " :longer-b 3 :c 4}"]
+            ["{:a        1 :longer-a 2"
+             " :longer-b 3 :c        4}"]
+            {:align-maps? true})))
+    (testing "multi-value commas"
+      (is (reformats-to?
+            ["{:a 1, :longer-a 2"
+             " :longer-b 3 , :c 4}"]
+            ["{:a        1, :longer-a 2"
+             " :longer-b 3, :c        4}"]
+            {:align-maps? true})))
+    (testing "multi-value uneven"
+      (is (reformats-to?
+            ["{:a 1 :longer-a 2 :c 3"
+             " :longer-b 4  :d 5}"]
+            ["{:a        1 :longer-a 2 :c 3"
+             " :longer-b 4 :d        5}"]
+            {:align-maps? true})))
+    (testing "multi-value partial commas"
+      (is (reformats-to?
+            ["{:a 1 :longer-a 2"
+             " :longer-b 3 , :c 4}"]
+            ["{:a        1  :longer-a 2"
+             " :longer-b 3, :c        4}"]
+            {:align-maps? true})))))
