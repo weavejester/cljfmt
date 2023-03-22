@@ -37,6 +37,7 @@ echo -n "Downloading cljfmt binaries... "
 curl -o /tmp/cljfmt.tar.gz -sL "$URL"
 echo "Done!"
 
+sudo mkdir -p /usr/local/bin
 sudo tar -xzf /tmp/cljfmt.tar.gz -C /usr/local/bin
 echo "Extracted cljfmt into /usr/local/bin"
 

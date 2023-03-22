@@ -1845,3 +1845,177 @@
 
 (deftest test-clojure-12-syntax
   (is (reformats-to? ["^Long/1 a"] ["^Long/1 a"])))
+
+(deftest test-align-maps
+  (testing "straightforward test cases"
+    (testing "sanity"
+      (is (reformats-to?
+           ["(def x 1)"]
+           ["(def x 1)"]
+           {:align-maps? true})))
+    (testing "no op 1"
+      (is (reformats-to?
+           ["{:a 1}"]
+           ["{:a 1}"]
+           {:align-maps? true})))
+    (testing "no op 2"
+      (is (reformats-to?
+           ["{:a 1"
+            " :b 2}"]
+           ["{:a 1"
+            " :b 2}"]
+           {:align-maps? true})))
+    (testing "empty"
+      (is (reformats-to?
+           ["{}"]
+           ["{}"]
+           {:align-maps? true})))
+    (testing "simple"
+      (is (reformats-to?
+           ["{:x 1"
+            " :longer 2}"]
+           ["{:x      1"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "nested simple"
+      (is (reformats-to?
+           ["{:x {:x 1}"
+            " :longer 2}"]
+           ["{:x      {:x 1}"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "nested align"
+      (is (reformats-to?
+           ["{:x {:x 1"
+            "     :longer 2}"
+            " :longer 2}"]
+           ["{:x      {:x      1"
+            "          :longer 2}"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "align many"
+      (is (reformats-to?
+           ["{:a 1"
+            " :longer 2"
+            " :b 3}"]
+           ["{:a      1"
+            " :longer 2"
+            " :b      3}"]
+           {:align-maps? true})))
+    (testing "preserves comments"
+      (is (reformats-to?
+           ["{:a 1 ;; comment"
+            " :longer 2}"]
+           ["{:a      1 ;; comment"
+            " :longer 2}"]
+           {:align-maps? true}))))
+  (testing "non-trivial test cases"
+    (testing "idnentation after align"
+      (is (reformats-to?
+           ["(def m {{:a 1"
+            ":b 2} [x"
+            "y]"
+            ":d [z]})"]
+           ["(def m {{:a 1"
+            "         :b 2} [x"
+            "                y]"
+            "        :d [z]})"])))
+    (testing "cljs map values"
+      (is (reformats-to?
+           ["{:indents {'thing.core/defthing [[:inner 0]]"
+            "'let [[:inner 0]]}"
+            "#?@(:cljs [:alias-map {}])}"]
+           ["{:indents                   {'thing.core/defthing [[:inner 0]]"
+            "                             'let                 [[:inner 0]]}"
+            " #?@(:cljs [:alias-map {}])}"]
+           {:align-maps? true})))
+    (testing "indentation off #1"
+      (is (reformats-to?
+           ["{  :a 1"
+            " :longer 2}"]
+           ["{:a      1"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "indentation off #2"
+      (is (reformats-to?
+           ["{  :a     1"
+            " :longer 2}"]
+           ["{:a      1"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "indentation off #3"
+      (is (reformats-to?
+           ["{:a           1"
+            " :longer 2}"]
+           ["{:a      1"
+            " :longer 2}"]
+           {:align-maps? true})))
+    (testing "columns"
+      (testing "multi-value line"
+        (is (reformats-to?
+             ["{:a 1 :b 2"
+              " :longer 3}"]
+             ["{:a      1 :b 2"
+              " :longer 3}"]
+             {:align-maps? true})))
+      (testing "multi-value line"
+        (is (reformats-to?
+             ["{:a 1 :longer-a 2"
+              " :longer-b 3 :c 4}"]
+             ["{:a        1 :longer-a 2"
+              " :longer-b 3 :c        4}"]
+             {:align-maps? true})))
+      (testing "multi-value commas"
+        (is (reformats-to?
+             ["{:a 1, :longer-a 2"
+              " :longer-b 3 , :c 4}"]
+             ["{:a        1, :longer-a 2"
+              " :longer-b 3, :c        4}"]
+             {:align-maps? true})))
+      (testing "multi-value uneven"
+        (is (reformats-to?
+             ["{:a 1 :longer-a 2 :c 3"
+              " :longer-b 4  :d 5}"]
+             ["{:a        1 :longer-a 2 :c 3"
+              " :longer-b 4 :d        5}"]
+             {:align-maps? true})))
+      (testing "multi-value groups 1"
+        (is (reformats-to?
+             ["{:a 1 :longer-a 2"
+              " :longer-b 3 :c 4"
+              ""
+              " :d 5 :e 6"
+              " :fg 7 :h 8}"]
+             ["{:a        1 :longer-a 2"
+              " :longer-b 3 :c        4"
+              ""
+              " :d  5 :e 6"
+              " :fg 7 :h 8}"]
+             {:align-maps? true})))
+      (testing "multi-value groups 2"
+        (is (reformats-to?
+             ["{:a 1 :longer-a 2"
+              " :longer-b 3 :c 4"
+              ""
+              ""
+              " :d 5 :e 6"
+              " :fg 7 :h 8"
+              ""
+              " :i 9 :jklmno 10"
+              " :p 11 :q :value}"]
+             ["{:a        1 :longer-a 2"
+              " :longer-b 3 :c        4"
+              ""
+              " :d  5 :e 6"
+              " :fg 7 :h 8"
+              ""
+              " :i 9  :jklmno 10"
+              " :p 11 :q      :value}"]
+             {:align-maps? true})))
+      (testing "multi-value partial commas"
+        (is (reformats-to?
+             ["{:a 1 :longer-a 2"
+              " :longer-b 3 , :c 4}"]
+             ["{:a        1  :longer-a 2"
+              " :longer-b 3, :c        4}"]
+             {:align-maps? true}))))))
