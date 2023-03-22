@@ -4,8 +4,7 @@
                  :cljs (cljs.test :refer-macros)) [deftest testing is are]]
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
-                                 replace-newlines wrap-normalize-newlines]]
-            [cljfmt.test-util.common :as common])
+                                 replace-newlines wrap-normalize-newlines]])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
