@@ -173,9 +173,12 @@
            (#(.getPath ^java.io.File %))
            cli-file-reader))
 
+(def default-paths ["src" "test" "project.clj"])
+
 (def default-options
   (merge cljfmt/default-options
          {:project-root "."
+          :paths        default-paths
           :file-pattern #"\.clj[csx]?$"
           :ansi?        true
           :parallel?    false}))
@@ -185,8 +188,6 @@
   [a b]
   (-> (merge a b)
       (assoc :indents (merge (:indents a {}) (:indents b)))))
-
-(def default-paths ["src" "test" "project.clj"])
 
 (defn- cli-options [defaults]
   [[nil "--help"]
@@ -233,11 +234,11 @@
   (.exists (io/as-file path)))
 
 (defn -main [& args]
-  (let [defaults      (merge-options default-options (load-configuration))
-        parsed-opts   (cli/parse-opts args (cli-options defaults))
+  (let [base-opts     (merge-options default-options (load-configuration))
+        parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge-options defaults (:options parsed-opts))
-        paths         (or (seq paths) (filter file-exists? default-paths))]
+        options       (merge-options base-opts (:options parsed-opts))
+        paths         (or (seq paths) (filter file-exists? (:paths base-opts)))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
       (if (or (nil? cmd) (:help options))
