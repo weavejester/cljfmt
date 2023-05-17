@@ -41,19 +41,25 @@
   (let [f (io/file dir name)]
     (when (.exists f) f)))
 
+(def ^:private valid-config-files
+  ["cljfmt.edn" "cljfmt.clj" ".cljfmt.edn" ".cljfmt.clj"])
+
 (defn- find-config-file-in-dir ^java.io.File [^java.io.File dir]
-  (or (find-file-in-dir dir ".cljfmt.edn")
-      (find-file-in-dir dir ".cljfmt.clj")))
+  (some #(find-file-in-dir dir %) valid-config-files))
 
 (defn find-config-file
-  "Find a `.cljfmt.end` or `.cljfmt.clj` configuration file in the current
-  directory or from the first parent directory to contain one."
+  "Find a configuration file in the current directory or in the first parent
+  directory to contain one. Valid configuration file names are:
+  - `cljfmt.edn`
+  - `cljfmt.clj`
+  - `.cljfmt.edn`
+  - `.cljfmt.clj`"
   ([] (find-config-file ""))
   ([path] (some->> (parent-dirs path) (some find-config-file-in-dir))))
 
 (defn load-config
-  "Load the default configuration merged with the nearest configuration
-  dotfile."
+  "Load a configuration merged with a map of sensible defaults. See
+  [[find-config-file]]."
   ([] (load-config ""))
   ([path]
    (merge-configs default-config
