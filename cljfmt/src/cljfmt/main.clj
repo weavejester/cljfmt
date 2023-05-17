@@ -1,6 +1,7 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
-  (:require [cljfmt.core :as cljfmt]
+  (:require [cljfmt.config :as config]
+            [cljfmt.core :as cljfmt]
             [cljfmt.diff :as diff]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
@@ -23,9 +24,6 @@
   (-> (.toAbsolutePath (.toPath dir))
       (.relativize (.toAbsolutePath (.toPath file)))
       (.toString)))
-
-(defn- filename-ext [filename]
-  (subs filename (inc (str/last-index-of filename "."))))
 
 (defn- grep [re dir]
   (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
@@ -148,47 +146,6 @@
           (map (partial print-file-status options))
           dorun))))
 
-(defn- cli-file-reader [filepath]
-  (let [contents (slurp filepath)]
-    (if (= (filename-ext filepath) "clj")
-      (read-string contents)
-      (edn/read-string contents))))
-
-(defn- parent-dirs [^String root]
-  (->> (.getAbsoluteFile (io/file root))
-       (iterate #(.getParentFile ^java.io.File %))
-       (take-while some?)))
-
-(defn- find-file-in-dir ^java.io.File [^java.io.File dir ^String name]
-  (let [f (io/file dir name)]
-    (when (.exists f) f)))
-
-(defn- find-config-file-in-dir ^java.io.File [^java.io.File dir]
-  (or (find-file-in-dir dir ".cljfmt.edn")
-      (find-file-in-dir dir ".cljfmt.clj")))
-
-(defn- load-configuration []
-  (some->> (parent-dirs "")
-           (some find-config-file-in-dir)
-           (#(.getPath ^java.io.File %))
-           cli-file-reader))
-
-(def default-paths ["src" "test" "project.clj"])
-
-(def default-options
-  (merge cljfmt/default-options
-         {:project-root "."
-          :paths        default-paths
-          :file-pattern #"\.clj[csx]?$"
-          :ansi?        true
-          :parallel?    false}))
-
-(defn merge-options
-  "Merge two maps of cljfmt options together."
-  [a b]
-  (-> (merge a b)
-      (assoc :indents (merge (:indents a {}) (:indents b)))))
-
 (defn- cli-options [defaults]
   [[nil "--help"]
    [nil "--parallel"
@@ -199,9 +156,9 @@
     :default (:file-pattern defaults)
     :parse-fn re-pattern]
    [nil "--indents INDENTS_PATH"
-    :parse-fn cli-file-reader]
+    :parse-fn config/read-config]
    [nil "--alias-map ALIAS_MAP_PATH"
-    :parse-fn cli-file-reader]
+    :parse-fn config/read-config]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
@@ -234,10 +191,10 @@
   (.exists (io/as-file path)))
 
 (defn -main [& args]
-  (let [base-opts     (merge-options default-options (load-configuration))
+  (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
-        options       (merge-options base-opts (:options parsed-opts))
+        options       (config/merge-configs base-opts (:options parsed-opts))
         paths         (or (seq paths) (filter file-exists? (:paths base-opts)))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
