@@ -13,10 +13,12 @@
           :parallel?    false}))
 
 (defn merge-configs
-  "Merge two cljfmt configuration maps together."
-  [a b]
-  (-> (merge a b)
-      (assoc :indents (merge (:indents a {}) (:indents b)))))
+  "Merge two or more cljfmt configuration maps together."
+  ([a b]
+   (-> (merge a b)
+       (assoc :indents (merge (:indents a {}) (:indents b)))))
+  ([a b & more]
+   (reduce merge-configs (merge-configs a b) more)))
 
 (defn- filename-ext [file]
   (let [filename (str file)]
@@ -54,6 +56,5 @@
   dotfile."
   ([] (load-config ""))
   ([path]
-   (some->> (find-config-file path)
-            read-config
-            (merge-configs default-config))))
+   (merge-configs default-config
+                  (some-> (find-config-file path) read-config))))

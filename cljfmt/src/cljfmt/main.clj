@@ -1,150 +1,10 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
   (:require [cljfmt.config :as config]
-            [cljfmt.core :as cljfmt]
-            [cljfmt.diff :as diff]
-            [clojure.edn :as edn]
+            [cljfmt.tool :as tool]
             [clojure.java.io :as io]
-            [clojure.stacktrace :as st]
-            [clojure.string :as str]
             [clojure.tools.cli :as cli])
   (:gen-class))
-
-(defn- abort [& msg]
-  (binding [*out* *err*]
-    (when (seq msg)
-      (apply println msg))
-    (System/exit 1)))
-
-(defn- warn [& args]
-  (binding [*out* *err*]
-    (apply println args)))
-
-(defn- relative-path [^java.io.File dir ^java.io.File file]
-  (-> (.toAbsolutePath (.toPath dir))
-      (.relativize (.toAbsolutePath (.toPath file)))
-      (.toString)))
-
-(defn- grep [re dir]
-  (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
-
-(defn- find-files [{:keys [file-pattern]} f]
-  (let [f (io/file f)]
-    (when-not (.exists f) (abort "No such file:" (str f)))
-    (if (.isDirectory f)
-      (grep file-pattern f)
-      [f])))
-
-(defn- reformat-string [options s]
-  ((cljfmt/wrap-normalize-newlines #(cljfmt/reformat-string % options)) s))
-
-(defn- project-path [{:keys [project-root]} file]
-  (-> project-root (or ".") io/file (relative-path (io/file file))))
-
-(defn- format-diff
-  ([options file]
-   (let [original (slurp (io/file file))]
-     (format-diff options file original (reformat-string options original))))
-  ([options file original revised]
-   (let [filename (project-path options file)
-         diff     (diff/unified-diff filename original revised)]
-     (if (:ansi? options)
-       (diff/colorize-diff diff)
-       diff))))
-
-(def ^:private zero-counts {:okay 0, :incorrect 0, :error 0})
-
-(defn- check-one [options file]
-  (let [original (slurp file)
-        status   {:counts zero-counts :file file}]
-    (try
-      (let [revised (reformat-string options original)]
-        (if (not= original revised)
-          (-> status
-              (assoc-in [:counts :incorrect] 1)
-              (assoc :diff (format-diff options file original revised)))
-          (assoc-in status [:counts :okay] 1)))
-      (catch Exception ex
-        (-> status
-            (assoc-in [:counts :error] 1)
-            (assoc :exception ex))))))
-
-(defn- print-stack-trace [ex]
-  (binding [*out* *err*]
-    (st/print-stack-trace ex)))
-
-(defn- print-file-status [options status]
-  (let [path (project-path options (:file status))]
-    (when-let [ex (:exception status)]
-      (warn "Failed to format file:" path)
-      (print-stack-trace ex))
-    (when (:reformatted status)
-      (println "Reformatting" path))
-    (when-let [diff (:diff status)]
-      (warn path "has incorrect formatting")
-      (warn diff))))
-
-(defn- exit [counts]
-  (when-not (zero? (:error counts 0))
-    (System/exit 2))
-  (when-not (zero? (:incorrect counts 0))
-    (System/exit 1)))
-
-(defn- print-final-count [counts]
-  (let [error     (:error counts 0)
-        incorrect (:incorrect counts 0)]
-    (when-not (zero? error)
-      (warn error "file(s) could not be parsed for formatting"))
-    (when-not (zero? incorrect)
-      (warn incorrect "file(s) formatted incorrectly"))
-    (when (and (zero? incorrect) (zero? error))
-      (println "All source files formatted correctly"))))
-
-(defn- merge-counts
-  ([]    zero-counts)
-  ([a]   a)
-  ([a b] (merge-with + a b)))
-
-(defn check
-  "Checks that the Clojure files contained in `paths` follow the formatting
-  (as per `options`)."
-  ([paths]
-   (check paths {}))
-  ([paths options]
-   (let [map*   (if (:parallel? options) pmap map)
-         counts (->> paths
-                     (mapcat (partial find-files options))
-                     (map* (partial check-one options))
-                     (map (fn [status]
-                            (print-file-status options status)
-                            (:counts status)))
-                     (reduce merge-counts))]
-     (print-final-count counts)
-     (exit counts))))
-
-(defn- fix-one [options file]
-  (let [original (slurp file)]
-    (try
-      (let [revised (reformat-string options original)]
-        (if (not= original revised)
-          (do (spit file revised)
-              {:file file :reformatted true})
-          {:file file}))
-      (catch Exception e
-        {:file file :exception e}))))
-
-(defn fix
-  "Applies the formatting (as per `options`) to the Clojure files
-  contained in `paths`."
-  ([paths]
-   (fix paths {}))
-  ([paths options]
-   (let [map* (if (:parallel? options) pmap map)]
-     (->> paths
-          (mapcat (partial find-files options))
-          (map* (partial fix-one options))
-          (map (partial print-file-status options))
-          dorun))))
 
 (defn- cli-options [defaults]
   [[nil "--help"]
@@ -187,23 +47,36 @@
     :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]])
 
+(defn- abort [& msg]
+  (binding [*out* *err*]
+    (when (seq msg)
+      (apply println msg))
+    (System/exit 1)))
+
 (defn- file-exists? [path]
   (.exists (io/as-file path)))
+
+(defn- abort-if-files-missing [paths]
+  (when-some [missing (some (complement file-exists?) paths)]
+    (abort "No such file:" (str missing))))
 
 (defn -main [& args]
   (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
-        options       (config/merge-configs base-opts (:options parsed-opts))
-        paths         (or (seq paths) (filter file-exists? (:paths base-opts)))]
+        options       (-> (config/merge-configs base-opts parsed-opts)
+                          (dissoc :arguments)
+                          (update :paths into paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
       (if (or (nil? cmd) (:help options))
         (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
             (println (:summary parsed-opts)))
-        (do (case cmd
-              "check" (check paths options)
-              "fix"   (fix paths options)
-              (abort "Unknown cljfmt command:" cmd))
-            (when (:parallel? options)
-              (shutdown-agents)))))))
+        (let [cmdf (case cmd
+                     "check" tool/check-no-config
+                     "fix"   tool/fix-no-config
+                     (abort "Unknown cljfmt command:" cmd))]
+          (abort-if-files-missing paths)
+          (cmdf options)
+          (when (:parallel? options)
+            (shutdown-agents)))))))
