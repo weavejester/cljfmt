@@ -2,7 +2,7 @@
  :tasks
  {test {:doc "Run babashka tests"
         :extra-deps {eftest/eftest {:mvn/version "0.6.0"}}
-        :extra-paths ["test"]
+        :extra-paths ["cljfmt/test"]
         :requires ([clojure.test :as t]
                    [cljfmt.core-test])
         :task (let [{:keys [fail error]} (t/run-tests 'cljfmt.core-test)]
