@@ -64,8 +64,7 @@
   (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
-        options       (-> (config/merge-configs base-opts parsed-opts)
-                          (dissoc :arguments)
+        options       (-> (config/merge-configs base-opts (:options parsed-opts))
                           (update :paths into paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
