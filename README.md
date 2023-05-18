@@ -1,30 +1,22 @@
 # cljfmt
 
-![Build Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)
+[![Build Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)](https://github.com/weavejester/cljfmt/actions/workflows/test.yml)
 
-cljfmt is a tool for formatting Clojure code [idiomatically][].
+cljfmt is a tool for detecting and fixing formatting errors in Clojure
+code.
 
-It can turn something like this:
+Its defaults are based on the [Clojure Style Guide][], but it also has
+many customization options to suit a particular project or team.
 
-```clojure
-( let [x 3
-    y 4]
-  (+ (* x x
-  )(* y y)
-  ))
-```
+It is not the goal of the project to provide a one-to-one mapping
+between a Clojure syntax tree and formatted text; rather the intent is
+to correct formatting errors with minimal changes to the existing
+structure of the text.
 
-Into nicely formatted Clojure code like this:
+If you want format completely unstructured Clojure code, the [zprint][]
+project may be more suitable.
 
-```clojure
-(let [x 3
-      y 4]
-  (+ (* x x) (* y y)))
-```
-
-However, it is not the goal of cljfmt to provide a canonical format.
-
-[idiomatically]: https://github.com/bbatsov/clojure-style-guide
+[clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 
 ## Installation
 
