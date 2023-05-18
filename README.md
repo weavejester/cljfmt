@@ -2,8 +2,8 @@
 
 [![Build Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)](https://github.com/weavejester/cljfmt/actions/workflows/test.yml)
 
-cljfmt is a tool for detecting and fixing formatting errors in Clojure
-code.
+cljfmt is a tool for detecting and fixing formatting errors in
+[Clojure][] code.
 
 Its defaults are based on the [Clojure Style Guide][], but it also has
 many customization options to suit a particular project or team.
@@ -16,80 +16,122 @@ structure of the text.
 If you want format completely unstructured Clojure code, the [zprint][]
 project may be more suitable.
 
+[clojure]: https://clojure.org/
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 
-## Installation
+## Usage
 
-The easiest way to get started with cljfmt is to add the lein-cljfmt
-plugin to your [Leiningen][] project map:
+cljfmt integrates with many existing build tools, or can be used as a
+library. As an end user, you have the choice of:
+
+### Clojure Tools
+
+The official Clojure CLI supports installation of thirdparty [tools][].
+To install cljfmt as a tool, run:
+
+```bash
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "FIXME"}' :as cljfmt
+```
+
+To use the tool to check code for formatting errors, run:
+
+```bash
+clj -Tcljfmt check
+```
+
+And to fix those errors:
+
+```bash
+clj -Tcljfmt fix
+```
+
+[tools]: https://clojure.org/reference/deps_and_cli#tool_install
+
+### Leiningen
+
+[Leiningen][] is a popular Clojure build tool. To use cljfmt with
+Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
 :plugins [[lein-cljfmt "0.9.2"]]
 ```
 
-cljfmt has tested on Leiningen 2.5, but may not work on older
-versions, particularly versions prior to Leiningen 2.4.
+To use the plugin to check code for formatting errors, run:
+
+```bash
+lein cljfmt check
+```
+
+And to fix those errors:
+
+```bash
+lein cljfmt fix
+```
 
 [leiningen]: https://github.com/technomancy/leiningen
 
-## Usage
+### Babashka
 
-### Leiningen
+[Babashka][] is a native Clojure interpreter with a very fast startup.
+Running cljfmt via Babashka can be several times faster than running it
+as a tool or via Leiningen.
 
-To check the formatting of your source files, use:
+To use cljfmt with Babashka, add the following dependency and task to
+your `bb.edn` file:
 
-    lein cljfmt check
+```edn
+{:deps
+ {cljfmt/cljfmt {:mvn/version "0.9.2"}}
+ :tasks
+ {cljfmt {:doc "Run cljfmt"
+          :requires ([cljfmt.main :as fmt])
+          :task (binding [fmt/*command* "bb cljfmt"]
+                  (apply fmt/-main *command-line-args*))}}}
+```
 
-If the formatting of any source file is incorrect, a diff will be
-supplied showing the problem, and what cljfmt thinks it should be.
-
-If you want to check only a specific file, or several specific files,
-you can do that, too:
-
-    lein cljfmt check src/foo/core.clj
-
-Once you've identified formatting issues, you can choose to ignore
-them, fix them manually, or let cljfmt fix them with:
-
-    lein cljfmt fix
-
-As with the `check` task, you can choose to fix a specific file:
-
-    lein cljfmt fix src/foo/core.clj
-
-### tools.deps
-
-It is also possible to use the [clojure][] command-line tool to check
-your project's files:
-
-[clojure]: https://clojure.org/guides/deps_and_cli
+To use the Babashka task to check code for formatting errors, run:
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.9.2"}}}' \
-  -m cljfmt.main [check|fix]
+bb cljfmt check
 ```
 
-Customizing the indentation rules is possible by supplying a custom
-indentation file. For example, `indentation.clj`:
-
-```clojure
-{org.me/foo [[:inner 0]]}
-```
-
-You can then specify this file when running cljfmt:
+And to fix those errors:
 
 ```bash
-clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.9.2"}}}' \
-  -m cljfmt.main check \
-  --indents indentation.clj
+bb cljfmt fix
 ```
 
-## Editor Support
+### Standalone
 
-* [vim-cljfmt](https://github.com/venantius/vim-cljfmt)
-* [CIDER 0.9+](https://github.com/clojure-emacs/cider)
-* [Calva](https://github.com/BetterThanTomorrow/calva) (VS Code)
-* [clojureVSCode](https://github.com/avli/clojureVSCode) (VS Code)
+cljfmt can also be run as a standalone `-main` application. Do do so,
+add the following dependency to your `deps.edn` file or the equivalent:
+
+```edn
+{:deps {cljfmt/cljfmt {:mvn/version "0.9.2"}}}
+```
+
+To use cljfmt to check for formatting errors, run:
+
+```bash
+clojure -M -m cljfmt.main check
+```
+
+And to fix those errors:
+
+```bash
+clojure -M -m cljfmt.main fix
+```
+
+### Editor Integration
+
+You can also use cljfmt via your editor. Several Clojure editing
+environments have support for cljfmt baked in:
+
+* [Calva](https://github.com/BetterThanTomorrow/calva) (Visual Studio Code)
+* [CIDER 0.9+](https://github.com/clojure-emacs/cider) (Emacs)
+* [clojureVSCode](https://github.com/avli/clojureVSCode) (Visual Studio Code)
+* [vim-cljfmt](https://github.com/venantius/vim-cljfmt) (Vim)
+
 
 ## Configuration
 
@@ -225,7 +267,7 @@ Indentation types are:
 * `:inner` -
   two character indentation applied to form arguments at a depth
   relative to a form symbol
-  
+
 * `:block` -
   first argument aligned indentation applied to form arguments at form
   depth 0 for a symbol
@@ -240,9 +282,9 @@ Form depth is the nested depth of any element within the form.
 A contrived example will help to explain depth:
 
 ```clojure
-(foo 
+(foo
  bar
- (baz 
+ (baz
   (qux plugh)
   corge)
  (grault
