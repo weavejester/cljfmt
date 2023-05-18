@@ -61,6 +61,9 @@
   (when-some [missing (some (complement file-exists?) paths)]
     (abort "No such file:" (str missing))))
 
+(def ^:dynamic *command*
+  "clojure -M -m cljfmt.main")
+
 (defn -main [& args]
   (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
@@ -70,7 +73,9 @@
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
       (if (or (nil? cmd) (-> parsed-opts :options :help))
-        (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
+        (do (println "Usage:")
+            (println (str \tab *command* " (check | fix) [PATHS...]"))
+            (println "Options:")
             (println (:summary parsed-opts)))
         (let [cmdf (case cmd
                      "check" tool/check-no-config
