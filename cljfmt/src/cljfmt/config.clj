@@ -42,7 +42,7 @@
     (when (.exists f) f)))
 
 (def ^:private valid-config-files
-  ["cljfmt.edn" "cljfmt.clj" ".cljfmt.edn" ".cljfmt.clj"])
+  [".cljfmt.edn" ".cljfmt.clj" "cljfmt.edn" "cljfmt.clj"])
 
 (defn- find-config-file-in-dir ^java.io.File [^java.io.File dir]
   (some #(find-file-in-dir dir %) valid-config-files))
@@ -50,10 +50,10 @@
 (defn find-config-file
   "Find a configuration file in the current directory or in the first parent
   directory to contain one. Valid configuration file names are:
-  - `cljfmt.edn`
-  - `cljfmt.clj`
   - `.cljfmt.edn`
-  - `.cljfmt.clj`"
+  - `.cljfmt.clj`
+  - `cljfmt.edn`
+  - `cljfmt.clj`"
   ([] (find-config-file ""))
   ([path] (some->> (parent-dirs path) (some find-config-file-in-dir))))
 
