@@ -8,8 +8,9 @@
 
 (defn- cli-options [defaults]
   [[nil "--help"]
-   [nil "--parallel"
-    :id :parallel?]
+   [nil "--[no-]parallel"
+    :id :parallel?
+    :default (:parallel? defaults)]
    [nil "--project-root PROJECT_ROOT"
     :default (:project-root defaults)]
    [nil "--file-pattern FILE_PATTERN"
