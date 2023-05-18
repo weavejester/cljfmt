@@ -68,7 +68,7 @@
                           (update :paths into paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
-      (if (or (nil? cmd) (:help options))
+      (if (or (nil? cmd) (-> parsed-opts :options :help))
         (do (println "cljfmt [OPTIONS] COMMAND [PATHS ...]")
             (println (:summary parsed-opts)))
         (let [cmdf (case cmd
