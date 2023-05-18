@@ -1,0 +1,5 @@
+{:parallel? true
+ :paths ["cljfmt/src"
+         "cljfmt/test"
+         "cljfmt/project.clj"
+         "lein-cljfmt/src"]}
