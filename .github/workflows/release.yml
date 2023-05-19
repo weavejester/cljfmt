@@ -48,5 +48,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: cljfmt-${{ github.ref_name }}-${{ platform }}
+          name: cljfmt-${{ github.ref_name }}-${{ matrix.platform }}
           path: cljfmt/target/cljfmt
