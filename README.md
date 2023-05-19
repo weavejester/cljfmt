@@ -31,7 +31,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "FIXME"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.10.0"}' :as cljfmt
 ```
 
 To use the tool to check code for formatting errors, run:
@@ -54,7 +54,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[lein-cljfmt "0.9.2"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.10.0"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -82,7 +82,7 @@ your `bb.edn` file:
 
 ```edn
 {:deps
- {cljfmt/cljfmt {:mvn/version "0.9.2"}}
+ {dev.weavejester/cljfmt {:mvn/version "0.10.0"}}
  :tasks
  {cljfmt {:doc "Run cljfmt"
           :requires ([cljfmt.main :as fmt])
@@ -110,7 +110,7 @@ cljfmt can also be run as a standalone `-main` application. Do do so,
 add the following dependency to your `deps.edn` file or the equivalent:
 
 ```edn
-{:deps {cljfmt/cljfmt {:mvn/version "0.9.2"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.10.0"}}}
 ```
 
 To use cljfmt to check for formatting errors, run:
