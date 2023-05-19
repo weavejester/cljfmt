@@ -18,6 +18,7 @@ project may be more suitable.
 
 [clojure]: https://clojure.org/
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
+[zprint]: https://github.com/kkinnear/zprint
 
 ## Usage
 
@@ -100,6 +101,8 @@ And to fix those errors:
 ```bash
 bb cljfmt fix
 ```
+
+[babashka]: https://babashka.org/
 
 ### Standalone
 
