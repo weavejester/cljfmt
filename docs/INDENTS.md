@@ -47,6 +47,43 @@ indentation:
 
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 
+## Recipes
+
+If you don't want to read further and just want a quick way of making a
+indent rule for a custom macro, here are some quick examples of use.
+
+#### Macro with body
+
+For a macro like:
+
+```clojure
+(ns com.example)
+
+(defmacro foo [& body] ...)
+```
+
+Use:
+
+```edn
+{:indents {com.example/foo [[:block 0]]}}
+```
+
+#### Macro with bindings and body
+
+For a macro like:
+
+```clojure
+(ns com.example)
+
+(defmacro bar [bindings & body] ...)
+```
+
+Use:
+
+```edn
+{:indents {com.example/bar [[:block 1]]}}
+```
+
 ## Concepts
 
 cljfmt format rules use **indexes** and **depth**.
