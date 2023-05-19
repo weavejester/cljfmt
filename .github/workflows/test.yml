@@ -25,3 +25,6 @@ jobs:
 
       - name: Execute babashka tests
         run: bb test
+
+      - name: Check formatting
+        run: bb fmt check
