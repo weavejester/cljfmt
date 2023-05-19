@@ -7,10 +7,11 @@ jobs:
   release:
     strategy:
       matrix:
-        - os: ubuntu-latest
-          platform: linux-amd64
-        - os: macos-latest
-          platform: darwin-amd64
+        include:
+          - os: ubuntu-latest
+            platform: linux-amd64
+          - os: macos-latest
+            platform: darwin-amd64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
