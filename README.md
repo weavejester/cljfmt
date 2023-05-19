@@ -125,6 +125,33 @@ And to fix those errors:
 clojure -M -m cljfmt.main fix
 ```
 
+### Library
+
+cljfmt can be run as a library that formats a string of Clojure code.
+First, add the dependency:
+
+```edn
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.10.0"}}}
+```
+
+Then use the library:
+
+```clojure
+(require '[cljfmt.core :as fmt])
+
+(fmt/reformat-string "(defn sum [x y]\n(+ x y))")
+;; => "(defn sum [x y]\n  (+ x y))"
+```
+
+To use load the configuration for the current directory:
+
+```clojure
+(require '[cljfmt.config :as cfg])
+
+(fmt/reformat-string "(+ x\ny)" (cfg/load-config))
+;; => "(+ x\n   y)"
+```
+
 ### Editor Integration
 
 You can also use cljfmt via your editor. Several Clojure editing
