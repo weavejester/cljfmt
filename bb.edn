@@ -4,6 +4,8 @@
         :requires ([cljfmt.main :as fmt])
         :task (binding [fmt/*command* "bb fmt"]
                 (apply fmt/-main *command-line-args*))}
+  lint {:doc "Run clj-kondo"
+        :task (shell "clj-kondo --lint cljfmt/src lein-cljfmt/src")}
   test {:doc "Run babashka tests"
         :extra-deps {eftest/eftest {:mvn/version "0.6.0"}}
         :extra-paths ["cljfmt/test"]

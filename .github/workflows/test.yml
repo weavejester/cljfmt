@@ -18,6 +18,7 @@ jobs:
         with:
           lein: 2.9.10
           bb: latest
+          clj-kondo: 2023.05.18
 
       - name: Execute tests
         working-directory: ./cljfmt
@@ -28,3 +29,6 @@ jobs:
 
       - name: Check formatting
         run: bb fmt check
+
+      - name: Lint sourcecode
+        run: bb lint
