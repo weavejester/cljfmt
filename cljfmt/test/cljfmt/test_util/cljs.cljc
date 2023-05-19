@@ -1,6 +1,6 @@
 (ns cljfmt.test-util.cljs
-  (:require [cljs.test :as test]
-            [cljfmt.test-util.common :as common]))
+  (:require [cljfmt.test-util.common :as common]
+            [cljs.test :as test]))
 
 #?(:clj
    (defmethod test/assert-expr 'reformats-to? [_env msg form]

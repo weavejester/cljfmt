@@ -2,4 +2,5 @@
  :paths ["cljfmt/src"
          "cljfmt/test"
          "cljfmt/project.clj"
-         "lein-cljfmt/src"]}
+         "lein-cljfmt/src"]
+ :sort-ns-references? true}

@@ -1,7 +1,7 @@
 (ns cljfmt.test-runner
-  (:require [cljs.nodejs :as nodejs]
-            [cljs.test :refer-macros [run-tests]]
-            [cljfmt.core-test :as ct]))
+  (:require [cljfmt.core-test :as ct]
+            [cljs.nodejs :as nodejs]
+            [cljs.test :refer-macros [run-tests]]))
 
 (nodejs/enable-util-print!)
 

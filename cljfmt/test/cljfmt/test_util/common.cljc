@@ -1,6 +1,6 @@
 (ns cljfmt.test-util.common
-  (:require [clojure.string :as str]
-            [cljfmt.core :refer [reformat-string]]))
+  (:require [cljfmt.core :refer [reformat-string]]
+            [clojure.string :as str]))
 
 (defn assert-reformats-to
   ([msg in-lines expected-lines]

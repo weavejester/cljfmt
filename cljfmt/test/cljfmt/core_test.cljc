@@ -1,11 +1,11 @@
 (ns cljfmt.core-test
-  (:require [#?@(:clj (clojure.test :refer)
+  (:require #?(:clj [cljfmt.test-util.clojure])
+            [#?@(:clj (clojure.test :refer)
                  :cljs (cljs.test :refer-macros)) [deftest testing is]]
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines]]
-            [cljfmt.test-util.common :as common]
-            #?(:clj [cljfmt.test-util.clojure]))
+            [cljfmt.test-util.common :as common])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
