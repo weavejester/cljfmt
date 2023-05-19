@@ -1,0 +1,42 @@
+name: Release
+on: [push]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Prepare java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '8'
+
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@10.1
+        with:
+          lein: 2.9.10
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.2'
+          java-version: '17'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install native dev tools
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install build-essential zlib1g-dev
+
+      - name: Build executable
+        working-directory: ./cljfmt
+        run: lein native-image
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cljfmt-SNAPSHOT
+          path: cljfmt/target/cljfmt
