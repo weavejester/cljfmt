@@ -1,8 +1,17 @@
 name: Release
-on: [push]
+on:
+  push:
+    tags:
+      - 'test-*.*.*'
 jobs:
   release:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        - os: ubuntu-latest
+          platform: linux-amd64
+        - os: macos-latest
+          platform: darwin-amd64
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,5 +47,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: cljfmt-SNAPSHOT
+          name: cljfmt-${{ github.ref_name }}-${{ platform }}
           path: cljfmt/target/cljfmt
