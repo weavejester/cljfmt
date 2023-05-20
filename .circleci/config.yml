@@ -109,7 +109,7 @@ jobs:
           command: |
             if ! [ -d graalvm-ce-java17-22.3.2 ]; then
               curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.2/graalvm-ce-java11-darwin-amd64-22.3.2.tar.gz
-              tar xzf graalvm-ce-java17-darwin-aarch64-22.3.2.tar.gz
+              tar xzf graalvm-ce-java17-darwin-amd64-22.3.2.tar.gz
             fi
       - run:
           name: Install GraalVM native-image
