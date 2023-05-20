@@ -25,6 +25,10 @@ jobs:
               tar xzf graalvm-ce-java17-linux-amd64-22.3.2.tar.gz
             fi
       - run:
+          name: Install GraalVM native-image
+          working_directory: ~/graalvm-ce-java17-22.3.2
+          command: bin/gu install native-image
+      - run:
           name: Compile native image
           working_directory: ~/repo/cljfmt
           command: lein native-image
