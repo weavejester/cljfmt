@@ -92,6 +92,7 @@ jobs:
     macos:
       xcode: 14.2.0
     resource_class: macos.x86.medium.gen2
+    working_directory: ~/repo
     environment:
       GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.2/Contents/Home
     steps:
