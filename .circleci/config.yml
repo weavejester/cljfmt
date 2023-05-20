@@ -57,7 +57,7 @@ jobs:
           name: Download Leiningen
           working_directory: ~/
           command: |
-            wget -O -sL https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+            wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
             chmod +x lein
       - run:
           name: Install native dev tools
@@ -91,5 +91,4 @@ jobs:
 workflows:
   compile:
     jobs:
-      - linux_amd64
       - linux_aarch64
