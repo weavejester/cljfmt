@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  linux:
+  linux_amd64:
     docker:
       - image: cimg/clojure:1.11.1-openjdk-17.0
     working_directory: ~/repo
@@ -40,7 +40,56 @@ jobs:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.2
           key: linux-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+  linux_aarch64:
+    machine:
+      enabled: true
+      image: ubuntu-2004:2022.04.2
+    resource_class: arm.medium
+    working_directory: ~/repo
+    environment:
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.2
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Download Leiningen
+          working_directory: ~/
+          command: |
+            wget -O -sL https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+            chmod +x lein
+      - run:
+          name: Install native dev tools
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install gcc g++ zlib1g-dev
+      - run:
+          name: Download GraalVM
+          working_directory: ~/
+          command: |
+            if ! [ -d graalvm-ce-java17-22.3.2 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.2/graalvm-ce-java17-linux-aarch64-22.3.2.tar.gz
+              tar xzf graalvm-ce-java17-linux-aarch64-22.3.2.tar.gz
+            fi
+      - run:
+          name: Install GraalVM native-image
+          working_directory: ~/graalvm-ce-java17-22.3.2
+          command: bin/gu install native-image
+      - run:
+          name: Compile native image
+          working_directory: ~/repo/cljfmt
+          command: ~/lein native-image
+      - store_artifacts:
+          path: cljfmt/target/cljfmt
+          destination: cljfmt
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/graalvm-ce-java17-22.3.2
+          key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 workflows:
   compile:
     jobs:
-      - linux
+      - linux_amd64
+      - linux_aarch64
