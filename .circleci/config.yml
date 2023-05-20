@@ -206,7 +206,9 @@ jobs:
       - run:
           name: Compile native image
           working_directory: cljfmt
-          command: ../lein native-image
+          command: |
+            $env:GRAALVM_HOME = "{0}/graalvm/graalvm-ce-java17-22.3.2" -f $env:CIRCLE_WORKING_DIRECTORY
+            ../lein native-image
       - store_artifacts:
           path: cljfmt/target/cljfmt
           destination: cljfmt
