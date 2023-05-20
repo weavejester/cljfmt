@@ -92,6 +92,8 @@ jobs:
     macos:
       xcode: 14.2.0
     resource_class: macos.x86.medium.gen2
+    environment:
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.2/Contents/Home
     steps:
       - checkout
       - restore_cache:
@@ -113,7 +115,7 @@ jobs:
             fi
       - run:
           name: Install GraalVM native-image
-          working_directory: ~/graalvm-ce-java17-22.3.2
+          working_directory: ~/graalvm-ce-java17-22.3.2/Contents/Home
           command: bin/gu install native-image
       - run:
           name: Compile native image
