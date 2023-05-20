@@ -88,7 +88,46 @@ jobs:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.2
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+  macos_amd64:
+    macos:
+      xcode: 14.2.0
+    resource_class: macos.x86.medium.gen2
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - macos-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Download Leiningen
+          working_directory: ~/
+          command: |
+            curl -O -sL https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+            chmod +x lein
+      - run:
+          name: Download GraalVM
+          working_directory: ~/
+          command: |
+            if ! [ -d graalvm-ce-java17-22.3.2 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.2/graalvm-ce-java11-darwin-amd64-22.3.2.tar.gz
+              tar xzf graalvm-ce-java17-darwin-aarch64-22.3.2.tar.gz
+            fi
+      - run:
+          name: Install GraalVM native-image
+          working_directory: ~/graalvm-ce-java17-22.3.2
+          command: bin/gu install native-image
+      - run:
+          name: Compile native image
+          working_directory: ~/repo/cljfmt
+          command: ~/lein native-image
+      - store_artifacts:
+          path: cljfmt/target/cljfmt
+          destination: cljfmt
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/graalvm-ce-java17-22.3.2
+          key: macos-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 workflows:
   compile:
     jobs:
-      - linux_aarch64
+      - macos_amd64
