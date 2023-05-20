@@ -7,7 +7,8 @@
   (:gen-class))
 
 (defn- cli-options [defaults]
-  [[nil "--help"]
+  [["-h" "--help"]
+   ["-v" "--version"]
    [nil "--[no-]parallel"
     :id :parallel?
     :default (:parallel? defaults)]
@@ -64,19 +65,32 @@
 (def ^:dynamic *command*
   "clojure -M -m cljfmt.main")
 
+(defn- print-help [summary]
+  (println "Usage:")
+  (println (str \tab *command* " (check | fix) [PATHS...]"))
+  (println "Options:")
+  (println summary))
+
+(defn- print-version []
+  (println "cljfmt 0.10.0"))
+
 (defn -main [& args]
   (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
-        options       (-> (config/merge-configs base-opts (:options parsed-opts))
+        flags         (:options parsed-opts)
+        options       (-> (config/merge-configs base-opts flags)
                           (update :paths into paths))]
     (if (:errors parsed-opts)
       (abort (:errors parsed-opts))
-      (if (or (nil? cmd) (-> parsed-opts :options :help))
-        (do (println "Usage:")
-            (println (str \tab *command* " (check | fix) [PATHS...]"))
-            (println "Options:")
-            (println (:summary parsed-opts)))
+      (cond
+        (:version flags)
+        (print-version)
+
+        (or (nil? cmd) (:help flags))
+        (print-help (:summary parsed-opts))
+
+        :else
         (let [cmdf (case cmd
                      "check" tool/check-no-config
                      "fix"   tool/fix-no-config
