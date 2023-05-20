@@ -36,3 +36,7 @@ jobs:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.2
           key: linux-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+workflows:
+  compile:
+    jobs:
+      - linux
