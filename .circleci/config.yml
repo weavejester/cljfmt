@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   linux:
     docker:
-      - image: 1.11.1-openjdk-17.0
+      - image: cimg/clojure:1.11.1-openjdk-17.0
     working_directory: ~/repo
     environment:
       GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.2
