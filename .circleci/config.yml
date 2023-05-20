@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  win: circleci/windows@5.0
 jobs:
   linux_amd64:
     docker:
@@ -172,7 +174,45 @@ jobs:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.1
           key: macos-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+  windows:
+    executor:
+      name: win/default
+      shell: powershell.exe
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - win-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Download Leiningen
+          command: |
+            (New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein.bat', 'lein.bat')
+      - run:
+          name: Download GraalVM
+          command: |
+            if (Test-Path('graalvm')) {
+              return
+            } else {
+              (New-Object Net.WebClient).DownloadFile('https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java11-windows-amd64-22.3.0.zip', 'graalvm.zip')
+              Expand-Archive graalvm.zip graalvm
+            }
+      - run:
+          name: Install GraalVM native image
+          working_directory: graalvm
+          command: bin/gu install native-image
+      - run:
+          name: Compile native image
+          working_directory: cljfmt
+          command: ../lein native-image
+      - store_artifacts:
+          path: cljfmt/target/cljfmt
+          destination: cljfmt
+      - save_cache:
+          paths:
+            - .m2
+            - graalvm
+          key: win-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 workflows:
   compile:
     jobs:
-      - macos_aarch64
+      - windows
