@@ -208,8 +208,7 @@ jobs:
       - run:
           name: Compile native image
           working_directory: cljfmt
-          command: |
-            set GRAALVM_HOME=%CIRCLE_WORKING_DIRECTORY%\graalvm\graalvm-ce-java17-22.3.2 & set PATH=%PATH%;%GRAALVM_HOME%\bin & "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat" & ..\lein native-image
+          command: ..\.circleci\script\compile.bat
       - store_artifacts:
           path: cljfmt/target/cljfmt
           destination: cljfmt
