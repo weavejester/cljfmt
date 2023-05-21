@@ -25,6 +25,33 @@ project may be more suitable.
 cljfmt integrates with many existing build tools, or can be used as a
 library. As an end user, you have the choice of:
 
+### Standalone
+
+The fastest way to run cljfmt is via a precompiled binary. If you're using
+Linux or MacOS, you can run the following command to install the binary into
+`/usr/local/bin`:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/weavejester/cljfmt/HEAD/install.sh)"
+```
+
+If you're using Windows, there's a [zipped up binary][] you can download and
+extract manually.
+
+To use cljfmt to check for formatting errors in your project, run:
+
+```bash
+cljfmt check
+```
+
+And to fix those errors:
+
+```bash
+cljfmt fix
+```
+
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.10.2/cljfmt-0.10.2-win-amd64.zip
+
 ### Clojure Tools
 
 The official Clojure CLI supports installation of thirdparty [tools][].
@@ -34,7 +61,7 @@ To install cljfmt as a tool, run:
 clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.10.2"}' :as cljfmt
 ```
 
-To use the tool to check code for formatting errors, run:
+To use the tool to check for formatting errors in your project, run:
 
 ```bash
 clj -Tcljfmt check
@@ -103,27 +130,6 @@ bb cljfmt fix
 ```
 
 [babashka]: https://babashka.org/
-
-### Standalone
-
-cljfmt can also be run as a standalone `-main` application. Do do so,
-add the following dependency to your `deps.edn` file or the equivalent:
-
-```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.10.2"}}}
-```
-
-To use cljfmt to check for formatting errors, run:
-
-```bash
-clojure -M -m cljfmt.main check
-```
-
-And to fix those errors:
-
-```bash
-clojure -M -m cljfmt.main fix
-```
 
 ### Library
 
