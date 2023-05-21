@@ -184,7 +184,7 @@ jobs:
       - run:
           name: Create artifact
           working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
+          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-aarch64.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
