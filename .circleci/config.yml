@@ -270,31 +270,31 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
       - linux_aarch64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
       - macos_amd64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
       - macos_aarch64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
       - windows:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
       - publish_release:
           requires:
             - linux_amd64
@@ -306,4 +306,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^test-\d+$/
+              only: /^v\d+\.\d+\.\d+$/
