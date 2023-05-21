@@ -267,11 +267,41 @@ workflows:
     jobs:
       - linux_amd64:
           filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^test-\d+$/
+      - linux_aarch64:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^test-\d+$/
+      - macos_amd64:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^test-\d+$/
+      - macos_aarch64:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^test-\d+$/
+      - windows:
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^test-\d+$/
       - publish_release:
           requires:
             - linux_amd64
+            - linux_aarch64
+            - macos_amd64
+            - macos_aarch64
+            - windows
           filters:
             branches:
               ignore: /.*/
