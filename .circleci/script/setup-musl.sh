@@ -15,4 +15,3 @@ make install
 
 cd ..
 install -Dm644 "/usr/local/lib/libz.a" "/usr/lib/x86_64-linux-musl/libz.a"
-ln -s /usr/bin/musl-gcc /usr/bin/x86_64-linux-musl-gcc
