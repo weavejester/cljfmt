@@ -34,9 +34,14 @@ jobs:
           name: Compile native image
           working_directory: ~/repo/cljfmt
           command: lein native-image
-      - store_artifacts:
-          path: cljfmt/target/cljfmt
-          destination: cljfmt
+      - run:
+          name: Create artifact
+          working_directory: ~/repo/cljfmt/target
+          command: tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64.tar.gz cljfmt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cljfmt-*.tar.gz
       - save_cache:
           paths:
             - ~/.m2
@@ -82,9 +87,14 @@ jobs:
           name: Compile native image
           working_directory: ~/repo/cljfmt
           command: ~/lein native-image
-      - store_artifacts:
-          path: cljfmt/target/cljfmt
-          destination: cljfmt
+      - run:
+          name: Create artifact
+          working_directory: ~/repo/cljfmt/target
+          command: tar -czf cljfmt-${CIRCLE_TAG}-linux-aarch64.tar.gz cljfmt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cljfmt-*.tar.gz
       - save_cache:
           paths:
             - ~/.m2
@@ -124,9 +134,14 @@ jobs:
           name: Compile native image
           working_directory: ~/repo/cljfmt
           command: ~/lein native-image
-      - store_artifacts:
-          path: cljfmt/target/cljfmt
-          destination: cljfmt
+      - run:
+          name: Create artifact
+          working_directory: ~/repo/cljfmt/target
+          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cljfmt-*.tar.gz
       - save_cache:
           paths:
             - ~/.m2
@@ -166,9 +181,14 @@ jobs:
           name: Compile native image
           working_directory: ~/repo/cljfmt
           command: ~/lein native-image
-      - store_artifacts:
-          path: cljfmt/target/cljfmt
-          destination: cljfmt
+      - run:
+          name: Create artifact
+          working_directory: ~/repo/cljfmt/target
+          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cljfmt-*.tar.gz
       - save_cache:
           paths:
             - ~/.m2
@@ -209,15 +229,51 @@ jobs:
           name: Compile native image
           working_directory: cljfmt
           command: ..\.circleci\script\compile.bat
-      - store_artifacts:
-          path: cljfmt/target/cljfmt.exe
-          destination: cljfmt
+      - run:
+          name: Create artifact
+          shell: powershell.exe
+          working_directory: ~/repo/cljfmt/target
+          command: |
+            Compress-Archive cljfmt.exe ("cljfmt-{0}-win-amd64.zip" -f $env:CIRCLE_TAG)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cljfmt-*.zip
       - save_cache:
           paths:
             - .m2
             - graalvm
           key: win-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+  publish_release:
+    docker:
+      - image: cibuilds/github:0.13
+    steps:
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          name: Create SHA256 hashes
+          working_directory: artifacts
+          command: |
+            for f in cljfmt-*; do
+              sha256sum $f | awk '{print $1'} > $f.sha256
+            done
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+                -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} \
+                ./artifacts/
 workflows:
   compile:
     jobs:
-      - windows
+      - linux_amd64:
+          filters:
+            tags:
+              only: /^test-\d+$/
+      - publish_release:
+          requires:
+            - linux_amd64
+          branches:
+            ignore: /.*/
+          tags:
+            only: /^test-\d+$/
