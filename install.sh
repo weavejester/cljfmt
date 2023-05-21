@@ -13,6 +13,8 @@ case $(uname -s) in
         ;;
 esac
 
+STATIC=
+
 case $(uname -m) in
     aarch64)
         ARCH=aarch64
