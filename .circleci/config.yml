@@ -39,7 +39,7 @@ jobs:
           working_directory: ~/repo/cljfmt/target
           command: tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64.tar.gz cljfmt
       - persist_to_workspace:
-          root: .
+          root: cljfmt/target
           paths:
             - cljfmt-*.tar.gz
       - save_cache:
@@ -92,7 +92,7 @@ jobs:
           working_directory: ~/repo/cljfmt/target
           command: tar -czf cljfmt-${CIRCLE_TAG}-linux-aarch64.tar.gz cljfmt
       - persist_to_workspace:
-          root: .
+          root: cljfmt/target
           paths:
             - cljfmt-*.tar.gz
       - save_cache:
@@ -139,7 +139,7 @@ jobs:
           working_directory: ~/repo/cljfmt/target
           command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
       - persist_to_workspace:
-          root: .
+          root: cljfmt/target
           paths:
             - cljfmt-*.tar.gz
       - save_cache:
@@ -186,7 +186,7 @@ jobs:
           working_directory: ~/repo/cljfmt/target
           command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
       - persist_to_workspace:
-          root: .
+          root: cljfmt/target
           paths:
             - cljfmt-*.tar.gz
       - save_cache:
@@ -232,11 +232,11 @@ jobs:
       - run:
           name: Create artifact
           shell: powershell.exe
-          working_directory: ~/repo/cljfmt/target
+          working_directory: cljfmt/target
           command: |
             Compress-Archive cljfmt.exe ("cljfmt-{0}-win-amd64.zip" -f $env:CIRCLE_TAG)
       - persist_to_workspace:
-          root: .
+          root: cljfmt/target
           paths:
             - cljfmt-*.zip
       - save_cache:
