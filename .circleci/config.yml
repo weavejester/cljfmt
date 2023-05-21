@@ -177,7 +177,7 @@ jobs:
   windows:
     executor:
       name: win/default
-      shell: powershell.exe
+      shell: cmd.exe
     steps:
       - checkout
       - restore_cache:
@@ -185,13 +185,15 @@ jobs:
             - win-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
       - run:
           name: Download Leiningen
+          shell: powershell.exe
           command: |
             (New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein.bat', 'lein.bat')
       - run:
           name: Install Leiningen
-          command: ./lein self-install
+          command: .\lein self-install
       - run:
           name: Download GraalVM
+          shell: powershell.exe
           command: |
             if (Test-Path('graalvm')) {
               return
@@ -202,13 +204,15 @@ jobs:
       - run:
           name: Install GraalVM native image
           working_directory: graalvm/graalvm-ce-java17-22.3.2
-          command: bin/gu install native-image
+          command: bin\gu install native-image
       - run:
           name: Compile native image
           working_directory: cljfmt
           command: |
-            $env:GRAALVM_HOME = "{0}/graalvm/graalvm-ce-java17-22.3.2" -f $env:CIRCLE_WORKING_DIRECTORY
-            ../lein native-image
+            set GRAALVM_HOME=%CIRCLE_WORKING_DIRECTORY%\graalvm\graalvm-ce-java17-22.3.2
+            set PATH=%PATH%;%GRAALVM_HOME%\bin
+            "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+            ..\lein native-image
       - store_artifacts:
           path: cljfmt/target/cljfmt
           destination: cljfmt
