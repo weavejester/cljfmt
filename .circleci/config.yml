@@ -210,7 +210,7 @@ jobs:
           working_directory: cljfmt
           command: ..\.circleci\script\compile.bat
       - store_artifacts:
-          path: cljfmt/target/cljfmt
+          path: cljfmt/target/cljfmt.exe
           destination: cljfmt
       - save_cache:
           paths:
