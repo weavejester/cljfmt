@@ -264,6 +264,7 @@ jobs:
                 -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} \
                 ./artifacts/
 workflows:
+  version: 2
   compile:
     jobs:
       - linux_amd64:
