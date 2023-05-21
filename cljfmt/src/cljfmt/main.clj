@@ -6,6 +6,8 @@
             [clojure.tools.cli :as cli])
   (:gen-class))
 
+(def ^:const VERSION "0.10.1")
+
 (defn- cli-options [defaults]
   [["-h" "--help"]
    ["-v" "--version"]
@@ -70,9 +72,6 @@
   (println "Options:")
   (println summary))
 
-(defn- print-version []
-  (println "cljfmt 0.10.0"))
-
 (defn -main [& args]
   (let [base-opts     (config/load-config)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
@@ -84,7 +83,7 @@
       (abort (:errors parsed-opts))
       (cond
         (:version flags)
-        (print-version)
+        (println "cljfmt" VERSION)
 
         (or (nil? cmd) (:help flags))
         (print-help (:summary parsed-opts))
