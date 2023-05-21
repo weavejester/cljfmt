@@ -62,8 +62,7 @@
   (when-some [missing (some (complement file-exists?) paths)]
     (abort "No such file:" (str missing))))
 
-(def ^:dynamic *command*
-  "clojure -M -m cljfmt.main")
+(def ^:dynamic *command* "cljfmt")
 
 (defn- print-help [summary]
   (println "Usage:")
