@@ -278,6 +278,8 @@ workflows:
     jobs:
       - linux_amd64:
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+$/
       - linux_aarch64:
