@@ -39,4 +39,9 @@
                   :main cljfmt.main
                   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
                              "-Dclojure.spec.skip-macros=true"]}
+   :static {:native-image
+            {:name "cljfmt-static"
+             :opts ["--static"
+                    "--libc=musl"
+                    "-H:CCompilerOption=-Wl,-z,stack-size=2097152"]}}
    :provided {:dependencies [[org.clojure/clojurescript "1.11.60"]]}})

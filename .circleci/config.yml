@@ -17,14 +17,17 @@ jobs:
           name: Install native dev tools
           command: |
             sudo apt-get update
-            sudo apt-get -y install gcc g++ zlib1g-dev
+            sudo apt-get -y install gcc g++ zlib1g-dev musl-tools
+      - run:
+          name: Install musl for static linking
+          command: sudo bash .circleci/script/setup-musl.sh
       - run:
           name: Download GraalVM
           working_directory: ~/
           command: |
             if ! [ -d graalvm-ce-java17-22.3.2 ]; then
               curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.2/graalvm-ce-java17-linux-amd64-22.3.2.tar.gz
-              tar xzf graalvm-ce-java17-linux-amd64-22.3.2.tar.gz
+              tar -xzf graalvm-ce-java17-linux-amd64-22.3.2.tar.gz
             fi
       - run:
           name: Install GraalVM native-image
@@ -35,9 +38,17 @@ jobs:
           working_directory: ~/repo/cljfmt
           command: lein native-image
       - run:
-          name: Create artifact
+          name: Compile static native image
+          working_directory: ~/repo/cljfmt
+          command: lein with-profile +static native-image
+      - run:
+          name: Create artifacts
           working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64.tar.gz cljfmt
+          command: |
+            tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64.tar.gz cljfmt
+            mv cljfmt cljfmt-dynamic
+            mv cljfmt-static cljfmt
+            tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64-static.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
@@ -267,8 +278,6 @@ workflows:
     jobs:
       - linux_amd64:
           filters:
-            branches:
-              ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+$/
       - linux_aarch64:
