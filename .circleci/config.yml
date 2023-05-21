@@ -265,7 +265,7 @@ jobs:
                 ./artifacts/
 workflows:
   version: 2
-  compile:
+  compile_and_release:
     jobs:
       - linux_amd64:
           filters:
@@ -274,7 +274,8 @@ workflows:
       - publish_release:
           requires:
             - linux_amd64
-          branches:
-            ignore: /.*/
-          tags:
-            only: /^test-\d+$/
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^test-\d+$/
