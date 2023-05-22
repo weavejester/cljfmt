@@ -5,8 +5,15 @@
             [clojure.java.io :as io]
             [clojure.stacktrace :as st]))
 
+(def ^:dynamic *no-output* false)
+
 (defn- warn [& args]
-  (binding [*out* *err*]
+  (when-not *no-output*
+    (binding [*out* *err*]
+      (apply println args))))
+
+(defn- info [& args]
+  (when-not *no-output*
     (apply println args)))
 
 (defn- relative-path [^java.io.File dir ^java.io.File file]
@@ -59,8 +66,9 @@
             (assoc :exception ex))))))
 
 (defn- print-stack-trace [ex]
-  (binding [*out* *err*]
-    (st/print-stack-trace ex)))
+  (when-not *no-output*
+    (binding [*out* *err*]
+      (st/print-stack-trace ex))))
 
 (defn- print-file-status [options status]
   (let [path (project-path options (:file status))]
@@ -68,7 +76,7 @@
       (warn "Failed to format file:" path)
       (print-stack-trace ex))
     (when (:reformatted status)
-      (println "Reformatting" path))
+      (info "Reformatting" path))
     (when-let [diff (:diff status)]
       (warn path "has incorrect formatting")
       (warn diff))))
@@ -87,7 +95,7 @@
     (when-not (zero? incorrect)
       (warn incorrect "file(s) formatted incorrectly"))
     (when (and (zero? incorrect) (zero? error))
-      (println "All source files formatted correctly"))))
+      (info "All source files formatted correctly"))))
 
 (defn- merge-counts
   ([]    zero-counts)
