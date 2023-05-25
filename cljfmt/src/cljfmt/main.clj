@@ -81,22 +81,22 @@
         flags         (:options parsed-opts)
         options       (-> (config/merge-configs base-opts flags)
                           (update :paths into paths))]
-    (if (:errors parsed-opts)
-      (abort (:errors parsed-opts))
-      (cond
-        (:version flags)
-        (println "cljfmt" VERSION)
+    (when (:errors parsed-opts)
+      (abort (:errors parsed-opts)))
+    (cond
+      (:version flags)
+      (println "cljfmt" VERSION)
 
-        (or (nil? cmd) (:help flags))
-        (print-help (:summary parsed-opts))
+      (or (nil? cmd) (:help flags))
+      (print-help (:summary parsed-opts))
 
-        :else
-        (let [cmdf (case cmd
-                     "check" tool/check-no-config
-                     "fix"   tool/fix-no-config
-                     (abort "Unknown cljfmt command:" cmd))]
-          (abort-if-files-missing paths)
-          (binding [tool/*no-output* (:quiet? options)]
-            (cmdf options))
-          (when (:parallel? options)
-            (shutdown-agents)))))))
+      :else
+      (let [cmdf (case cmd
+                   "check" tool/check-no-config
+                   "fix"   tool/fix-no-config
+                   (abort "Unknown cljfmt command:" cmd))]
+        (abort-if-files-missing paths)
+        (binding [tool/*no-output* (:quiet? options)]
+          (cmdf options))
+        (when (:parallel? options)
+          (shutdown-agents))))))
