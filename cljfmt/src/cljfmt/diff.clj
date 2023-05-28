@@ -26,11 +26,13 @@
    :green "[032m"
    :cyan  "[036m"})
 
-(defn- ansi-terminal? []
-  (and (System/console) (System/getenv "TERM")))
+(defn- ansi-colors? []
+  (and (System/console)
+       (System/getenv "TERM")
+       (not (System/getenv "NO_COLOR"))))
 
 (defn- colorize [s color]
-  (if (ansi-terminal?)
+  (if (ansi-colors?)
     (str \u001b (ansi-colors color) s \u001b (ansi-colors :reset))
     s))
 
