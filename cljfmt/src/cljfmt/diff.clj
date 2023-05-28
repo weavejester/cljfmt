@@ -33,8 +33,13 @@
    :green "[032m"
    :cyan  "[036m"})
 
+(defn- ansi-terminal? []
+  (and (System/console) (System/getenv "TERM")))
+
 (defn- colorize [s color]
-  (str \u001b (ansi-colors color) s \u001b (ansi-colors :reset)))
+  (if (ansi-terminal?)
+    (str \u001b (ansi-colors color) s \u001b (ansi-colors :reset))
+    s))
 
 (defn colorize-diff [diff-text]
   (-> diff-text

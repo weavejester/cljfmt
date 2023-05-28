@@ -79,7 +79,7 @@
       (info "Reformatting" path))
     (when-let [diff (:diff status)]
       (warn path "has incorrect formatting")
-      (warn diff))))
+      (println diff))))
 
 (defn- exit [counts]
   (when-not (zero? (:error counts 0))
