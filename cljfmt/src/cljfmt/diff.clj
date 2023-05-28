@@ -1,9 +1,7 @@
 (ns cljfmt.diff
   (:import [difflib DiffUtils]
-           [java.io File]
-           [java.util.regex Pattern])
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+           [java.io File])
+  (:require [clojure.string :as str]))
 
 (defn- lines [s]
   (str/split s #"\n"))
@@ -11,18 +9,13 @@
 (defn- unlines [ss]
   (str/join "\n" ss))
 
-(defn to-absolute-path [filename]
-  (->> (str/split filename (re-pattern (Pattern/quote File/separator)))
-       ^java.io.File (apply io/file)
-       .getCanonicalPath))
-
 (defn unified-diff
   ([filename original revised]
    (unified-diff filename original revised 3))
   ([filename original revised context]
    (unlines (DiffUtils/generateUnifiedDiff
-             (->> filename to-absolute-path (str "a"))
-             (->> filename to-absolute-path (str "b"))
+             (str "a" File/separator filename)
+             (str "b" File/separator filename)
              (lines original)
              (DiffUtils/diff (lines original) (lines revised))
              context))))
