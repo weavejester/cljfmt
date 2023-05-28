@@ -1,8 +1,8 @@
 (ns cljfmt.main
   "Functionality to apply formatting to a given project."
   (:require [cljfmt.config :as config]
+            [cljfmt.io :as io]
             [cljfmt.tool :as tool]
-            [clojure.java.io :as io]
             [clojure.tools.cli :as cli])
   (:gen-class))
 
@@ -59,11 +59,11 @@
       (apply println msg))
     (System/exit 1)))
 
-(defn- file-exists? [path]
-  (.exists (io/as-file path)))
+(defn- file-missing? [path]
+  (not (io/exists? (io/file-entity path))))
 
 (defn- abort-if-files-missing [paths]
-  (when-some [missing (some (complement file-exists?) paths)]
+  (when-some [missing (first (filter file-missing? paths))]
     (abort "No such file:" (str missing))))
 
 (def ^:dynamic *command* "cljfmt")
@@ -80,7 +80,7 @@
         [cmd & paths] (:arguments parsed-opts)
         flags         (:options parsed-opts)
         options       (-> (config/merge-configs base-opts flags)
-                          (update :paths into paths))]
+                          (update :paths #(or (seq paths) %)))]
     (when (:errors parsed-opts)
       (abort (:errors parsed-opts)))
     (cond

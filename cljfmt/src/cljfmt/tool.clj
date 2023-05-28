@@ -2,7 +2,8 @@
   (:require [cljfmt.config :as config]
             [cljfmt.core :as cljfmt]
             [cljfmt.diff :as diff]
-            [clojure.java.io :as io]
+            [cljfmt.io :as io]
+            [clojure.java.io :as cio]
             [clojure.stacktrace :as st]))
 
 (def ^:dynamic *no-output* false)
@@ -12,34 +13,25 @@
     (binding [*out* *err*]
       (apply println args))))
 
-(defn- info [& args]
-  (when-not *no-output*
-    (apply println args)))
-
-(defn- relative-path [^java.io.File dir ^java.io.File file]
-  (-> (.toAbsolutePath (.toPath dir))
-      (.relativize (.toAbsolutePath (.toPath file)))
-      (.toString)))
-
 (defn- grep [re dir]
-  (filter #(re-find re (relative-path dir %)) (file-seq (io/file dir))))
+  (filter #(re-find re (io/relative-path % dir)) (io/list-files dir)))
 
 (defn- find-files [{:keys [file-pattern]} f]
-  (let [f (io/file f)]
-    (when (.exists f)
-      (if (.isDirectory f)
+  (let [f (io/file-entity f)]
+    (when (io/exists? f)
+      (if (io/directory? f)
         (grep file-pattern f)
-        [f]))))
+        (list f)))))
 
 (defn- reformat-string [options s]
   ((cljfmt/wrap-normalize-newlines #(cljfmt/reformat-string % options)) s))
 
 (defn- project-path [{:keys [project-root]} file]
-  (-> project-root (or ".") io/file (relative-path (io/file file))))
+  (->> (or project-root ".") cio/file (io/relative-path file)))
 
 (defn- format-diff
   ([options file]
-   (let [original (slurp (io/file file))]
+   (let [original (io/read-file file)]
      (format-diff options file original (reformat-string options original))))
   ([options file original revised]
    (let [filename (project-path options file)
@@ -51,7 +43,7 @@
 (def ^:private zero-counts {:okay 0, :incorrect 0, :error 0})
 
 (defn- check-one [options file]
-  (let [original (slurp file)
+  (let [original (io/read-file file)
         status   {:counts zero-counts :file file}]
     (try
       (let [revised (reformat-string options original)]
@@ -76,7 +68,7 @@
       (warn "Failed to format file:" path)
       (print-stack-trace ex))
     (when (:reformatted status)
-      (info "Reformatting" path))
+      (warn "Reformatted" path))
     (when-let [diff (:diff status)]
       (warn path "has incorrect formatting")
       (println diff))))
@@ -95,7 +87,7 @@
     (when-not (zero? incorrect)
       (warn incorrect "file(s) formatted incorrectly"))
     (when (and (zero? incorrect) (zero? error))
-      (info "All source files formatted correctly"))))
+      (warn "All source files formatted correctly"))))
 
 (defn- merge-counts
   ([]    zero-counts)
@@ -124,22 +116,25 @@
     (check-no-config opts)))
 
 (defn- fix-one [options file]
-  (let [original (slurp file)]
+  (let [original (io/read-file file)]
     (try
       (let [revised (reformat-string options original)]
         (if (not= original revised)
-          (do (spit file revised)
+          (do (io/write-file file revised)
               {:file file :reformatted true})
           {:file file}))
       (catch Exception e
         {:file file :exception e}))))
 
+(defn- recursively-find-files [{:keys [paths] :as options}]
+  (mapcat #(find-files options %) (set paths)))
+
 (defn fix-no-config
   "The same as `fix`, but ignores dotfile configuration."
   [options]
-  (let [map* (if (:parallel? options) pmap map)]
-    (->> (:paths options)
-         (mapcat (partial find-files options))
+  (let [files (recursively-find-files options)
+        map*  (if (:parallel? options) pmap map)]
+    (->> files
          (map* (partial fix-one options))
          (map (partial print-file-status options))
          dorun)))
