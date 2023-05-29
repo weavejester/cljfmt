@@ -33,6 +33,8 @@ Linux or MacOS, you can run the following command to install the binary into
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/weavejester/cljfmt/HEAD/install.sh)"
 ```
 
+You can also run this command to update cljfmt to the latest version.
+
 If you're using Windows, there's a [zipped up binary][] you can download and
 extract manually.
 
@@ -48,7 +50,12 @@ And to fix those errors:
 cljfmt fix
 ```
 
+Use `--help` for a list of all the command-line options.
+
+For persistent configuration, you can use a [configuration file][].
+
 [zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.10.2/cljfmt-0.10.2-win-amd64.zip
+[configuration file]: #configuration
 
 ### Clojure Tools
 
@@ -94,7 +101,11 @@ And to fix those errors:
 lein cljfmt fix
 ```
 
+To configure it, put a `:cljfmt` key and a map of options in your
+project file. See the [configuration][] section for more details.
+
 [leiningen]: https://github.com/technomancy/leiningen
+[configuration]: #configuration
 
 ### Library
 
@@ -216,6 +227,9 @@ project map:
   Clojure files. Defaults to checking `src` and `test`, except in
   Leiningen where the `:source-paths` and `:test-paths` keys are used
   instead.
+
+  Paths can also be passed as command line arguments. If the path is
+  `-`, then the input is STDIN, and the output STDOUT.
 
 ## License
 
