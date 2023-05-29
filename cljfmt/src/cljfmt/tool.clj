@@ -7,11 +7,15 @@
             [clojure.stacktrace :as st]))
 
 (def ^:dynamic *no-output* false)
+(def ^:dynamic *verbose* false)
 
 (defn- warn [& args]
   (when-not *no-output*
     (binding [*out* *err*]
       (apply println args))))
+
+(defn- trace [& args]
+  (when *verbose* (apply warn args)))
 
 (defn- grep [re dir]
   (filter #(re-find re (io/relative-path % dir)) (io/list-files dir)))
@@ -43,6 +47,7 @@
 (def ^:private zero-counts {:okay 0, :incorrect 0, :error 0})
 
 (defn- check-one [options file]
+  (trace "Processing file:" (project-path options file))
   (let [original (io/read-file file)
         status   {:counts zero-counts :file file}]
     (try
@@ -116,6 +121,7 @@
     (check-no-config opts)))
 
 (defn- fix-one [options file]
+  (trace "Processing file:" (project-path options file))
   (let [original (io/read-file file)]
     (try
       (let [revised (reformat-string options original)]

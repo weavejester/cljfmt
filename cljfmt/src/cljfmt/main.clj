@@ -10,9 +10,11 @@
 
 (defn- cli-options [defaults]
   [["-h" "--help"]
-   ["-v" "--version"]
+   [nil "--version"]
    ["-q" "--quiet"
     :id :quiet?]
+   ["-v" "--verbose"
+    :id :verbose?]
    [nil "--[no-]parallel"
     :id :parallel?
     :default (:parallel? defaults)]
@@ -96,7 +98,8 @@
                    "fix"   tool/fix-no-config
                    (abort "Unknown cljfmt command:" cmd))]
         (abort-if-files-missing paths)
-        (binding [tool/*no-output* (:quiet? options)]
+        (binding [tool/*no-output* (:quiet? options)
+                  tool/*verbose* (:verbose? options)]
           (cmdf options))
         (when (:parallel? options)
           (shutdown-agents))))))
