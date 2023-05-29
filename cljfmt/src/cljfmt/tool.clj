@@ -124,10 +124,11 @@
   (trace "Processing file:" (project-path options file))
   (let [original (io/read-file file)]
     (try
-      (let [revised (reformat-string options original)]
-        (if (not= original revised)
-          (do (io/write-file file revised)
-              {:file file :reformatted true})
+      (let [revised  (reformat-string options original)
+            changed? (not= original revised)]
+        (io/update-file file revised changed?)
+        (if changed?
+          {:file file :reformatted true}
           {:file file}))
       (catch Exception e
         {:file file :exception e}))))

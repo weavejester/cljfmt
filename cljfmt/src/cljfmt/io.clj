@@ -3,7 +3,7 @@
 
 (defprotocol FileEntity
   (read-file [f])
-  (write-file [f s])
+  (update-file [f s changed?])
   (exists? [f])
   (directory? [f])
   (list-files [f])
@@ -12,7 +12,7 @@
 (extend-protocol FileEntity
   File
   (read-file [f] (slurp f))
-  (write-file [f s] (spit f s))
+  (update-file [f s changed?] (when changed? (spit f s)))
   (exists? [f] (.exists f))
   (directory? [f] (.isDirectory f))
   (list-files [f] (file-seq f))
@@ -24,7 +24,7 @@
 (deftype StdIO [in out]
   FileEntity
   (read-file [_] (slurp in))
-  (write-file [_ s] (binding [*out* out] (print s)) (flush))
+  (update-file [_ s _] (binding [*out* out] (print s)) (flush))
   (exists? [_] true)
   (directory? [_] false)
   (list-files [_] nil)
