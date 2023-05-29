@@ -96,39 +96,6 @@ lein cljfmt fix
 
 [leiningen]: https://github.com/technomancy/leiningen
 
-### Babashka
-
-[Babashka][] is a native Clojure interpreter with a very fast startup.
-Running cljfmt via Babashka can be several times faster than running it
-as a tool or via Leiningen.
-
-To use cljfmt with Babashka, add the following dependency and task to
-your `bb.edn` file:
-
-```edn
-{:deps
- {dev.weavejester/cljfmt {:mvn/version "0.10.2"}}
- :tasks
- {cljfmt {:doc "Run cljfmt"
-          :requires ([cljfmt.main :as fmt])
-          :task (binding [fmt/*command* "bb cljfmt"]
-                  (apply fmt/-main *command-line-args*))}}}
-```
-
-To use the Babashka task to check code for formatting errors, run:
-
-```bash
-bb cljfmt check
-```
-
-And to fix those errors:
-
-```bash
-bb cljfmt fix
-```
-
-[babashka]: https://babashka.org/
-
 ### Library
 
 cljfmt can be run as a library that formats a string of Clojure code.
