@@ -30,7 +30,8 @@
   (list-files [_] nil)
   (relative-path [_ _] "STDIN"))
 
-(defn file-entity [^String path]
-  (if (= "-" path)
-    (->StdIO *in* *out*)
-    (File. path)))
+(defn file-entity [path]
+  (cond
+    (instance? File path) path
+    (= "-" path) (->StdIO *in* *out*)
+    :else (File. path)))
