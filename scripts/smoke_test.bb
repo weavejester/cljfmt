@@ -7,8 +7,9 @@
                              "lein cljfmt check")))))
 
 (deftest check-clj-tool
-  (is (zero? (:exit (p/shell
-                     "clj -M -m cljfmt.main check cljfmt/src cljfmt/test")))))
+  (is (zero? (:exit
+              (p/shell
+               "clojure -M -m cljfmt.main check cljfmt/src cljfmt/test")))))
 
 (deftest check-standalone
   (is (zero? (:exit (p/shell

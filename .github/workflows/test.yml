@@ -16,9 +16,28 @@ jobs:
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@11.0
         with:
+          cli: latest
           lein: 2.9.10
           bb: latest
           clj-kondo: 2023.05.18
+          cljfmt: 0.10.4
+
+      - name: Execute tests
+        working-directory: ./cljfmt
+        run: lein test
+
+      - name: Execute babashka tests
+        run: bb test
+
+      - name: Check formatting
+        run: bb fmt
+
+      - name: Lint sourcecode
+        run: bb lint
+
+      - name: Install cljfmt dependency
+        working-directory: ./cljfmt
+        run: lein install
 
       - name: Install GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -37,19 +56,6 @@ jobs:
       - name: Build executable
         working-directory: ./cljfmt
         run: lein native-image
-
-      - name: Execute tests
-        working-directory: ./cljfmt
-        run: lein test
-
-      - name: Execute babashka tests
-        run: bb test
-
-      - name: Check formatting
-        run: cljfmt/target/cljfmt check
-
-      - name: Lint sourcecode
-        run: bb lint
 
       - name: Run smoke tests
         run: bb smoke
