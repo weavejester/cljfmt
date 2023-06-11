@@ -14,11 +14,29 @@ jobs:
           java-version: '8'
 
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@10.1
+        uses: DeLaGuardo/setup-clojure@11.0
         with:
           lein: 2.9.10
           bb: latest
           clj-kondo: 2023.05.18
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.2'
+          java-version: '17'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install native dev tools
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install build-essential zlib1g-dev
+
+      - name: Build executable
+        working-directory: ./cljfmt
+        run: lein native-image
 
       - name: Execute tests
         working-directory: ./cljfmt
@@ -28,7 +46,12 @@ jobs:
         run: bb test
 
       - name: Check formatting
-        run: bb fmt check
+        run: cljfmt/target/cljfmt check
 
       - name: Lint sourcecode
         run: bb lint
+
+      - name: Run smoke tests
+        run: bb smoke
+
+
