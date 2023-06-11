@@ -34,4 +34,4 @@
   (cond
     (instance? File path) path
     (= "-" path) (->StdIO *in* *out*)
-    :else (File. path)))
+    :else (File. ^String path)))
