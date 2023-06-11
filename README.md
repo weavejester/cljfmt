@@ -1,4 +1,4 @@
-# cljfmt [![Build Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)](https://github.com/weavejester/cljfmt/actions/workflows/test.yml) [![Release Status](https://dl.circleci.com/status-badge/img/gh/weavejester/cljfmt/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/weavejester/cljfmt/tree/master)
+# cljfmt [![Test Status](https://github.com/weavejester/cljfmt/actions/workflows/test.yml/badge.svg)](https://github.com/weavejester/cljfmt/actions/workflows/test.yml) [![Release Status](https://dl.circleci.com/status-badge/img/gh/weavejester/cljfmt.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/weavejester/cljfmt)
 
 cljfmt is a tool for detecting and fixing formatting errors in
 [Clojure][] code.
