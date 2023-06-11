@@ -2,18 +2,19 @@
   (:require [babashka.process :as p]
             [clojure.test :refer [deftest is run-tests]]))
 
+(defn- shell-ok?
+  ([cmd] (shell-ok? cmd {}))
+  ([cmd opts]
+   (zero? (:exit (p/shell (assoc opts :continue true) cmd)))))
+
 (deftest check-lein-plugin
-  (is (zero? (:exit (p/shell {:dir "lein-cljfmt", :continue true}
-                             "lein cljfmt check")))))
+  (is (shell-ok? "lein cljfmt check" {:dir "lein-cljfmt"})))
 
 (deftest check-clj-tool
-  (is (zero? (:exit
-              (p/shell
-               "clojure -M -m cljfmt.main check cljfmt/src cljfmt/test")))))
+  (is (shell-ok? "clojure -M -m cljfmt.main check cljfmt/src cljfmt/test")))
 
 (deftest check-standalone
-  (is (zero? (:exit (p/shell
-                     "cljfmt/target/cljfmt check cljfmt/src cljfmt/test")))))
+  (is (shell-ok? "cljfmt/target/cljfmt check cljfmt/src cljfmt/test")))
 
 (defn -main []
   (let [{:keys [fail error]} (run-tests 'smoke-test)]
