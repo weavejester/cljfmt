@@ -21,6 +21,9 @@
 (defn- merge-default-options [options]
   (config/merge-configs config/default-config options))
 
+(defn- merge-file-options [{:keys [load-config-file?] :as options}]
+  (config/merge-configs (when load-config-file? (config/load-config)) options))
+
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files."
   [project command & paths]
@@ -30,6 +33,7 @@
         options (-> (:cljfmt project)
                     (assoc :paths paths)
                     (assoc :project-root (:root project))
+                    (merge-file-options)
                     (merge-default-options))]
     (if leiningen.core.main/*info*
       (execute-command command options)
