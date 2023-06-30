@@ -157,11 +157,20 @@ files in the current and parent directories:
 
 The configuration file should contain a map of options.
 
+### Leiningen
+
 In Leiningen, the configuration is found in on the `:cljfmt` key in the
 project map:
 
 ```clojure
 :cljfmt {}
+```
+
+In order to load the standard configuration file from Leiningen, add the
+`:load-config-file?` key to the `:cljfmt` map:
+
+```clojure
+:cljfmt {:load-config-file? true}
 ```
 
 ### Formatting Options
