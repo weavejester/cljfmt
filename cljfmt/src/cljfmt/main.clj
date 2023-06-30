@@ -73,6 +73,9 @@
 (defn- print-help [summary]
   (println "Usage:")
   (println (str \tab *command* " (check | fix) [PATHS...]"))
+  (when-let [config-file (config/find-config-file)]
+    (println "Config:")
+    (println (str \tab config-file)))
   (println "Options:")
   (println summary))
 
