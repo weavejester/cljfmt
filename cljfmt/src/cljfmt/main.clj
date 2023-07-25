@@ -3,6 +3,7 @@
   (:require [cljfmt.config :as config]
             [cljfmt.io :as io]
             [cljfmt.tool :as tool]
+            [clojure.java.io :as jio]
             [clojure.tools.cli :as cli])
   (:gen-class))
 
@@ -23,6 +24,7 @@
    [nil "--file-pattern FILE_PATTERN"
     :default (:file-pattern defaults)
     :parse-fn re-pattern]
+   [nil "--config CONFIG_FILE"]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
@@ -66,17 +68,23 @@
 
 (def ^:dynamic *command* "cljfmt")
 
-(defn- print-help [summary]
+(defn- print-help [summary ^java.io.File config-file]
   (println "Usage:")
   (println (str \tab *command* " (check | fix) [PATHS...]"))
-  (when-let [config-file (config/find-config-file)]
+  (when config-file
     (println "Config:")
-    (println (str \tab config-file)))
+    (println (str \tab (.getAbsolutePath config-file))))
   (println "Options:")
   (println summary))
 
+(defn- find-config-file [args]
+  (let [opts (cli/parse-opts args (cli-options config/default-config))]
+    (or (some-> opts :options :config jio/file)
+        (config/find-config-file))))
+
 (defn -main [& args]
-  (let [base-opts     (config/load-config)
+  (let [config-file   (find-config-file args)
+        base-opts     (config/load-config config-file)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
         flags         (:options parsed-opts)
@@ -89,7 +97,7 @@
       (println "cljfmt" VERSION)
 
       (or (nil? cmd) (:help flags))
-      (print-help (:summary parsed-opts))
+      (print-help (:summary parsed-opts) config-file)
 
       :else
       (let [cmdf (case cmd

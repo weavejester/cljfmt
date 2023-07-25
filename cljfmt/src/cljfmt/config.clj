@@ -49,9 +49,15 @@
   ([] (find-config-file ""))
   ([path] (some->> (parent-dirs path) (some find-config-file-in-dir))))
 
+(defn- directory? [path]
+  (.isDirectory (.getAbsoluteFile (io/file path))))
+
 (defn load-config
-  "Load a configuration merged with a map of sensible defaults. See
-  [[find-config-file]]."
+  "Load a configuration merged with a map of sensible defaults. May take
+  an path to a config file, or to a directory to search. If no argument
+  is supplied, it uses the current directory. See: [[find-config-file]]."
   ([] (load-config ""))
   ([path]
-   (merge default-config (some-> (find-config-file path) read-config))))
+   (merge default-config (if (directory? path)
+                           (some-> (find-config-file path) read-config)
+                           (read-config path)))))
