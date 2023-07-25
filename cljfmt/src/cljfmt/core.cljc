@@ -495,8 +495,9 @@
    :remove-trailing-whitespace?           true
    :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
-   :indents   default-indents
-   :alias-map {}})
+   :indents       default-indents
+   :extra-indents {}
+   :alias-map     {}})
 
 (defn reformat-form
   ([form]
@@ -517,7 +518,8 @@
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
            remove-multiple-non-indenting-spaces)
          (cond-> (:indentation? opts)
-           (reindent (:indents opts) (:alias-map opts)))
+           (reindent (merge (:indents opts) (:extra-indents opts))
+                     (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 

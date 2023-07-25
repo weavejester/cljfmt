@@ -19,10 +19,10 @@
     (lein/abort "Unknown cljfmt command:" command)))
 
 (defn- merge-default-options [options]
-  (config/merge-configs config/default-config options))
+  (merge config/default-config options))
 
 (defn- merge-file-options [{:keys [load-config-file?] :as options}]
-  (config/merge-configs (when load-config-file? (config/load-config)) options))
+  (merge (when load-config-file? (config/load-config)) options))
 
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files."

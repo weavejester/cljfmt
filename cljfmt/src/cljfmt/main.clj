@@ -84,7 +84,7 @@
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
         flags         (:options parsed-opts)
-        options       (-> (config/merge-configs base-opts flags)
+        options       (-> (merge base-opts flags)
                           (update :paths #(or (seq paths) %)))]
     (when (:errors parsed-opts)
       (abort (:errors parsed-opts)))

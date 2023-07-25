@@ -1036,6 +1036,24 @@
        {:indents {'foo [[:block 0]]}})
       "can customize block indentation")
   (is (reformats-to?
+       ["(defn f [x]"
+        "(foo x"
+        "1))"]
+       ["(defn f [x]"
+        "      (foo x"
+        "        1))"]
+       {:indents {'foo [[:inner 0]]}})
+      "can override existing indents")
+  (is (reformats-to?
+       ["(defn f [x]"
+        "(foo x"
+        "1))"]
+       ["(defn f [x]"
+        "  (foo x"
+        "    1))"]
+       {:extra-indents {'foo [[:inner 0]]}})
+      "can extend existing indents")
+  (is (reformats-to?
        ["(do"
         "foo"
         "bar)"]

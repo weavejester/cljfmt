@@ -117,7 +117,7 @@
   "Checks that the Clojure paths specified by the :paths option are
   correctly formatted."
   [options]
-  (let [opts (config/merge-configs (config/load-config) options)]
+  (let [opts (merge (config/load-config) options)]
     (check-no-config opts)))
 
 (defn- fix-one [options file]
@@ -149,5 +149,5 @@
 (defn fix
   "Fixes the formatting for all files specified by the :paths option."
   [options]
-  (let [opts (config/merge-configs (config/load-config) options)]
+  (let [opts (merge (config/load-config) options)]
     (fix-no-config opts)))
