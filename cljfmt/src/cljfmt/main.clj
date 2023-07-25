@@ -23,10 +23,6 @@
    [nil "--file-pattern FILE_PATTERN"
     :default (:file-pattern defaults)
     :parse-fn re-pattern]
-   [nil "--indents INDENTS_PATH"
-    :parse-fn config/read-config]
-   [nil "--alias-map ALIAS_MAP_PATH"
-    :parse-fn config/read-config]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
