@@ -30,7 +30,7 @@
   (let [contents (slurp file)]
     (case (filename-ext file)
       "clj" (read-string contents)
-      "edn" (edn/read-string contents))))
+      "edn" (edn/read-string {:readers {'re re-pattern}} contents))))
 
 (defn- parent-dirs [^String root]
   (->> (.getAbsoluteFile (io/file root))
