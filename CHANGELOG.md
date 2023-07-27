@@ -1,3 +1,10 @@
+## 0.11.0 (2023-07-27)
+
+- Breaking change: split `:indents` into `:indents` and `:extra-indents`
+- Breaking change: removed `--indents` and `--alias-map` CLI options
+- Added `--config` CLI option
+- Added `#re` data reader for edn configurations
+
 ## 0.10.6 (2023-06-30)
 
 - Added active config file to `--help` text

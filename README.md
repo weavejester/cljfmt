@@ -18,6 +18,15 @@ project may be more suitable.
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 [zprint]: https://github.com/kkinnear/zprint
 
+## Breaking Changes in 0.11.0
+
+The `:indents` key has been split into `:indents` and `:extra-indents`.
+The `:indents` key **replaces** all default indents, while the
+`:extra-indents` key will **append** to the default indents.
+
+The `--indents` and `--alias-map` keys have been removed from the CLI,
+in favor of using a configuration file instead.
+
 ## Usage
 
 cljfmt integrates with many existing build tools, or can be used as a
@@ -54,7 +63,7 @@ Use `--help` for a list of all the command-line options.
 
 For persistent configuration, you can use a [configuration file][].
 
-[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.10.6/cljfmt-0.10.6-win-amd64.zip
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.11.0/cljfmt-0.11.0-win-amd64.zip
 [configuration file]: #configuration
 
 ### Clojure Tools
@@ -63,7 +72,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.10.6"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.11.0"}' :as cljfmt
 ```
 
 To use the tool to check for formatting errors in your project, run:
@@ -86,7 +95,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[dev.weavejester/lein-cljfmt "0.10.6"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.11.0"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -113,7 +122,7 @@ cljfmt can be run as a library that formats a string of Clojure code.
 First, add the dependency:
 
 ```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.10.6"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.11.0"}}}
 ```
 
 Then use the library:
@@ -181,7 +190,12 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:indents` -
   a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
-  See [INDENTS.md][] for a complete explanation.
+  See [INDENTS.md][] for a complete explanation. This will **replace**
+  the default indents.
+
+* `:extra-indents` -
+  the same as `:indents`, except that this will **append** to the
+  default indents.
 
 * `:alias-map` -
   a map of namespace alias strings to fully qualified namespace
