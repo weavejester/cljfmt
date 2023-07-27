@@ -7,19 +7,30 @@ have different indentation conventions.
 
 By default, cljfmt indents according to the [Clojure Style Guide][]. Any
 function or macro that differs needs specific indent rules. These can be
-defined using the `:indents` option. For example:
+defined using the `:indents` or `:extra-indents` options.
 
-```edn
-{:indents {when [[:block 1]]}}
+The `:indents` option will **replace** all default indents, while the
+`:extra-indents` option will **add** to them.
+
+For example:
+
+```clojure
+{:extra-indents {when [[:block 1]]}}
 ```
 
 The key can be either a symbol or a regular expression. For example:
 
 ```clojure
-{:indents {#"^with-" [[:inner 0]]}}
+{:extra-indents {#"^with-" [[:inner 0]]}}
 ```
 
-Note that edn files do not support regular expressions.
+Note that edn files do not support the Clojure regular expression
+syntax. If you're using an edn configuration, use the `#re` data reader:
+
+
+```edn
+{:extra-indents {#re "^with-" [[:inner 0]]}}
+```
 
 If the symbol is unqualified, it will match all symbols regardless of
 namespace. If the symbol is qualified, it will match only the symbol
@@ -29,20 +40,19 @@ any symbol by reading the `ns` declaration.
 In the cases where it cannot, you can supply an optional alias map. For
 example:
 
-```edn
-{:indents   {com.example/foo [[:inner 0]]}
+```clojure
+{:extra-indents {com.example/foo [[:inner 0]]}
  :alias-map {ex com.example}}
 ```
 
 This rule would match both `com.example/foo` and `ex/foo`.
 
-By default, new indentation rules are merged with the defaults. If you
-want to replace the defaults, use the `:replace` metadata hint. For
-example, to replace all indentation rules with a constant 2-space
-indentation:
+If we want to replace the existing indentation rules, we can use the
+`:indents` option instead of `:extra-indents`. For example, to replace
+all indentation rules with a constant 2-space indentation:
 
-```edn
-{:indents ^:replace {#".*" [[:inner 0]]}}
+```clojure
+{:indents {#".*" [[:inner 0]]}}
 ```
 
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
@@ -65,7 +75,7 @@ For a macro like:
 Use:
 
 ```edn
-{:indents {com.example/foo [[:block 0]]}}
+{:extra-indents {com.example/foo [[:block 0]]}}
 ```
 
 #### Macro with bindings and body
@@ -81,7 +91,7 @@ For a macro like:
 Use:
 
 ```edn
-{:indents {com.example/bar [[:block 1]]}}
+{:extra-indents {com.example/bar [[:block 1]]}}
 ```
 
 ## Concepts
