@@ -2,6 +2,27 @@ version: 2.1
 orbs:
   win: circleci/windows@5.0
 jobs:
+  uberjar:
+     docker:
+      - image: cimg/clojure:1.11.1-openjdk-17.0
+     working_directory: ~/repo
+     steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - uberjar-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Build uberjar
+          working_directory: ~/repo/cljfmt
+          command: lein uberjar
+      - persist_to_workspace:
+          root: cljfmt/target
+          paths:
+            - cljfmt-*-standalone.jar
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: uberjar-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
   linux_amd64:
     docker:
       - image: cimg/clojure:1.11.1-openjdk-17.0
@@ -276,6 +297,12 @@ workflows:
   version: 2
   compile_and_release:
     jobs:
+      - uberjar:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?\d+\.\d+\.\d+$/
       - linux_amd64:
           filters:
             branches:
@@ -308,6 +335,7 @@ workflows:
               only: /^v?\d+\.\d+\.\d+$/
       - publish_release:
           requires:
+            - uberjar
             - linux_amd64
             - linux_aarch64
             - macos_amd64
