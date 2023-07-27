@@ -50,7 +50,7 @@
   ([path] (some->> (parent-dirs path) (some find-config-file-in-dir))))
 
 (defn- directory? [path]
-  (.isDirectory (.getAbsoluteFile (io/file path))))
+  (some-> path io/file .getAbsoluteFile .isDirectory))
 
 (defn load-config
   "Load a configuration merged with a map of sensible defaults. May take
@@ -58,6 +58,7 @@
   is supplied, it uses the current directory. See: [[find-config-file]]."
   ([] (load-config ""))
   ([path]
-   (merge default-config (if (directory? path)
-                           (some-> (find-config-file path) read-config)
-                           (read-config path)))))
+   (let [path (if (directory? path)
+                (find-config-file path)
+                path)]
+     (merge default-config (some-> path read-config)))))
