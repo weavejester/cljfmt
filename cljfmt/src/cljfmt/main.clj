@@ -7,7 +7,7 @@
             [clojure.tools.cli :as cli])
   (:gen-class))
 
-(def ^:const VERSION "0.11.0")
+(def ^:const VERSION "0.11.1")
 
 (defn- cli-options [defaults]
   [["-h" "--help"]

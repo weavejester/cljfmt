@@ -1,3 +1,7 @@
+## 0.11.1 (2023-07-27)
+
+- Fixed error when cljfmt has no configuration (#313)
+
 ## 0.11.0 (2023-07-27)
 
 - Breaking change: split `:indents` into `:indents` and `:extra-indents`

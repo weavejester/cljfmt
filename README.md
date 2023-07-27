@@ -18,7 +18,7 @@ project may be more suitable.
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 [zprint]: https://github.com/kkinnear/zprint
 
-## Breaking Changes in 0.11.0
+## Breaking Changes in 0.11.x
 
 The `:indents` key has been split into `:indents` and `:extra-indents`.
 The `:indents` key **replaces** all default indents, while the
@@ -63,7 +63,7 @@ Use `--help` for a list of all the command-line options.
 
 For persistent configuration, you can use a [configuration file][].
 
-[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.11.0/cljfmt-0.11.0-win-amd64.zip
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.11.1/cljfmt-0.11.1-win-amd64.zip
 [configuration file]: #configuration
 
 ### Clojure Tools
@@ -72,7 +72,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.11.0"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.11.1"}' :as cljfmt
 ```
 
 To use the tool to check for formatting errors in your project, run:
@@ -95,7 +95,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[dev.weavejester/lein-cljfmt "0.11.0"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.11.1"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -122,7 +122,7 @@ cljfmt can be run as a library that formats a string of Clojure code.
 First, add the dependency:
 
 ```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.11.0"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.11.1"}}}
 ```
 
 Then use the library:
