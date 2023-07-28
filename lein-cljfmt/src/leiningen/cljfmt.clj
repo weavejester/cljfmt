@@ -18,11 +18,11 @@
     "fix"   (tool/fix-no-config options)
     (lein/abort "Unknown cljfmt command:" command)))
 
-(defn- merge-default-options [options]
-  (merge config/default-config options))
-
-(defn- merge-file-options [{:keys [load-config-file?] :as options}]
-  (merge (when load-config-file? (config/load-config)) options))
+(defn- merge-options [{:keys [load-config-file?] :as options}]
+  (tool/deep-merge-with #(last %&)
+                        (if load-config-file? (config/load-config) {})
+                        config/default-config
+                        options))
 
 (defn ^:no-project-needed cljfmt
   "Format Clojure source files."
@@ -33,8 +33,7 @@
         options (-> (:cljfmt project)
                     (assoc :paths paths)
                     (assoc :project-root (:root project))
-                    (merge-file-options)
-                    (merge-default-options))]
+                    (merge-options))]
     (if leiningen.core.main/*info*
       (execute-command command options)
       (with-out-str
