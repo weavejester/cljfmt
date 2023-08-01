@@ -20,12 +20,28 @@ project may be more suitable.
 
 ## Breaking Changes in 0.11.x
 
+The `--indents` and `--alias-map` keys have been removed from the CLI,
+in favor of using a configuration file instead.
+
 The `:indents` key has been split into `:indents` and `:extra-indents`.
 The `:indents` key **replaces** all default indents, while the
 `:extra-indents` key will **append** to the default indents.
 
-The `--indents` and `--alias-map` keys have been removed from the CLI,
-in favor of using a configuration file instead.
+If you need to retain backward compatibility with an older version of
+cljfmt, then you can add the `:legacy/merge-indents?` key to your
+configuration:
+
+```edn
+{:legacy/merge-indents? true
+ :indents {example.core/foo [[:inner 0]]}}
+```
+
+This will treat `:indents` as if it were `:extra-indents`. i.e. it is
+equivalent to:
+
+```edn
+{:extra-indents {example.core/foo [[:inner 0]]}}
+```
 
 ## Usage
 

@@ -24,6 +24,13 @@
       "clj" (read-string contents)
       "edn" (edn/read-string {:readers {'re re-pattern}} contents))))
 
+(defn convert-legacy-keys [config]
+  (cond-> config
+    (:legacy/merge-indents? config)
+    (-> (assoc :extra-indents (:indents config))
+        (dissoc :legacy/merge-indents?
+                :indents))))
+
 (defn- parent-dirs [^String root]
   (->> (.getAbsoluteFile (io/file root))
        (iterate #(.getParentFile ^java.io.File %))
@@ -61,4 +68,6 @@
    (let [path (if (directory? path)
                 (find-config-file path)
                 path)]
-     (merge default-config (some-> path read-config)))))
+     (->> (some-> path read-config)
+          (merge default-config)
+          (convert-legacy-keys)))))
