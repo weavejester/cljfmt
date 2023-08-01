@@ -1,6 +1,6 @@
 (ns cljfmt.config-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [cljfmt.config :as config]))
+  (:require [cljfmt.config :as config]
+            [clojure.test :refer [deftest is]]))
 
 (deftest test-convert-legacy-keys
   (is (= {:indents {'foo [[:inner 0]]}}
