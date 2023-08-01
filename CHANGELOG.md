@@ -1,3 +1,7 @@
+## 0.11.2 (2023-08-01)
+
+- Added `:legacy/merge-indents?` for compatibility with 0.10.x (#316)
+
 ## 0.11.1 (2023-07-27)
 
 - Fixed error when cljfmt has no configuration (#313)
