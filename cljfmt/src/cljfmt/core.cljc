@@ -187,10 +187,28 @@
        (count)
        (dec)))
 
-(defn- list-indent [zloc]
+(defn- skip-meta [zloc]
+  (if (#{:meta :meta*} (z/tag zloc))
+    (-> zloc z/down z/right)
+    zloc))
+
+(defn- cursive-two-space-list-indent? [zloc]
+  (-> zloc z/leftmost* skip-meta z/tag #{:vector :map :list :set} not))
+
+(defn- zprint-two-space-list-indent? [zloc]
+  (-> zloc z/leftmost* z/tag #{:token :list}))
+
+(defn two-space-list-indent? [zloc context]
+  (case (:function-arguments-indentation context)
+    :community false
+    :cursive (cursive-two-space-list-indent? zloc)
+    :zprint (zprint-two-space-list-indent? zloc)))
+
+(defn- list-indent [zloc context]
   (if (> (index-of zloc) 1)
     (-> zloc z/leftmost* z/right margin)
-    (coll-indent zloc)))
+    (cond-> (coll-indent zloc)
+      (two-space-list-indent? zloc context) inc)))
 
 (def indent-size 2)
 
@@ -288,12 +306,26 @@
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
                (> (index-of zloc) idx))
         (inner-indent zloc key 0 nil context)
-        (list-indent zloc)))))
+        (list-indent zloc context)))))
 
 (def default-indents
   (merge (read-resource "cljfmt/indents/clojure.clj")
          (read-resource "cljfmt/indents/compojure.clj")
          (read-resource "cljfmt/indents/fuzzy.clj")))
+
+(def default-options
+  {:indentation?                          true
+   :insert-missing-whitespace?            true
+   :remove-consecutive-blank-lines?       true
+   :remove-multiple-non-indenting-spaces? false
+   :remove-surrounding-whitespace?        true
+   :remove-trailing-whitespace?           true
+   :split-keypairs-over-multiple-lines?   false
+   :sort-ns-references?                   false
+   :function-arguments-indentation        :community
+   :indents       default-indents
+   :extra-indents {}
+   :alias-map     {}})
 
 (defmulti ^:private indenter-fn
   (fn [_sym _context [type & _args]] type))
@@ -315,12 +347,12 @@
 
 (defn- custom-indent [zloc indents context]
   (if (empty? indents)
-    (list-indent zloc)
+    (list-indent zloc context)
     (let [indenter (->> indents
                         (map #(make-indenter % context))
                         (apply some-fn))]
       (or (indenter zloc)
-          (list-indent zloc)))))
+          (list-indent zloc context)))))
 
 (defn- indent-amount [zloc indents context]
   (let [tag (-> zloc z/up z/tag)
@@ -346,11 +378,15 @@
   ([form indents]
    (indent form indents {}))
   ([form indents alias-map]
+   (indent form indents alias-map default-options))
+  ([form indents alias-map opts]
    (let [ns-name (find-namespace (z/of-node form))
-         sorted-indents (sort-by indent-order indents)]
+         sorted-indents (sort-by indent-order indents)
+         context (merge (select-keys opts [:function-arguments-indentation])
+                        {:alias-map alias-map
+                         :ns-name ns-name})]
      (transform form edit-all should-indent?
-                #(indent-line % sorted-indents {:alias-map alias-map
-                                                :ns-name ns-name})))))
+                #(indent-line % sorted-indents context)))))
 
 (defn- map-key? [zloc]
   (and (z/map? (z/up zloc))
@@ -381,7 +417,9 @@
   ([form indents]
    (indent (unindent form) indents))
   ([form indents alias-map]
-   (indent (unindent form) indents alias-map)))
+   (indent (unindent form) indents alias-map))
+  ([form indents alias-map opts]
+   (indent (unindent form) indents alias-map opts)))
 
 (defn final? [zloc]
   (and (nil? (z/right* zloc)) (root? (z/up* zloc))))
@@ -486,19 +524,6 @@
 (defn sort-ns-references [form]
   (transform form edit-all ns-reference? sort-arguments))
 
-(def default-options
-  {:indentation?                          true
-   :insert-missing-whitespace?            true
-   :remove-consecutive-blank-lines?       true
-   :remove-multiple-non-indenting-spaces? false
-   :remove-surrounding-whitespace?        true
-   :remove-trailing-whitespace?           true
-   :split-keypairs-over-multiple-lines?   false
-   :sort-ns-references?                   false
-   :indents       default-indents
-   :extra-indents {}
-   :alias-map     {}})
-
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -519,7 +544,8 @@
            remove-multiple-non-indenting-spaces)
          (cond-> (:indentation? opts)
            (reindent (merge (:indents opts) (:extra-indents opts))
-                     (:alias-map opts)))
+                     (:alias-map opts)
+                     opts))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 
