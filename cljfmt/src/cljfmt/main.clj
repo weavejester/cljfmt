@@ -51,7 +51,15 @@
     :id :split-keypairs-over-multiple-lines?]
    [nil "--[no-]sort-ns-references"
     :default (:sort-ns-references? defaults)
-    :id :sort-ns-references?]])
+    :id :sort-ns-references?]
+   [nil "--function-arguments-indentation STYLE"
+    "STYLE may be community, cursive, or zprint"
+    :default (:function-arguments-indentation defaults)
+    :default-desc (name (:function-arguments-indentation defaults))
+    :parse-fn keyword
+    :validate [#{:community :cursive :zprint}
+               "Must be one of community, cursive, or zprint"]
+    :id :function-arguments-indentation]])
 
 (defn- abort [& msg]
   (binding [*out* *err*]

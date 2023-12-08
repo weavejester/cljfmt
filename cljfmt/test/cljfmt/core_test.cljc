@@ -1,7 +1,7 @@
 (ns cljfmt.core-test
   (:require #?(:clj [cljfmt.test-util.clojure])
             [#?@(:clj (clojure.test :refer)
-                 :cljs (cljs.test :refer-macros)) [deftest testing is]]
+                 :cljs (cljs.test :refer-macros)) [deftest testing is are]]
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines]]
@@ -10,22 +10,35 @@
 
 (deftest test-indent
   (testing "list indentation"
-    (is (reformats-to?
-         ["(foo bar"
-          "baz"
-          "quz)"]
-         ["(foo bar"
-          "     baz"
-          "     quz)"]))
+    (are [fn-args-indent]
+         (reformats-to?
+          ["(foo bar"
+           "baz"
+           "quz)"]
+          ["(foo bar"
+           "     baz"
+           "     quz)"]
+          {:function-arguments-indentation fn-args-indent})
+      :community
+      :cursive
+      :zprint)
 
-    (is (reformats-to?
-         ["(foo"
-          "bar"
-          "baz)"]
-         ["(foo"
-          " bar"
-          " baz)"])
-        "to first arg"))
+    (are [fn-args-indent expected]
+         (reformats-to?
+          ["(foo"
+           "bar"
+           "baz)"]
+          expected
+          {:function-arguments-indentation fn-args-indent})
+      :community ["(foo"
+                  " bar"
+                  " baz)"]
+      :cursive ["(foo"
+                "  bar"
+                "  baz)"]
+      :zprint ["(foo"
+               "  bar"
+               "  baz)"]))
 
   (testing "block indentation"
     (is (reformats-to?
@@ -88,11 +101,15 @@
          ["(defn foo"
           "([] 0)"
           "([x]"
-          "(+ x 1)))"]
+          "(+ x 1))"
+          "(^Number [x y]"
+          "(+ x y)))"]
          ["(defn foo"
           "  ([] 0)"
           "  ([x]"
-          "   (+ x 1)))"])
+          "   (+ x 1))"
+          "  (^Number [x y]"
+          "   (+ x y)))"])
         "defn multi-arity")
     (is (reformats-to?
          ["(fn [x]"
@@ -531,7 +548,17 @@
          ["(;a"
           ""
           " ;b"
-          " )"])))
+          " )"]))
+    (is (reformats-to?
+         ["(;a"
+          ""
+          " ;b"
+          " )"]
+         ["(;a"
+          ""
+          " ;b"
+          "  )"]
+         {:function-arguments-indentation :cursive})))
 
   (testing "empty indent blocks"
     (is (reformats-to?
@@ -575,6 +602,13 @@
          ["(foo"
           " )"]
          {:remove-surrounding-whitespace? false}))
+    (is (reformats-to?
+         ["(foo"
+          ")"]
+         ["(foo"
+          "  )"]
+         {:remove-surrounding-whitespace? false
+          :function-arguments-indentation :cursive}))
     (is (reformats-to?
          ["(foo (bar (baz)))"]
          ["(foo (bar (baz)))"]))
@@ -1007,7 +1041,19 @@
           "  )"
           " )"]
          {:remove-surrounding-whitespace? false})
-        "indents properly")))
+        "indents properly")
+    (is (reformats-to?
+         ["(foo"
+          "(bar"
+          ")"
+          ")"]
+         ["(foo"
+          "  (bar"
+          "    )"
+          "  )"]
+         {:remove-surrounding-whitespace? false
+          :function-arguments-indentation :cursive})
+        "indents properly with :function-arguments-indentation :cursive")))
 
 (deftest test-options
   (is (reformats-to?
@@ -1067,6 +1113,16 @@
         "foo"
         "bar)"]
        ["(do"
+        "  foo"
+        "  bar)"]
+       {:indents {}
+        :function-arguments-indentation :cursive})
+      "can clear indents rules with :function-arguments-indentation :cursive")
+  (is (reformats-to?
+       ["(do"
+        "foo"
+        "bar)"]
+       ["(do"
         "foo"
         "bar)"]
        {:indentation? false})
@@ -1093,6 +1149,16 @@
        {:remove-surrounding-whitespace? false
         :remove-trailing-whitespace? false}))
   (is (reformats-to?
+       ["(foo"
+        " "
+        ")"]
+       ["(foo"
+        "  "
+        "  )"]
+       {:remove-surrounding-whitespace? false
+        :remove-trailing-whitespace? false
+        :function-arguments-indentation :cursive}))
+  (is (reformats-to?
        ["( "
         "foo"
         " )"]
@@ -1102,6 +1168,16 @@
        {:remove-surrounding-whitespace? false
         :remove-trailing-whitespace? false}))
   (is (reformats-to?
+       ["( "
+        "foo"
+        " )"]
+       ["( "
+        "  foo"
+        "  )"]
+       {:remove-surrounding-whitespace? false
+        :remove-trailing-whitespace? false
+        :function-arguments-indentation :cursive}))
+  (is (reformats-to?
        ["(foo"
         "   bar "
         ")"]
@@ -1110,6 +1186,16 @@
         " )"]
        {:remove-surrounding-whitespace? false
         :remove-trailing-whitespace? false}))
+  (is (reformats-to?
+       ["(foo"
+        "   bar "
+        ")"]
+       ["(foo"
+        "  bar "
+        "  )"]
+       {:remove-surrounding-whitespace? false
+        :remove-trailing-whitespace? false
+        :function-arguments-indentation :cursive}))
   (is (reformats-to?
        ["{:one two :three four}"]
        ["{:one two"
@@ -1190,10 +1276,45 @@
            "  3 4)"]
           {:alias-map {"other" "another.lib"}
            :sort-ns-references? true
-           :indents   {'block1                 [[:block 1]]
-                       'other.lib/overridden   [[:block 2]] ;; This one is ignored
-                       'another.lib/overridden [[:block 1]] ;; As this one overrides.
-                       'some.lib/block2        [[:block 2]]}}))))
+           :indents
+           {'block1                 [[:block 1]]
+            'other.lib/overridden   [[:block 2]] ;; This one is ignored
+            'another.lib/overridden [[:block 1]] ;; As this one overrides.
+            'some.lib/block2        [[:block 2]]}})))
+  #?(:clj
+     (is (reformats-to?
+          ["(ns foo.bar"
+           "  (:require"
+           "   [some.lib :as lib]"
+           "   [other.lib :as other]))"
+           "(lib/block2 1 2"
+           "      3 4)"
+           "(other/block1 1"
+           "     2"
+           "        3 4)"
+           "(other/overridden 1"
+           "  2"
+           "  3 4)"]
+          ["(ns foo.bar"
+           "    (:require"
+           "      [other.lib :as other]"
+           "      [some.lib :as lib]))"
+           "(lib/block2 1 2"
+           "  3 4)"
+           "(other/block1 1"
+           "  2"
+           "  3 4)"
+           "(other/overridden 1"
+           "  2"
+           "  3 4)"]
+          {:alias-map {"other" "another.lib"}
+           :sort-ns-references? true
+           :function-arguments-indentation :cursive
+           :indents
+           {'block1                 [[:block 1]]
+            'other.lib/overridden   [[:block 2]] ;; This one is ignored
+            'another.lib/overridden [[:block 1]] ;; As this one overrides.
+            'some.lib/block2        [[:block 2]]}}))))
 
 (deftest test-parsing
   (is (reformats-to?
@@ -1214,6 +1335,12 @@
         "bar)"]
        ["#_(foo"
         "   bar)"]))
+  (is (reformats-to?
+       ["#_(foo"
+        "bar)"]
+       ["#_(foo"
+        "    bar)"]
+       {:function-arguments-indentation :cursive}))
   (is (reformats-to?
        ["(juxt +' -')"]
        ["(juxt +' -')"]))
@@ -1344,6 +1471,21 @@
        ["(ns foo.bar"
         "  (:require"
         "   [c]"
+        "   [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "   b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "    [a.b :as b] ;; aabb"
+        "   ;; bbb"
+        "    b"
+        "    [c]))"]
+       {:sort-ns-references? true
+        :function-arguments-indentation :cursive}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [c]"
         "   ^:keep a"
         "   #?(:clj d)"
         "   ^{:x 1} b))"]
@@ -1353,4 +1495,197 @@
         "   ^:keep a"
         "   ^{:x 1} b"
         "   [c]))"]
-       {:sort-ns-references? true})))
+       {:sort-ns-references? true}))
+  (is (reformats-to?
+       ["(ns foo.bar"
+        "  (:require"
+        "   [c]"
+        "   ^:keep a"
+        "   #?(:clj d)"
+        "   ^{:x 1} b))"]
+       ["(ns foo.bar"
+        "  (:require"
+        "    #?(:clj d)"
+        "    ^:keep a"
+        "    ^{:x 1} b"
+        "    [c]))"]
+       {:sort-ns-references? true
+        :function-arguments-indentation :cursive})))
+
+(deftest cursive-and-zprint-function-argument-indents-depend-on-first-element
+  (let [input ["(foo"
+               "bar)"
+               "(:foo"
+               "bar)"
+               "(^:foo bar"
+               "baz)"
+               "(^:foo [bar]"
+               "baz)"
+               "(^{:foo 1} bar"
+               "baz)"
+               "(^{:foo 1} [bar]"
+               "baz)"
+               "(#^:foo bar"
+               "baz)"
+               "(#^:foo [bar]"
+               "baz)"
+               "(#^{:foo 1} bar"
+               "baz)"
+               "(#^{:foo 1} [bar]"
+               "baz)"
+               "([foo]"
+               "bar)"
+               "({:foo 1}"
+               "bar)"
+               "((foo)"
+               "bar)"
+               "(#=foo"
+               "bar)"
+               "(#=[foo]"
+               "bar)"
+               "(#_foo"
+               "bar)"
+               "(#_[foo]"
+               "bar)"
+               "(#(foo)"
+               "bar)"
+               "(#{foo}"
+               "bar)"
+               "(@foo"
+               "bar)"
+               "(#?(:clj foo)"
+               "bar)"
+               "(#?(:clj [foo])"
+               "bar)"
+               "(~foo"
+               "bar)"
+               "(#'foo"
+               "bar)"
+               "('foo"
+               "bar)"
+               "(`foo"
+               "bar)"
+               "(~@foo"
+               "bar)"
+               "(#:foo{:bar 1}"
+               "baz)"]]
+    (testing ":cursive style uses 2 spaces unless starting with a collection"
+      (is (reformats-to?
+           input
+           ["(foo"
+            "  bar)"
+            "(:foo"
+            "  bar)"
+            "(^:foo bar"
+            "  baz)"
+            "(^:foo [bar]"
+            " baz)"
+            "(^{:foo 1} bar"
+            "  baz)"
+            "(^{:foo 1} [bar]"
+            " baz)"
+            "(#^:foo bar"
+            "  baz)"
+            "(#^:foo [bar]"
+            " baz)"
+            "(#^{:foo 1} bar"
+            "  baz)"
+            "(#^{:foo 1} [bar]"
+            " baz)"
+            "([foo]"
+            " bar)"
+            "({:foo 1}"
+            " bar)"
+            "((foo)"
+            " bar)"
+            "(#=foo"
+            "  bar)"
+            "(#=[foo]"
+            "  bar)"
+            "(#_foo"
+            "  bar)"
+            "(#_[foo]"
+            "  bar)"
+            "(#(foo)"
+            "  bar)"
+            "(#{foo}"
+            " bar)"
+            "(@foo"
+            "  bar)"
+            "(#?(:clj foo)"
+            "  bar)"
+            "(#?(:clj [foo])"
+            "  bar)"
+            "(~foo"
+            "  bar)"
+            "(#'foo"
+            "  bar)"
+            "('foo"
+            "  bar)"
+            "(`foo"
+            "  bar)"
+            "(~@foo"
+            "  bar)"
+            "(#:foo{:bar 1}"
+            "  baz)"]
+           {:function-arguments-indentation :cursive})))
+    (testing ":zprint uses 2 spaces if starting with a symbol, keyword, or list"
+      (is (reformats-to?
+           input
+           ["(foo"
+            "  bar)"
+            "(:foo"
+            "  bar)"
+            "(^:foo bar"
+            " baz)"
+            "(^:foo [bar]"
+            " baz)"
+            "(^{:foo 1} bar"
+            " baz)"
+            "(^{:foo 1} [bar]"
+            " baz)"
+            "(#^:foo bar"
+            " baz)"
+            "(#^:foo [bar]"
+            " baz)"
+            "(#^{:foo 1} bar"
+            " baz)"
+            "(#^{:foo 1} [bar]"
+            " baz)"
+            "([foo]"
+            " bar)"
+            "({:foo 1}"
+            " bar)"
+            "((foo)"
+            "  bar)"
+            "(#=foo"
+            " bar)"
+            "(#=[foo]"
+            " bar)"
+            "(#_foo"
+            " bar)"
+            "(#_[foo]"
+            " bar)"
+            "(#(foo)"
+            " bar)"
+            "(#{foo}"
+            " bar)"
+            "(@foo"
+            " bar)"
+            "(#?(:clj foo)"
+            " bar)"
+            "(#?(:clj [foo])"
+            " bar)"
+            "(~foo"
+            " bar)"
+            "(#'foo"
+            " bar)"
+            "('foo"
+            " bar)"
+            "(`foo"
+            " bar)"
+            "(~@foo"
+            " bar)"
+            "(#:foo{:bar 1}"
+            " baz)"]
+           {:function-arguments-indentation :zprint})))))

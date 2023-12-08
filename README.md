@@ -250,7 +250,21 @@ In order to load the standard configuration file from Leiningen, add the
   other references in the `ns` forms at the top of your namespaces.
   Defaults to false.
 
+* `:function-arguments-indentation` -
+  - `:community` if cljfmt should follow the [community style recommendation][]
+    to indent function/macro arguments by a single space when there
+    are no arguments on the same line as the function name.
+  - `:cursive` if two spaces should be used instead, unless the first
+    thing in the list (not counting metadata) is a data structure
+    literal. This should replicate Cursive's default behaviour.
+  - `:zprint` if two spaces should be used instead if the first thing
+    in the list is a symbol or keyword. This should replicate zprint's
+    default behaviour.
+
+  Defaults to `:community`
+
 [indents.md]: docs/INDENTS.md
+[community style recommendation]: https://guide.clojure.style/#one-space-indent
 
 ### Runtime Options
 
