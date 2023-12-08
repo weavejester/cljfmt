@@ -1,3 +1,7 @@
+## 0.12.0 (2023-12-08)
+
+- Added support for Cursive and zprint style list indentation (#324)
+
 ## 0.11.2 (2023-08-01)
 
 - Added `:legacy/merge-indents?` for compatibility with 0.10.x (#316)
