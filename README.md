@@ -103,6 +103,14 @@ And to fix those errors:
 clj -Tcljfmt fix
 ```
 
+Be mindful of the quoting rules when setting options with tools:
+
+```bash
+clj -Tcljfmt fix :paths '["-"]' < my_file.clj
+```
+
+That will read `my_file.clj` via STDIN.
+
 [tools]: https://clojure.org/reference/deps_and_cli#tool_install
 
 ### Leiningen
