@@ -39,3 +39,5 @@ echo "Done!"
 
 sudo tar -xzf /tmp/cljfmt.tar.gz -C /usr/local/bin
 echo "Extracted cljfmt into /usr/local/bin"
+
+rm /tmp/cljfmt.tar.gz
