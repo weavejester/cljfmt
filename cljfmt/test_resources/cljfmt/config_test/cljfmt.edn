@@ -1,0 +1,4 @@
+{:extra-indents {com.foo/a [[:inner 0]]
+                 com.unrelated/a [[:inner 0]]}
+ :extra-configs ["extra1-cljfmt.edn"
+                 "extra2-cljfmt.edn"]}
