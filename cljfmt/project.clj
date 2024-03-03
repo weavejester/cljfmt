@@ -44,4 +44,5 @@
              :opts ["--static"
                     "--libc=musl"
                     "-H:CCompilerOption=-Wl,-z,stack-size=2097152"]}}
-   :provided {:dependencies [[org.clojure/clojurescript "1.11.60"]]}})
+   :provided {:dependencies [[org.clojure/clojurescript "1.11.60"]]}
+   :dev {:resource-paths ["test_resources"]}})
