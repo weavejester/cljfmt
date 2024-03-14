@@ -134,7 +134,8 @@ project file. See the [configuration][] section for more details.
 
 ### Library
 
-cljfmt can be run as a library that formats a string of Clojure code.
+cljfmt can be run as a library that formats a string of Clojure code or
+recursively checks / fixes paths like the CLI tool.
 First, add the dependency:
 
 ```edn
@@ -142,6 +143,8 @@ First, add the dependency:
 ```
 
 Then use the library:
+
+#### Checking strings of code:
 
 ```clojure
 (require '[cljfmt.core :as fmt])
@@ -157,6 +160,22 @@ To load the configuration for the current directory:
 
 (fmt/reformat-string "(+ x\ny)" (cfg/load-config))
 ;; => "(+ x\n   y)"
+```
+
+#### Checking / fixing paths recursively
+
+```clojure
+(require '[cljfmt.tool :as fmt])
+
+(fmt/check-paths ["/path/to/check"])
+```
+
+Or to recursively fix paths:
+
+```clojure
+(require '[cljfmt.tool :as fmt])
+
+(fmt/fix-paths ["/path/to/fix"])
 ```
 
 ### Editor Integration
