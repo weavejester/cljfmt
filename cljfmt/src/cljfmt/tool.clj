@@ -4,7 +4,8 @@
             [cljfmt.diff :as diff]
             [cljfmt.io :as io]
             [clojure.java.io :as cio]
-            [clojure.stacktrace :as st]))
+            [clojure.stacktrace :as st])
+  (:import (java.io File)))
 
 (def ^:dynamic *no-output* false)
 (def ^:dynamic *verbose* false)
@@ -99,25 +100,70 @@
   ([a]   a)
   ([a b] (merge-with + a b)))
 
-(defn check-no-config
-  "The same as `check`, but ignores dotfile configuration."
-  [options]
-  (let [map*   (if (:parallel? options) pmap map)
-        counts (->> (:paths options)
-                    (mapcat (partial find-files options))
-                    (map* (partial check-one options))
-                    (map (fn [status]
-                           (print-file-status options status)
-                           (:counts status)))
-                    (reduce merge-counts))]
+(defn- merge-statuses
+  [a b]
+  (let [^File file (:file b)
+        path       (.getPath file)
+        diff       (:diff b)
+        exception  (:exception b)]
+    (cond-> a
+            true (update :counts #(merge-with + % (:counts b)))
+
+            (and file (= 1 (-> b :counts :incorrect)))
+            (assoc-in [:incorrect path] "has incorrect formatting")
+
+            (and file diff) (assoc-in [:incorrect path] diff)
+            (and file exception) (assoc-in [:error path] exception))))
+
+(defmulti check-report-file (fn [& args] (first args)))
+(defmulti check-report-final (fn [& args] (first args)))
+
+(defmethod check-report-file :cli
+  [_ options status]
+  (print-file-status options status)
+  (:counts status))
+
+(defmethod check-report-final :cli
+  [_ results]
+  (let [counts (reduce merge-counts results)]
     (print-final-count counts)
     (exit counts)))
+
+(defmethod check-report-file :lib
+  [_ _ status]
+  status)
+
+(defmethod check-report-final :lib
+  [_ results]
+  (reduce merge-statuses {} results))
+
+(defn check-no-config
+  "The same as `check`, but ignores dotfile configuration."
+  [{:keys [parallel? paths report/file report/final] :as options}]
+  (let [map*        (if parallel? pmap map)
+        report-file (partial file options)
+        results     (->> paths
+                         (mapcat (partial find-files options))
+                         (map* (partial check-one options))
+                         (map report-file))]
+    (final results)))
 
 (defn check
   "Checks that the Clojure paths specified by the :paths option are
   correctly formatted."
   [options]
-  (let [opts (merge (config/load-config) options)]
+  (let [opts (merge {:report/file  #(check-report-file :cli %)
+                     :report/final #(check-report-final :cli %)}
+                    (config/load-config) options)]
+    (check-no-config opts)))
+
+(defn check-paths
+  "Runs a check on the provided paths and returns a map detailing the results."
+  [paths & [options]]
+  (let [opts (merge {:report/file  #(check-report-file :lib %)
+                     :report/final #(check-report-final :lib %)}
+                    (config/load-config) options
+                    {:paths paths})]
     (check-no-config opts)))
 
 (defn- fix-one [options file]
@@ -136,18 +182,37 @@
 (defn- recursively-find-files [{:keys [paths] :as options}]
   (mapcat #(find-files options %) (set paths)))
 
+(defmulti fix-report (fn [& args] (first args)))
+
+(defmethod fix-report :cli
+  [_ options status]
+  (print-file-status options status))
+
+(defmethod fix-report :lib
+  [_ _ status]
+  status)
+
 (defn fix-no-config
   "The same as `fix`, but ignores dotfile configuration."
-  [options]
+  [{fix-report :report/fix :keys [parallel?] :as options}]
   (let [files (recursively-find-files options)
-        map*  (if (:parallel? options) pmap map)]
+        map*  (if parallel? pmap map)]
     (->> files
          (map* (partial fix-one options))
-         (map (partial print-file-status options))
+         (map fix-report)
          dorun)))
 
 (defn fix
   "Fixes the formatting for all files specified by the :paths option."
   [options]
-  (let [opts (merge (config/load-config) options)]
+  (let [opts (merge {:report/fix #(fix-report :cli %)}
+                    (config/load-config) options)]
+    (fix-no-config opts)))
+
+(defn fix-paths
+  "Fixes code in the provided paths."
+  [paths & [options]]
+  (let [opts (merge {:report/fix #(fix-report :lib %)}
+                    (config/load-config) options
+                    {:paths paths})]
     (fix-no-config opts)))
