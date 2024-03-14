@@ -2,6 +2,7 @@
   "Functionality to apply formatting to a given project."
   (:require [cljfmt.config :as config]
             [cljfmt.io :as io]
+            [cljfmt.report :as report]
             [cljfmt.tool :as tool]
             [clojure.java.io :as jio]
             [clojure.tools.cli :as cli])
@@ -113,7 +114,7 @@
                    "fix"   tool/fix-no-config
                    (abort "Unknown cljfmt command:" cmd))]
         (abort-if-files-missing paths)
-        (binding [tool/*no-output* (:quiet? options)
+        (binding [report/*no-output* (:quiet? options)
                   tool/*verbose* (:verbose? options)]
           (cmdf options))
         (when (:parallel? options)
