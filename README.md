@@ -150,7 +150,7 @@ Then use the library:
 ;; => "(defn sum [x y]\n  (+ x y))"
 ```
 
-To use load the configuration for the current directory:
+To load the configuration for the current directory:
 
 ```clojure
 (require '[cljfmt.config :as cfg])
