@@ -152,7 +152,7 @@
   "Checks that the Clojure paths specified by the :paths option are
   correctly formatted."
   [options]
-  (let [opts (merge {:report/file  #(check-report-file :cli %)
+  (let [opts (merge {:report/file  #(check-report-file :cli %1 %2)
                      :report/final #(check-report-final :cli %)}
                     (config/load-config) options)]
     (check-no-config opts)))
@@ -160,7 +160,7 @@
 (defn check-paths
   "Runs a check on the provided paths and returns a map detailing the results."
   [paths & [options]]
-  (let [opts (merge {:report/file  #(check-report-file :lib %)
+  (let [opts (merge {:report/file  #(check-report-file :lib %1 %2)
                      :report/final #(check-report-final :lib %)}
                     (config/load-config) options
                     {:paths paths})]
@@ -194,9 +194,10 @@
 
 (defn fix-no-config
   "The same as `fix`, but ignores dotfile configuration."
-  [{fix-report :report/fix :keys [parallel?] :as options}]
+  [{:keys [parallel? report/fix] :as options}]
   (let [files (recursively-find-files options)
-        map*  (if parallel? pmap map)]
+        map*  (if parallel? pmap map)
+        fix-report (partial fix options)]
     (->> files
          (map* (partial fix-one options))
          (map fix-report)
@@ -205,14 +206,14 @@
 (defn fix
   "Fixes the formatting for all files specified by the :paths option."
   [options]
-  (let [opts (merge {:report/fix #(fix-report :cli %)}
+  (let [opts (merge {:report/fix #(fix-report :cli %1 %2)}
                     (config/load-config) options)]
     (fix-no-config opts)))
 
 (defn fix-paths
   "Fixes code in the provided paths."
   [paths & [options]]
-  (let [opts (merge {:report/fix #(fix-report :lib %)}
+  (let [opts (merge {:report/fix #(fix-report :lib %1 %2)}
                     (config/load-config) options
                     {:paths paths})]
     (fix-no-config opts)))
