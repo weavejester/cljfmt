@@ -280,10 +280,22 @@
     (or (symbol-matches-key? (fully-qualified-symbol possible-sym context) key)
         (symbol-matches-key? (remove-namespace possible-sym) key))))
 
+(defn- parent-is-thread-first? [zloc context]
+  (some #(form-matches-key? zloc % context) #{'-> 'as-> 'some-> 'cond->}))
+
+(defn- is-first-parameter? [zloc]
+  (= (z/right (z/leftmost zloc)) zloc))
+
+(defn- adjust-idx [zloc idx context]
+  (cond-> idx
+    (and (parent-is-thread-first? zloc context) (not (is-first-parameter? zloc)))
+    (some-> dec (max 0))))
+
 (defn- inner-indent [zloc key depth idx context]
-  (let [top (nth (iterate z/up zloc) depth)]
+  (let [top (nth (iterate z/up zloc) depth)
+        adjusted-idx (adjust-idx (z/up zloc) idx context)]
     (when (and (form-matches-key? top key context)
-               (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
+               (or (nil? idx) (index-matches-top-argument? zloc depth adjusted-idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
@@ -302,9 +314,10 @@
 
 (defn- block-indent [zloc key idx context]
   (when (form-matches-key? zloc key context)
-    (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
+    (let [adjusted-idx (adjust-idx (z/up zloc) idx context)
+          zloc-after-idx (some-> zloc (nth-form (inc adjusted-idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
-               (> (index-of zloc) idx))
+               (> (index-of zloc) adjusted-idx))
         (inner-indent zloc key 0 nil context)
         (list-indent zloc context)))))
 

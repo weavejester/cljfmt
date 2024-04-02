@@ -692,7 +692,39 @@
          ["#:clj {:a :b"
           ":c :d}"]
          ["#:clj {:a :b"
-          "       :c :d}"]))))
+          "       :c :d}"]))) 
+
+  (testing "thread first"
+    (is (reformats-to?
+          ["(-> v"
+           "(cond->"
+           "a b"
+           "c d))"]
+          ["(-> v"
+           "    (cond->"
+           "      a b"
+           "      c d))"]))
+    (is (reformats-to?
+          ["(cond-> v"
+           "a b"
+           "c d)"]
+          ["(cond-> v"
+           "  a b"
+           "  c d)"]))
+    (is (reformats-to?
+          ["(-> v"
+           "(cond-> a b"
+           "c d))"]
+          ["(-> v"
+           "    (cond-> a b"
+           "            c d))"]))
+    (is (reformats-to?
+          ["(-> (cond-> a"
+           "odd? inc)"
+           "inc)"]
+          ["(-> (cond-> a"
+           "      odd? inc)"
+           "    inc)"]))))
 
 (deftest test-remove-multiple-non-indenting-spaces
   (let [opts {:remove-multiple-non-indenting-spaces? true}]
