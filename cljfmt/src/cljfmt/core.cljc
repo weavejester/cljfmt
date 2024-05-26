@@ -280,20 +280,23 @@
     (or (symbol-matches-key? (fully-qualified-symbol possible-sym context) key)
         (symbol-matches-key? (remove-namespace possible-sym) key))))
 
-(defn- parent-is-thread-first? [zloc context]
-  (some #(form-matches-key? zloc % context) #{'-> 'as-> 'some-> 'cond->}))
+(defn- form-matches-thread-macro? [zloc context]
+  (let [possible-sym (form-symbol zloc)
+        fully-qualified-sym (fully-qualified-symbol possible-sym context)
+        sym-without-namespace (remove-namespace possible-sym)]
+    (some #(or (symbol-matches-key? fully-qualified-sym %)
+               (symbol-matches-key? sym-without-namespace %))
+          #{'-> 'as-> 'some-> 'cond->})))
 
-(defn- is-first-parameter? [zloc]
+(defn- first-argument? [zloc]
   (= (z/right (z/leftmost zloc)) zloc))
 
-(defn- adjust-idx [zloc idx context]
-  (cond-> idx
-    (and (parent-is-thread-first? zloc context) (not (is-first-parameter? zloc)))
-    (some-> dec (max 0))))
+(defn- in-thread-macro? [zloc context]
+  (and (form-matches-thread-macro? zloc context) (not (first-argument? zloc))))
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)
-        adjusted-idx (adjust-idx (z/up zloc) idx context)]
+        adjusted-idx (cond-> idx (in-thread-macro? (z/up zloc) context) (some-> dec (max 0)))]
     (when (and (form-matches-key? top key context)
                (or (nil? idx) (index-matches-top-argument? zloc depth adjusted-idx)))
       (let [zup (z/up zloc)]
@@ -314,7 +317,7 @@
 
 (defn- block-indent [zloc key idx context]
   (when (form-matches-key? zloc key context)
-    (let [adjusted-idx (adjust-idx (z/up zloc) idx context)
+    (let [adjusted-idx (cond-> idx (in-thread-macro? (z/up zloc) context) (some-> dec (max 0)))
           zloc-after-idx (some-> zloc (nth-form (inc adjusted-idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
                (> (index-of zloc) adjusted-idx))
