@@ -296,7 +296,7 @@
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)
-        adjusted-idx (cond-> idx (in-thread-macro? (z/up zloc) context) (some-> dec (max 0)))]
+        adjusted-idx (cond-> idx (in-thread-macro? (z/up top) context) (some-> dec))]
     (when (and (form-matches-key? top key context)
                (or (nil? idx) (index-matches-top-argument? zloc depth adjusted-idx)))
       (let [zup (z/up zloc)]
