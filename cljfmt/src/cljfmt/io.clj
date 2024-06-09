@@ -1,4 +1,5 @@
 (ns cljfmt.io
+  (:require [clojure.java.io :as cio])
   (:import java.io.File))
 
 (defprotocol FileEntity
@@ -35,3 +36,6 @@
     (instance? File path) path
     (= "-" path) (->StdIO *in* *out*)
     :else (File. ^String path)))
+
+(defn project-path [{:keys [project-root]} file]
+  (->> (or project-root ".") cio/file (relative-path file)))
