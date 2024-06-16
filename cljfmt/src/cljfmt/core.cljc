@@ -275,15 +275,41 @@
       (symbol? key)  (= key sym)
       (pattern? key) (re-find key (str sym)))))
 
-(defn form-matches-key? [zloc key context]
+(defn- form-symbol-matches? [zloc pred context]
   (let [possible-sym (form-symbol zloc)]
-    (or (symbol-matches-key? (fully-qualified-symbol possible-sym context) key)
-        (symbol-matches-key? (remove-namespace possible-sym) key))))
+    (or (pred (fully-qualified-symbol possible-sym context))
+        (pred (remove-namespace possible-sym)))))
+
+(defn- form-matches-key? [zloc key context]
+  (form-symbol-matches? zloc #(symbol-matches-key? % key) context))
+
+(defn- form-matches-thread-macro? [zloc context]
+  (form-symbol-matches? zloc (:threads context) context))
+
+(defn- get-zipper-position [zloc]
+  (loop [idx 0
+         loop-zloc (z/leftmost zloc)]
+    (cond
+      (= zloc loop-zloc) idx
+      (= loop-zloc (z/rightmost zloc)) nil
+      :else (recur (inc idx) (z/right loop-zloc)))))
+
+(defn- in-thread-macro? [zloc context]
+  (when (= zloc (z/root zloc))
+    (when-some [idx (form-matches-thread-macro? zloc context)]
+      (let [position (cond-> (get-zipper-position (z/up zloc))
+                       (in-thread-macro? (z/up (z/up zloc)) context) inc)]
+        (cond
+          (< position 2) false
+          (= idx :odd) (odd? position)
+          (= idx :even) (even? position)
+          :else (<= idx position))))))
 
 (defn- inner-indent [zloc key depth idx context]
-  (let [top (nth (iterate z/up zloc) depth)]
+  (let [top (nth (iterate z/up zloc) depth)
+        adjusted-idx (cond-> idx (in-thread-macro? zloc context) (some-> dec))]
     (when (and (form-matches-key? top key context)
-               (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
+               (or (nil? idx) (index-matches-top-argument? zloc depth adjusted-idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
 
@@ -302,9 +328,10 @@
 
 (defn- block-indent [zloc key idx context]
   (when (form-matches-key? zloc key context)
-    (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
+    (let [adjusted-idx (cond-> idx (in-thread-macro? zloc context) (some-> dec (max 0)))
+          zloc-after-idx (some-> zloc (nth-form (inc adjusted-idx)))]
       (if (and (or (nil? zloc-after-idx) (first-form-in-line? zloc-after-idx))
-               (> (index-of zloc) idx))
+               (> (index-of zloc) adjusted-idx))
         (inner-indent zloc key 0 nil context)
         (list-indent zloc context)))))
 
@@ -335,6 +362,9 @@
 
 (defmethod indenter-fn :block [sym context [_ idx]]
   (fn [zloc] (block-indent zloc sym idx context)))
+
+(defmethod indenter-fn :thread [_ _ _]
+  (constantly nil))
 
 (defn- make-indenter [[key opts] context]
   (apply some-fn (map (partial indenter-fn key context) opts)))
@@ -372,6 +402,13 @@
 (defn- find-namespace [zloc]
   (some-> zloc root z/down (z/find z/right ns-form?) z/down z/next z/sexpr))
 
+(defn- get-thread-indents [indents]
+  (->> indents
+       (keep (fn [[k v]]
+               (when-first [[_ idx] (filter (fn [[rule]] (= rule :thread)) v)]
+                 [k (or idx 2)])))
+       (into {})))
+
 (defn indent
   ([form]
    (indent form default-indents {}))
@@ -384,7 +421,8 @@
          sorted-indents (sort-by indent-order indents)
          context (merge (select-keys opts [:function-arguments-indentation])
                         {:alias-map alias-map
-                         :ns-name ns-name})]
+                         :ns-name ns-name
+                         :threads (get-thread-indents indents)})]
      (transform form edit-all should-indent?
                 #(indent-line % sorted-indents context)))))
 
