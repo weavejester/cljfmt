@@ -59,6 +59,33 @@
 (defn- directory? [path]
   (some-> path io/file .getAbsoluteFile .isDirectory))
 
+(def ^:private extra-config-respected-keys [:extra-indents])
+
+(defn- merge-keys
+  [init coll ks]
+  (reduce (fn [acc k]
+            (update acc k merge (get coll k)))
+          init ks))
+
+(defn- merge-extra-configs
+  [path config]
+  (let [base-dir (-> path io/file ((fn [^java.io.File f] (.getParent f))))]
+    ;; extra-configs later in the list override earlier ones.
+    (loop [confs (mapv #(io/file base-dir %) (:extra-configs config))
+           econf {}]
+      (if (empty? confs)
+        ;; A little confusing but: We're merging the base config's
+        ;; values into the extra-configs, and then back into the base
+        ;; config, so we allow the base config to have the final say.
+        (merge config (merge-keys econf config extra-config-respected-keys))
+        (let [;; Only merging select values from other configs.
+              xtra (-> confs first read-config
+                       (select-keys extra-config-respected-keys))]
+          (recur (rest confs) ;;(merge econf xtra)
+                 (reduce-kv (fn [acc k v]
+                              (update acc k merge v))
+                            econf xtra)))))))
+
 (defn load-config
   "Load a configuration merged with a map of sensible defaults. May take
   an path to a config file, or to a directory to search. If no argument
@@ -70,4 +97,5 @@
                 path)]
      (->> (some-> path read-config)
           (merge default-config)
+          (merge-extra-configs path)
           (convert-legacy-keys)))))
