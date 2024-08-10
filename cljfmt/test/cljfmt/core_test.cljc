@@ -692,7 +692,34 @@
          ["#:clj {:a :b"
           ":c :d}"]
          ["#:clj {:a :b"
-          "       :c :d}"]))))
+          "       :c :d}"])))
+  (testing "~ @ is not ~@"
+    (is (reformats-to?
+         ["~ @foo"]
+         ["~ @foo"]))
+    (is (reformats-to?
+         ["~(deref foo)"]
+         ["~(deref foo)"]))
+    (is (reformats-to?
+         ["~(clojure.core/deref foo)"]
+         ["~(clojure.core/deref foo)"]))
+    (is (reformats-to?
+         ["~ @foo"]
+         ["~ @foo"]))
+    (is (reformats-to?
+         ["~     @foo"]
+         ["~     @foo"]))
+    (is (reformats-to?
+         ["~\n@foo"]
+         ["~"
+          " @foo"]))
+    (is (reformats-to?
+         ["~;;comment\n@foo"]
+         ["~;;comment"
+          " @foo"]))
+    (is (reformats-to?
+         ["~#_a@foo"]
+         ["~#_a @foo"]))))
 
 (deftest test-remove-multiple-non-indenting-spaces
   (let [opts {:remove-multiple-non-indenting-spaces? true}]
@@ -1568,7 +1595,9 @@
                "(~@foo"
                "bar)"
                "(#:foo{:bar 1}"
-               "baz)"]]
+               "baz)"
+               "(~ @foo"
+               "bar)"]]
     (testing ":cursive style uses 2 spaces unless starting with a collection"
       (is (reformats-to?
            input
@@ -1627,7 +1656,9 @@
             "(~@foo"
             "  bar)"
             "(#:foo{:bar 1}"
-            "  baz)"]
+            "  baz)"
+            "(~ @foo"
+            "  bar)"]
            {:function-arguments-indentation :cursive})))
     (testing ":zprint uses 2 spaces if starting with a symbol, keyword, or list"
       (is (reformats-to?
@@ -1687,5 +1718,7 @@
             "(~@foo"
             " bar)"
             "(#:foo{:bar 1}"
-            " baz)"]
+            " baz)"
+            "(~ @foo"
+            " bar)"]
            {:function-arguments-indentation :zprint})))))
