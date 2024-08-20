@@ -1248,6 +1248,14 @@
        ["{:one two #_comment"
         " :three four}"]
        {:split-keypairs-over-multiple-lines? true}))
+  (is (reformats-to?
+       ["(with-timezone (java.time.OffsetDateTime.)"
+        "\"US/Pacific\")"]
+       ["(with-timezone (java.time.OffsetDateTime.)"
+        "               \"US/Pacific\")"]
+       {:indents {#"^with-"      [[:inner 0]]
+                  'with-timezone [[:default]]}})
+      "Should be able to override fuzzy indent rules for with- and explicitly specify :default indentation")
   #?(:clj
      (is (reformats-to?
           ["(ns foo.bar"

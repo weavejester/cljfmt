@@ -336,6 +336,11 @@
 (defmethod indenter-fn :block [sym context [_ idx]]
   (fn [zloc] (block-indent zloc sym idx context)))
 
+(defmethod indenter-fn :default [sym context [_]]
+  (fn [zloc]
+    (when (form-matches-key? zloc sym context)
+      (list-indent zloc context))))
+
 (defn- make-indenter [[key opts] context]
   (apply some-fn (map (partial indenter-fn key context) opts)))
 
