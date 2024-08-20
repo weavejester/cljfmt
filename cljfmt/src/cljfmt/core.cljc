@@ -243,7 +243,8 @@
        (some-> zloc z/down ns-token?)))
 
 (defn- token-value [zloc]
-  (when (token? zloc) (z/sexpr zloc)))
+  (let [zloc (skip-meta zloc)]
+    (when (token? zloc) (z/sexpr zloc))))
 
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))

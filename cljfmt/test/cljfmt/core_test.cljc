@@ -475,7 +475,19 @@
           ":foo)"]
          ["(def ^:private foo"
           "  :foo)"])
-        "hanging metadata and name on def does not hang subsequent indentation"))
+        "hanging metadata and name on def does not hang subsequent indentation")
+
+    (testing "metadata on the first symbol in a list should be ignored when looking for matching indentation rules"
+      (is (reformats-to?
+           ["(^:amazing fn [x y]"
+            "(+ x y))"]
+           ["(^:amazing fn [x y]"
+            "  (+ x y))"]))
+      (is (reformats-to?
+           ["(^{:amazing true} fn [x y]"
+            "(+ x y))"]
+           ["(^{:amazing true} fn [x y]"
+            "  (+ x y))"]))))
 
   (testing "fuzzy matches"
     (is (reformats-to?
