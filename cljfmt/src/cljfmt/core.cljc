@@ -339,11 +339,14 @@
 (defn- make-indenter [[key opts] context]
   (apply some-fn (map (partial indenter-fn key context) opts)))
 
-(defn- indent-order [[key _]]
-  (cond
-    (and (symbol? key) (namespace key)) (str 0 key)
-    (symbol? key) (str 1 key)
-    (pattern? key) (str 2 key)))
+(defn- indent-order [[key specs]]
+  (let [get-depth (fn [[type depth]] (if (= type :inner) depth 0))
+        max-depth (transduce (map get-depth) max 0 specs)
+        key-order  (cond
+                     (qualified-symbol? key) 0
+                     (simple-symbol? key)    1
+                     (pattern? key)          2)]
+    [(- max-depth) key-order (str key)]))
 
 (defn- custom-indent [zloc indents context]
   (if (empty? indents)

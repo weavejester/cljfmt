@@ -173,7 +173,40 @@
          ["(defrecord Foo [x]"
           "  Closeable"
           "  (close [_]"
-          "    (prn x)))"])))
+          "    (prn x)))"]))
+    (testing "nested rules like [:inner 1] (#349)"
+      (is (reformats-to?
+           ["(ns my.namespace)"
+            ""
+            "(defprotocol MyProtocol"
+            "MyClass"
+            "(with-x [this x]"
+            "\"with-x is a method\"))"
+            ""
+            "(extend-protocol MyProtocol"
+            "MyClass"
+            "(with-x [this x]"
+            "(+ this x)))"
+            ""
+            "(defn x [x]"
+            "(with-x x "
+            "1))"]
+           ["(ns my.namespace)"
+            ""
+            "(defprotocol MyProtocol"
+            "  MyClass"
+            "  (with-x [this x]"
+            "    \"with-x is a method\"))"
+            ""
+            "(extend-protocol MyProtocol"
+            "  MyClass"
+            "  (with-x [this x]"
+            "    (+ this x)))"
+            ""
+            "(defn x [x]"
+            "  (with-x x"
+            "          1))"]
+           {:extra-indents '{my.namespace/with-x [[:block 0]]}}))))
 
   (testing "data structure indentation"
     (is (reformats-to?
