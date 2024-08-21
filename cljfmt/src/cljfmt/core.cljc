@@ -566,12 +566,22 @@
           (= :as (z/sexpr zloc)))))
 
 #?(:clj
+   (defn- symbol-node? [zloc]
+     (some-> zloc z/node n/symbol-node?)))
+
+#?(:clj
+   (defn- leftmost-symbol [zloc]
+     (some-> zloc z/leftmost (z/find (comp symbol-node? skip-meta)))))
+
+#?(:clj
    (defn- as-zloc->alias-mapping [as-zloc]
      (let [alias             (some-> as-zloc z/right z/sexpr)
-           current-namespace (some-> as-zloc z/leftmost z/sexpr)
+           current-namespace (some-> as-zloc leftmost-symbol z/sexpr)
            grandparent-node  (some-> as-zloc z/up z/up)
            parent-namespace  (when-not (ns-require-form? grandparent-node)
-                               (first (z/child-sexprs grandparent-node)))]
+                               (when (or (z/vector? grandparent-node)
+                                         (z/list? grandparent-node))
+                                 (first (z/child-sexprs grandparent-node))))]
        (when (and (symbol? alias) (symbol? current-namespace))
          {(str alias) (if parent-namespace
                         (format "%s.%s" parent-namespace current-namespace)
