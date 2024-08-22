@@ -33,10 +33,6 @@
 (defn- transform [form zf & args]
   (z/root (apply zf (z/of-node form) args)))
 
-(defn- surrounding? [zloc p?]
-  (and (p? zloc) (or (nil? (z/left* zloc))
-                     (nil? (z/skip z/right* p? zloc)))))
-
 (defn root? [zloc]
   (nil? (z/up* zloc)))
 
@@ -49,9 +45,23 @@
 (defn- clojure-whitespace? [zloc]
   (z/whitespace? zloc))
 
+(defn- unquote? [zloc]
+  (and zloc (= (n/tag (z/node zloc)) :unquote)))
+
+(defn- deref? [zloc]
+  (and zloc (= (n/tag (z/node zloc)) :deref)))
+
+(defn- unquote-deref? [zloc]
+  (and (deref? zloc)
+       (unquote? (z/up* zloc))))
+
 (defn- surrounding-whitespace? [zloc]
   (and (not (top? zloc))
-       (surrounding? zloc clojure-whitespace?)))
+       (clojure-whitespace? zloc)
+       (or (and (nil? (z/left* zloc))
+                ;; don't convert ~ @ to ~@
+                (not (unquote-deref? (z/right* zloc))))
+           (nil? (z/skip z/right* clojure-whitespace? zloc)))))
 
 (defn remove-surrounding-whitespace [form]
   (transform form edit-all surrounding-whitespace? z/remove*))
