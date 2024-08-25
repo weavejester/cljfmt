@@ -697,7 +697,47 @@
           ":cljs bar)"]
          ["#?@(:clj foo"
           "    :cljs bar)"])
-        "splicing syntax"))
+        "splicing syntax")
+    (testing "symbols using reader conditionals should indent correctly"
+      (let [opts {:indents '{defprotocol          [[:block 1] [:inner 1]]
+                             potemkin/defprotocol+ [[:block 1] [:inner 1]]}}]
+        (testing "standard syntax"
+          (is (reformats-to?
+               ["(#?(:clj potemkin/defprotocol+ :cljs defprotocol) MyProtocol"
+                "  \"This is a docstring for my protocol.\""
+                "  (method [this x]"
+                "    \"This is a docstring for a protocol method.\")"
+                ")"]
+               ["(#?(:clj potemkin/defprotocol+ :cljs defprotocol) MyProtocol"
+                "  \"This is a docstring for my protocol.\""
+                "  (method [this x]"
+                "    \"This is a docstring for a protocol method.\"))"]
+               opts)
+              ":clj and :cljs"))
+        (is (reformats-to?
+             ["(#?(:clj potemkin/defprotocol+) MyProtocol"
+              "  \"This is a docstring for my protocol.\""
+              "  (method [this x]"
+              "    \"This is a docstring for a protocol method.\")"
+              ")"]
+             ["(#?(:clj potemkin/defprotocol+) MyProtocol"
+              "  \"This is a docstring for my protocol.\""
+              "  (method [this x]"
+              "    \"This is a docstring for a protocol method.\"))"]
+             opts)
+            "only :clj")
+        (is (reformats-to?
+             ["(#?(:cljs ^:wow defprotocol) MyProtocol"
+              "  \"This is a docstring for my protocol.\""
+              "  (method [this x]"
+              "    \"This is a docstring for a protocol method.\")"
+              ")"]
+             ["(#?(:cljs ^:wow defprotocol) MyProtocol"
+              "  \"This is a docstring for my protocol.\""
+              "  (method [this x]"
+              "    \"This is a docstring for a protocol method.\"))"]
+             opts)
+            "only :cljs; skip metadata in front of symbol"))))
 
   (testing "namespaced maps"
     (is (reformats-to?

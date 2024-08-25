@@ -259,8 +259,20 @@
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
 
+(defn- find-next-keyword [zloc]
+  (z/find zloc z/right #(n/keyword-node? (z/node %))))
+
+(defn- first-symbol-in-reader-conditional [zloc]
+  (when (reader-conditional? zloc)
+    (when-let [key-loc (-> zloc z/down z/right z/down find-next-keyword)]
+      (when-let [value-loc (-> key-loc z/next skip-meta)]
+        (when (token? value-loc)
+          (z/sexpr value-loc))))))
+
 (defn- form-symbol [zloc]
-  (-> zloc z/leftmost token-value))
+  (let [zloc (z/leftmost zloc)]
+    (or (token-value zloc)
+        (first-symbol-in-reader-conditional zloc))))
 
 (defn- index-matches-top-argument? [zloc depth idx]
   (and (> depth 0)
