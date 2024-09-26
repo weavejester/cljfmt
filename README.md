@@ -309,6 +309,16 @@ In order to load the standard configuration file from Leiningen, add the
   Paths can also be passed as command line arguments. If the path is
   `-`, then the input is STDIN, and the output STDOUT.
 
+* `:extra-configs` -
+  additional config files that will also be imported and merged into
+  the base configuration. Is not recursive, so `:extra-configs` in
+  imported configs will not be respected.
+
+  File paths are expected to be relative paths from the base config file.
+
+  Only certain keys from other configs will be respected:
+  * `:extra-indents`
+
 ## License
 
 Copyright © 2023 James Reeves

@@ -1,0 +1,11 @@
+{:parallel? true
+ :paths ["x"]
+ :sort-ns-references? true
+ :extra-indents {;; exists in base
+                 com.foo/a [[:inner 1]]
+                 ;; not included in later config
+                 com.foo/b [[:inner 1]]
+                 ;; overridden in later configs
+                 com.foo/c [[:inner 1]]
+                 com.foo/d [[:inner 1]]}
+ :extra-configs []}

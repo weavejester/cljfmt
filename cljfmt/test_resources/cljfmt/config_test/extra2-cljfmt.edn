@@ -1,0 +1,7 @@
+{:parallel? false
+ :paths ["y"]
+ :sort-ns-references? false
+ :extra-indents {com.foo/c [[:inner 2]]
+                 com.foo/d [[:inner 2]]
+                 com.foo/e [[:inner 2]]}
+ :extra-configs []}
