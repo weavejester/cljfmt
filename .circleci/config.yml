@@ -66,10 +66,10 @@ jobs:
           name: Create artifacts
           working_directory: ~/repo/cljfmt/target
           command: |
-            tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64.tar.gz cljfmt
+            tar -czf cljfmt-0.13.0-linux-amd64.tar.gz cljfmt
             mv cljfmt cljfmt-dynamic
             mv cljfmt-static cljfmt
-            tar -czf cljfmt-${CIRCLE_TAG}-linux-amd64-static.tar.gz cljfmt
+            tar -czf cljfmt-0.13.0-linux-amd64-static.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
@@ -122,7 +122,7 @@ jobs:
       - run:
           name: Create artifact
           working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-linux-aarch64.tar.gz cljfmt
+          command: tar -czf cljfmt-0.13.0-linux-aarch64.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
@@ -169,7 +169,7 @@ jobs:
       - run:
           name: Create artifact
           working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
+          command: tar -czf cljfmt-0.13.0-darwin-amd64.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
@@ -216,7 +216,7 @@ jobs:
       - run:
           name: Create artifact
           working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-aarch64.tar.gz cljfmt
+          command: tar -czf cljfmt-0.13.0-darwin-aarch64.tar.gz cljfmt
       - persist_to_workspace:
           root: cljfmt/target
           paths:
@@ -292,7 +292,7 @@ jobs:
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./artifacts/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete 0.13.0 ./artifacts/
 workflows:
   version: 2
   compile_and_release:
@@ -302,37 +302,37 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - linux_amd64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - linux_aarch64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - macos_amd64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - macos_aarch64:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - windows:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
       - publish_release:
           requires:
             - uberjar
@@ -345,4 +345,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v?\d+\.\d+\.\d+$/
+              only: /^circleci-force$/
