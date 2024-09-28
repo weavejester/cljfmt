@@ -1,3 +1,15 @@
+## 0.13.0 (2024-09-28)
+
+- Added `:report` option to `check` and `fix` functions (#342)
+- Added `:default` custom indentation rule (#347)
+- Updated dependencies
+- Fixed error on Clojure 1.12 syntax (#355)
+- Fixed nested `:inner` indentation (#350)
+- Fixed indentation for symbols preceded by metadata (#346)
+- Fixed indentation for symbols in reader conditionals (#348)
+- Fixed `~ @foo` being rewritten as `~@foo` (#345)
+- Fixed install script not cleaning up after itself (#331)
+
 ## 0.12.0 (2023-12-08)
 
 - Added support for Cursive and zprint style list indentation (#324)
