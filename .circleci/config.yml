@@ -135,7 +135,7 @@ jobs:
   macos_amd64:
     macos:
       xcode: 14.2.0
-    resource_class: macos.x86.medium.gen2
+    resource_class: macos.m1.medium.gen1
     working_directory: ~/repo
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.2/Contents/Home
