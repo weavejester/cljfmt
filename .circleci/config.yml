@@ -300,38 +300,26 @@ workflows:
       - uberjar:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - linux_amd64:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - linux_aarch64:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - macos_amd64:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - macos_aarch64:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - windows:
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
       - publish_release:
           requires:
@@ -343,6 +331,4 @@ workflows:
             - windows
           filters:
             branches:
-              ignore: /.*/
-            tags:
               only: /^circleci-force$/
