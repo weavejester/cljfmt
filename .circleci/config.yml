@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   win: circleci/windows@5.0
+  macos: circleci/macos@2.4.1
 jobs:
   uberjar:
      docker:
@@ -140,6 +141,7 @@ jobs:
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.2/Contents/Home
     steps:
+      - macos/install-rosetta
       - checkout
       - restore_cache:
           keys:
