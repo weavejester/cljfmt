@@ -1815,3 +1815,6 @@
             "(~ @foo"
             " bar)"]
            {:function-arguments-indentation :zprint})))))
+
+(deftest test-clojure-12-syntax
+  (is (reformats-to? ["^Long/1 a"] ["^Long/1 a"])))
