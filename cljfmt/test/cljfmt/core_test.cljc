@@ -290,6 +290,33 @@
          {:indents {'thing.core/defn [[:inner 0]]}
           #?@(:cljs [:alias-map {"t" "thing.core"}])})
         "applies custom indentation to namespaced defn")
+    (testing "handles metadata on or comments before forms inside ns :require list"
+      (doseq [ignore-str [""
+                          "^{:clj-kondo/ignore [:discouraged-namespace]} "
+                          "^:clj-kondo/ignore "
+                          "^{some-symbol another-symbol} "
+                          "#_{:clj-kondo/ignore [:discouraged-namespace]} "
+                          "#_:clj-kondo/ignore "
+                          "^tag "
+                          "#_old-thing "]
+              ns-vec-str [(str ignore-str "[thing.core :as t]")
+                          (str ignore-str "[thing [core :as t]]")
+                          (str ignore-str "(thing [core :as t])")
+                          (str "[" ignore-str "thing.core :as t]")
+                          (str ignore-str " [" ignore-str "thing.core :as t]")]
+              :let [ns-str (str "(ns example (:require " ns-vec-str "))")]]
+        (testing ns-str
+          (is (reformats-to?
+               [ns-str
+                ""
+                "(t/defn foo [x]"
+                "(+ x 1))"]
+               [ns-str
+                ""
+                "(t/defn foo [x]"
+                "  (+ x 1))"]
+               {:indents {'ns [[:block 1]], 'thing.core/defn [[:inner 0]]}
+                #?@(:cljs [:alias-map {"t" "thing.core"}])})))))
     (is (reformats-to?
          ["(comment)"
           "(ns thing.core)"
