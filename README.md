@@ -295,7 +295,9 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:file-pattern` -
   a regular expression to decide which files to scan. Defaults to
-  `#”\.clj[csx]?$”`.
+  `#"\.clj[csx]?$"`.
+  - When config is defined in edn file, you need to use `#re` tag and string
+    convertable to regex pattern, e.g. `:file-pattern #re "\\.clj[csx]?$"`.
 
 * `:parallel?` -
   true if cljfmt should process files in parallel. Defaults to false.
