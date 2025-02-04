@@ -1474,6 +1474,9 @@
        ["::foo/bar"]
        ["::foo/bar"]))
   (is (reformats-to?
+       ["foo//"]
+       ["foo//"]))
+  (is (reformats-to?
        ["foo:bar"]
        ["foo:bar"])
       "a name with an embedded colon")
