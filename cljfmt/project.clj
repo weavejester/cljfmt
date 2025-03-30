@@ -8,7 +8,7 @@
                  [org.clojure/tools.cli "1.1.230"]
                  [org.clojure/tools.reader "1.5.0"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
-                 [rewrite-clj "1.1.48"]]
+                 [rewrite-clj "1.1.49"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
