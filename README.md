@@ -288,6 +288,23 @@ In order to load the standard configuration file from Leiningen, add the
 
   Defaults to `:community`
 
+* `:align-maps?` -
+  True if cljfmt should left align the values of maps.
+
+  This will convert:
+  ```clojure
+  {:foo 1
+   :barbaz 2}
+  ```
+  To:
+  ```clojure
+  {:foo    1
+   :barbaz 2}
+  ```
+  Defaults to `false`.
+
+You can also configure the behavior of cljfmt:
+
 [indents.md]: docs/INDENTS.md
 [community style recommendation]: https://guide.clojure.style/#one-space-indent
 

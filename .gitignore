@@ -10,3 +10,4 @@ pom.xml.asc
 reports
 .cpcache
 .clj-kondo
+.lsp
