@@ -42,7 +42,7 @@ example:
 
 ```clojure
 {:extra-indents {com.example/foo [[:inner 0]]}
- :alias-map {ex com.example}}
+ :alias-map {"ex" "com.example"}}
 ```
 
 This rule would match both `com.example/foo` and `ex/foo`.
