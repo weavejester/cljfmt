@@ -32,6 +32,9 @@
    [nil "--[no-]indentation"
     :default (:indentation? defaults)
     :id :indentation?]
+   [nil "--[no-]indent-line-comments"
+    :default (:indent-line-comments? defaults)
+    :id :indent-line-comments?]
    [nil "--[no-]remove-multiple-non-indenting-spaces"
     :default (:remove-multiple-non-indenting-spaces? defaults)
     :id :remove-multiple-non-indenting-spaces?]

@@ -90,6 +90,9 @@
 (defn- comment? [zloc]
   (some-> zloc z/node n/comment?))
 
+(defn- line-comment? [zloc]
+  (and (comment? zloc) (re-matches #"(?s);;([^;].*)?" (z/string zloc))))
+
 (defn- comma? [zloc]
   (some-> zloc z/node n/comma?))
 
@@ -145,14 +148,27 @@
 (defn- comment-next? [zloc]
   (-> zloc z/next* skip-whitespace comment?))
 
-(defn- should-indent? [zloc]
-  (and (line-break? zloc) (not (comment-next? zloc))))
+(defn- comment-next-other-than-line-comment? [zloc]
+  (when-let [znext (-> zloc z/next* skip-whitespace)]
+    (and (comment? znext) (not (line-comment? znext)))))
 
-(defn- should-unindent? [zloc]
-  (and (indentation? zloc) (not (comment-next? zloc))))
+(defn- should-indent? [zloc opts]
+  (and (line-break? zloc)
+       (if (:indent-line-comments? opts)
+         (not (comment-next-other-than-line-comment? zloc))
+         (not (comment-next? zloc)))))
 
-(defn unindent [form]
-  (transform form edit-all should-unindent? z/remove*))
+(defn- should-unindent? [zloc opts]
+  (and (indentation? zloc)
+       (if (:indent-line-comments? opts)
+         (not (comment-next-other-than-line-comment? zloc))
+         (not (comment-next? zloc)))))
+
+(defn unindent
+  ([form]
+   (unindent form {}))
+  ([form opts]
+   (transform form edit-all #(should-unindent? % opts) z/remove*)))
 
 (def ^:private start-element
   {:meta "^", :meta* "#^", :vector "[",       :map "{"
@@ -338,6 +354,7 @@
 
 (def default-options
   {:indentation?                          true
+   :indent-line-comments?                 false
    :insert-missing-whitespace?            true
    :remove-consecutive-blank-lines?       true
    :remove-multiple-non-indenting-spaces? false
@@ -416,7 +433,7 @@
          context (merge (select-keys opts [:function-arguments-indentation])
                         {:alias-map alias-map
                          :ns-name ns-name})]
-     (transform form edit-all should-indent?
+     (transform form edit-all #(should-indent? % opts)
                 #(indent-line % sorted-indents context)))))
 
 (defn- map-key? [zloc]
@@ -450,7 +467,7 @@
   ([form indents alias-map]
    (indent (unindent form) indents alias-map))
   ([form indents alias-map opts]
-   (indent (unindent form) indents alias-map opts)))
+   (indent (unindent form opts) indents alias-map opts)))
 
 (defn final? [zloc]
   (and (nil? (z/right* zloc)) (root? (z/up* zloc))))

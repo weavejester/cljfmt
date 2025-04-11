@@ -1848,3 +1848,156 @@
 
 (deftest test-clojure-12-syntax
   (is (reformats-to? ["^Long/1 a"] ["^Long/1 a"])))
+
+(deftest test-indenting-comments
+  (testing "whole-line comments"
+    (testing "whole-line flush-left comments"
+      (testing "whole-line margin flush-left ; comments"
+        (is (reformats-to?
+             ["(when 42"
+              "; leave me alone"
+              ")"]
+             ["(when 42"
+              "; leave me alone"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              ";"
+              ")"]
+             ["(when 42"
+              ";"
+              "  )"]
+             {:indent-line-comments? true})))
+      (testing "whole-line line flush-left ;; comments"
+        (is (reformats-to?
+             ["(when 42"
+              ";; answer"
+              ")"]
+             ["(when 42"
+              "  ;; answer"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              ";;"
+              ")"]
+             ["(when 42"
+              "  ;;"
+              "  )"]
+             {:indent-line-comments? true})))
+      (testing "whole-line heading flush-left ;;; comments"
+        (is (reformats-to?
+             ["(when 42"
+              ";;; heading"
+              ")"]
+             ["(when 42"
+              ";;; heading"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              ";;;"
+              ")"]
+             ["(when 42"
+              ";;;"
+              "  )"]
+             {:indent-line-comments? true}))))
+    (testing "whole-line pre-indented comments"
+      (testing "whole-line margin pre-indented ; comments"
+        (is (reformats-to?
+             ["(when 42"
+              "     ; leave me alone"
+              ")"]
+             ["(when 42"
+              "     ; leave me alone"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              "     ;"
+              ")"]
+             ["(when 42"
+              "     ;"
+              "  )"]
+             {:indent-line-comments? true})))
+      (testing "whole-line line pre-indented ;; comments"
+        (is (reformats-to?
+             ["(when 42"
+              "     ;; answer"
+              ")"]
+             ["(when 42"
+              "  ;; answer"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              "     ;;"
+              ")"]
+             ["(when 42"
+              "  ;;"
+              "  )"]
+             {:indent-line-comments? true})))
+      (testing "whole-line heading pre-indented ;;; comments"
+        (is (reformats-to?
+             ["(when 42"
+              "     ;;; heading"
+              ")"]
+             ["(when 42"
+              "     ;;; heading"
+              "  )"]
+             {:indent-line-comments? true}))
+        (is (reformats-to?
+             ["(when 42"
+              "     ;;;"
+              ")"]
+             ["(when 42"
+              "     ;;;"
+              "  )"]
+             {:indent-line-comments? true})))))
+  (testing "after-code comments"
+    (testing "after-code margin ; comments"
+      (is (reformats-to?
+           ["(when 42  ; leave me alone"
+            "     :a"
+            ")"]
+           ["(when 42  ; leave me alone"
+            "  :a)"]
+           {:indent-line-comments? true}))
+      (is (reformats-to?
+           ["(when 42  ;"
+            "     :a"
+            ")"]
+           ["(when 42  ;"
+            "  :a)"]
+           {:indent-line-comments? true})))
+    (testing "after-code line ;; comments"
+      (is (reformats-to?
+           ["(when 42  ;; leave me alone"
+            "     :a"
+            ")"]
+           ["(when 42  ;; leave me alone"
+            "  :a)"]
+           {:indent-line-comments? true}))
+      (is (reformats-to?
+           ["(when 42  ;;"
+            "     :a"
+            ")"]
+           ["(when 42  ;;"
+            "  :a)"]
+           {:indent-line-comments? true})))
+    (testing "after-code heading ;;; comments"
+      (is (reformats-to?
+           ["(when 42  ;;; leave me alone"
+            "     :a"
+            ")"]
+           ["(when 42  ;;; leave me alone"
+            "  :a)"]
+           {:indent-line-comments? true}))
+      (is (reformats-to?
+           ["(when 42  ;;;"
+            "     :a"
+            ")"]
+           ["(when 42  ;;;"
+            "  :a)"]
+           {:indent-line-comments? true})))))

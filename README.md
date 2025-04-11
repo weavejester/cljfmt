@@ -238,6 +238,10 @@ In order to load the standard configuration file from Leiningen, add the
   the same as `:indents`, except that this will **append** to the
   default indents.
 
+* `:indent-line-comments?` -
+  true if cljfmt should align whole-line `;;` comments with the code.
+  Defaults to false.
+
 * `:alias-map` -
   a map of namespace alias strings to fully qualified namespace
   names. This option is unnecessary in most cases, because cljfmt
