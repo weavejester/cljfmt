@@ -1,3 +1,10 @@
+## 0.13.1 (2025-04-11)
+
+- Added `:indent-line-comments?` option (#362)
+- Fixed symbols in `:alias-map` option (#363)
+- Fixed parsing of `foo//` (#357)
+- Fixed formatting for requires with metadata (#352)
+
 ## 0.13.0 (2024-09-28)
 
 - Added `:report` option to `check` and `fix` functions (#342)
