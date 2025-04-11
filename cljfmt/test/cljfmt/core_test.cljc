@@ -332,6 +332,14 @@
           #?@(:cljs [:alias-map {}])})
         "recognises the current namespace as part of a qualifed indent spec")
     (is (reformats-to?
+         ["(m/defthing foo [x]"
+          "(+ x 1))"]
+         ["(m/defthing foo [x]"
+          "  (+ x 1))"]
+         {:indents {'thing.core/defthing [[:inner 0]]}
+          :alias-map {'m 'thing.core}})
+        "accepts symbols in :alias-map option")
+    (is (reformats-to?
          ["(ns example"
           "(:require [thing.core :as t]))"
           ""

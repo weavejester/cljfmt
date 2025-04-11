@@ -243,9 +243,9 @@ In order to load the standard configuration file from Leiningen, add the
   Defaults to false.
 
 * `:alias-map` -
-  a map of namespace alias strings to fully qualified namespace
-  names. This option is unnecessary in most cases, because cljfmt
-  will parse the `ns` declaration in each file. See [INDENTS.md][].
+  a map of namespace alias to fully qualified namespace names. May be
+  symbols or strings. This option is unnecessary in most cases, because
+  cljfmt will parse the `ns` declaration in each file. See [INDENTS.md][].
 
 * `:remove-surrounding-whitespace?` -
   true if cljfmt should remove whitespace surrounding inner

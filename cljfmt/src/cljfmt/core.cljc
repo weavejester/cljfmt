@@ -636,14 +636,17 @@
             (map as-zloc->alias-mapping)
             (apply merge)))))
 
+(defn- stringify-map [m]
+  (into {} (map (fn [[k v]] [(str k) (str v)])) m))
+
 (defn reformat-string
   ([form-string]
    (reformat-string form-string {}))
   ([form-string options]
    (let [parsed-form (p/parse-string-all form-string)
-         alias-map   #?(:clj (merge (alias-map-for-form parsed-form)
-                                    (:alias-map options))
-                        :cljs (:alias-map options))]
+         alias-map   #?(:clj  (merge (alias-map-for-form parsed-form)
+                                     (stringify-map (:alias-map options)))
+                        :cljs (stringify-map (:alias-map options)))]
      (-> parsed-form
          (reformat-form (cond-> options
                           alias-map (assoc :alias-map alias-map)))
