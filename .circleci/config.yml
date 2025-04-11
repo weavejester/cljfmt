@@ -83,7 +83,7 @@ jobs:
   linux_aarch64:
     machine:
       enabled: true
-      image: ubuntu-2004:2022.04.2
+      image: ubuntu-2204:2023.07.1
     resource_class: arm.medium
     working_directory: ~/repo
     environment:
