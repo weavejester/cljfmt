@@ -2009,3 +2009,20 @@
            ["(when 42  ;;;"
             "  :a)"]
            {:indent-line-comments? true})))))
+
+(deftest test-multibyte-codepoints
+  (is (reformats-to?
+       ["(defn- x"
+        "  [x style]"
+        "  (case style"
+        "    :normal x"
+        "    :𝕨𝕚𝕝𝕕   (if (sequential? x)"
+        "       :a"
+        "       :b)))"]
+       ["(defn- x"
+        "  [x style]"
+        "  (case style"
+        "    :normal x"
+        "    :𝕨𝕚𝕝𝕕   (if (sequential? x)"
+        "              :a"
+        "              :b)))"])))

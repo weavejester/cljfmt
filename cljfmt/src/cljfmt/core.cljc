@@ -191,11 +191,12 @@
         (recur p (cons (start-element (n/tag (z/node p))) worklist))
         (apply str worklist)))))
 
-(defn- last-line-in-string [^String s]
+(defn- last-line-in-string ^String [^String s]
   (subs s (inc (.lastIndexOf s "\n"))))
 
 (defn- margin [zloc]
-  (-> zloc prior-line-string last-line-in-string count))
+  (let [last-line (-> zloc prior-line-string last-line-in-string)]
+    (.codePointCount last-line 0 (.length last-line))))
 
 (defn- whitespace [width]
   (n/whitespace-node (apply str (repeat width " "))))
