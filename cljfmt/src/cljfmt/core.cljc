@@ -194,9 +194,12 @@
 (defn- last-line-in-string ^String [^String s]
   (subs s (inc (.lastIndexOf s "\n"))))
 
+(defn- line-length [line]
+  #?(:clj  (.codePointCount line 0 (.length line))
+     :cljs (.-length (js/Array.from line))))
+
 (defn- margin [zloc]
-  (let [last-line (-> zloc prior-line-string last-line-in-string)]
-    (.codePointCount last-line 0 (.length last-line))))
+  (-> zloc prior-line-string last-line-in-string line-length))
 
 (defn- whitespace [width]
   (n/whitespace-node (apply str (repeat width " "))))
