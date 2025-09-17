@@ -195,7 +195,7 @@
   (subs s (inc (.lastIndexOf s "\n"))))
 
 (defn- line-length [line]
-  #?(:clj  (.codePointCount line 0 (.length line))
+  #?(:clj  (.codePointCount ^String line 0 (.length ^String line))
      :cljs (.-length (js/Array.from line))))
 
 (defn- margin [zloc]
