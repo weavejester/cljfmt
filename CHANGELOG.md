@@ -1,3 +1,7 @@
+## 0.13.2 (2025-09-17)
+
+- Fixed indentation for lines with multi-byte codepoints (#367)
+
 ## 0.13.1 (2025-04-11)
 
 - Added `:indent-line-comments?` option (#362)
