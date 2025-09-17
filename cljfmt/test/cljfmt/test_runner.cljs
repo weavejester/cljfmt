@@ -6,7 +6,8 @@
 (nodejs/enable-util-print!)
 
 (defmethod cljs.test/report [:cljs.test/default :end-run-tests] [m]
-  (when (pos? (:fail m))
+  (when (or (pos? (:fail m))
+            (pos? (:error m)))
     (js/process.exit 1)))
 
 (defn -main []
