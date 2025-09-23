@@ -2012,17 +2012,23 @@
 
 (deftest test-multibyte-codepoints
   (is (reformats-to?
-       ["(defn- x"
-        "  [x style]"
-        "  (case style"
-        "    :normal x"
-        "    :𝕨𝕚𝕝𝕕   (if (sequential? x)"
-        "       :a"
-        "       :b)))"]
-       ["(defn- x"
-        "  [x style]"
-        "  (case style"
-        "    :normal x"
-        "    :𝕨𝕚𝕝𝕕   (if (sequential? x)"
-        "              :a"
-        "              :b)))"])))
+       ["[(str \"email\""
+        "      \"Brian\")"
+        "(str \"📚 \" (str \"email\""
+        "                  \"Convert\"))"
+        "(str \"⌛️ \" (str \"email\""
+        "                  \"Save\"))"
+        "(str \"🎓 \" (str \"email\""
+        "                  \"Help\"))"
+        "(str \"🔢 \" (str \"email\""
+        "                   \"Leverage\"))]"]
+       ["[(str \"email\""
+        "      \"Brian\")"
+        " (str \"📚 \" (str \"email\""
+        "                 \"Convert\"))"
+        " (str \"⌛️ \" (str \"email\""
+        "                 \"Save\"))"
+        " (str \"🎓 \" (str \"email\""
+        "                 \"Help\"))"
+        " (str \"🔢 \" (str \"email\""
+        "                 \"Leverage\"))]"])))
