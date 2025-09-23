@@ -1,3 +1,7 @@
+## 0.13.4 (2025-09-24)
+
+- Reverted fix for multi-byte codepoints due to regression (#369)
+
 ## 0.13.3 (2025-09-17)
 
 * Fixed ClojureScript indentation broken by 0.13.2
