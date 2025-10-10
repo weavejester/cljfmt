@@ -3,4 +3,7 @@
          "cljfmt/test"
          "cljfmt/project.clj"
          "lein-cljfmt/src"]
- :sort-ns-references? true}
+ :sort-ns-references? true
+ :align-forms? true
+ :align-maps? true
+ }
