@@ -336,6 +336,11 @@
          (read-resource "cljfmt/indents/compojure.clj")
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
+
+(def ^:private default-aligns
+  (read-resource "cljfmt/align/clojure.clj"))
+
+
 (def default-options
   {:indentation?                          true
    :insert-missing-whitespace?            true
@@ -350,6 +355,7 @@
    :extra-indents                         {}
    :align-maps?                           false
    :align-forms?                          false
+   :aligns                                default-aligns
    :alias-map                             {}})
 
 (defmulti ^:private indenter-fn
@@ -641,8 +647,6 @@
 (defn align-maps [form]
   (transform form edit-all z/map? align-form-columns))
 
-(def ^:private default-aligns
-  (read-resource "cljfmt/align/clojure.clj"))
 
 (defn alignable? [aligns form]
   (let [zloc (-> form z/of-node first)]

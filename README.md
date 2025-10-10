@@ -371,6 +371,14 @@ You can also configure the behavior of cljfmt:
   :cljfmt {:aligns ^:replace {#".*" #{0}}
   ```
 
+## Compile binary locally
+
+1. Download GraalVM for Java SDK, eg `sdk install java 24.0.2-graal`
+2. Use in current shell with `sdk use java 24.0.2-graal`
+3. `cd cljfmt`
+4. Run `lein native-image`
+5. Try binary with `./target/cljfmt --help`
+
 ## License
 
 Copyright © 2025 James Reeves
