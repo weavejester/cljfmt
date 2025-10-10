@@ -618,7 +618,7 @@
   (let [right (z/right* zloc)]
     (if (comma? right)
       (insert-space-right (remove-space-right right) (dec n))
-      (z/insert-space-right zloc n))))
+      (z/insert-right* zloc (whitespace n)))))
 
 (defn- set-spacing-right [zloc n]
   (-> zloc (remove-space-right) (insert-space-right n)))
@@ -632,8 +632,36 @@
           (z/up zloc))))
     zloc))
 
+(defn- composite-node? [zloc]
+  (#{:map :vector :set :list} (z/tag zloc)))
+
+
 (defn- pad-node [zloc width]
-  (set-spacing-right zloc (- width (node-width zloc))))
+  (let [padding-needed (- width (node-width zloc))]
+    (if (and (composite-node? zloc) (> padding-needed 0))
+      ;; For composite nodes, remove existing space and insert correct amount
+      (let [right (z/right* zloc)]
+        (if (space? right)
+          ;; Remove space - z/remove* returns zloc at previous position
+          ;; which for a space after a composite is inside the composite
+          (let [after-remove (z/remove* right)
+                ;; Navigate back up to the composite level
+                at-composite (if (z/up* after-remove)
+                               (loop [loc after-remove]
+                                 (if (= (z/node (z/up* loc)) (z/node zloc))
+                                   loc
+                                   (if-let [up (z/up* loc)]
+                                     (recur up)
+                                     loc)))
+                               after-remove)]
+            ;; Go up one level to be at the composite node level
+            (if (z/up* at-composite)
+              (z/insert-right* (z/up* at-composite) (whitespace padding-needed))
+              (z/insert-right* at-composite (whitespace padding-needed))))
+          ;; No space to remove, just insert
+          (z/insert-right* zloc (whitespace padding-needed))))
+      ;; For non-composite nodes, use the standard approach
+      (set-spacing-right zloc padding-needed))))
 
 (defn- end-of-line? [zloc]
   (line-break? (skip-whitespace-and-commas (z/right* zloc))))
@@ -649,7 +677,7 @@
 
 
 (defn alignable? [aligns form]
-  (let [zloc (-> form z/of-node first)]
+  (let [zloc form]
     (when (and (not (z/whitespace-or-comment? zloc))
                (z/list? (z/up zloc)))
       (let [form-type (some-> zloc z/up z/down z/string symbol)]

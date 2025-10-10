@@ -1913,7 +1913,41 @@
               "         [a      1"
               "          longer 2])"]
              {:align-forms? true
-              :aligns {'special #{1}}}))))))
+              :aligns {'special #{1}}}))))
+    (testing "binding forms"
+      (testing "simple symbol binding forms"
+        (is (reformats-to?
+             ["(let [is-user? (node/type? node/user entry)"
+              "      admin? true])"]
+             ["(let [is-user? (node/type? node/user entry)"
+              "      admin?   true])"]
+             {:align-forms? true})))
+      (testing "map binding forms"
+        (is (reformats-to?
+             ["(let [{:keys [id]} @(simplechat.tx/create-chat cluster org account)])"]
+             ["(let [{:keys [id]} @(simplechat.tx/create-chat cluster org account)])"]
+             {:align-forms? true})))
+      (testing "vector binding forms"
+        (is (reformats-to?
+             ["(let [[value set-value!] (ls/use-state \"foo\" \"\")"
+              "      [other thing] (something-else)])"]
+             ["(let [[value set-value!] (ls/use-state \"foo\" \"\")"
+              "      [other thing]      (something-else)])"]
+             {:align-forms? true})))
+      (testing "mixed binding forms with complex case"
+        (is (reformats-to?
+             ["(let [user (get-user)"
+              "      [value set-value!] (ls/use-state \"foo\" \"\")"
+              "      {:keys [id name]} (get-data)"
+              "      [a b] (something)"
+              "      simple-var 42])"]
+             ["(let [user               (get-user)"
+              "      [value set-value!] (ls/use-state \"foo\" \"\")"
+              "      {:keys [id name]}  (get-data)"
+              "      [a b]              (something)"
+              "      simple-var         42])"]
+             {:align-forms? true}))))))
+
 
 (deftest test-align-maps
   (testing "straightforward test cases"

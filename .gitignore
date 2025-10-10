@@ -11,3 +11,5 @@ reports
 .cpcache
 .clj-kondo
 .lsp
+.idea
+*.iml
