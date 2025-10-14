@@ -225,63 +225,18 @@ In order to load the standard configuration file from Leiningen, add the
 
 ### Formatting Options
 
-* `:align-map-columns?` -
-  true if cljfmt should align the keys and values of maps such that they
-  line up in columns. Defaults to false.
-
-* `:indentation?` -
-  true if cljfmt should correct the indentation of your code.
-  Defaults to true.
-
-* `:indents` -
-  a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
-  See [INDENTS.md][] for a complete explanation. This will **replace**
-  the default indents.
-
-* `:extra-indents` -
-  the same as `:indents`, except that this will **append** to the
-  default indents.
-
-* `:indent-line-comments?` -
-  true if cljfmt should align whole-line `;;` comments with the code.
-  Defaults to false.
-
 * `:alias-map` -
   a map of namespace alias to fully qualified namespace names. May be
   symbols or strings. This option is unnecessary in most cases, because
   cljfmt will parse the `ns` declaration in each file. See [INDENTS.md][].
 
-* `:remove-surrounding-whitespace?` -
-  true if cljfmt should remove whitespace surrounding inner
-  forms. This will convert <code>(&nbsp;&nbsp;foo&nbsp;&nbsp;)</code> to `(foo)`.
-  Defaults to true.
+* `:align-map-columns?` -
+  true if cljfmt should align the keys and values of maps such that they
+  line up in columns. Defaults to false.
 
-* `:remove-trailing-whitespace?` -
-  true if cljfmt should remove trailing whitespace in lines. This will
-  convert <code>(foo)&nbsp;&nbsp;&nbsp;\n</code> to `(foo)\n`. Defaults to true.
-
-* `:insert-missing-whitespace?` -
-  true if cljfmt should insert whitespace missing from between
-  elements. This will convert `(foo(bar))` to `(foo (bar))`.
-  Defaults to true.
-
-* `:remove-consecutive-blank-lines?` -
-  true if cljfmt should collapse consecutive blank lines. This will
-  convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
-
-* `:remove-multiple-non-indenting-spaces?` -
-  true if cljfmt should remove multiple non indenting spaces. For
-  example, this will convert <code>{:a 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:b 2}</code>
-  to `{:a 1 :b 2}`. Defaults to false.
-
-* `:split-keypairs-over-multiple-lines?` -
-  true if cljfmt should break hashmaps onto multiple lines. This will
-  convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
-
-* `:sort-ns-references?` -
-  true if cljfmt should alphanumerically sort the requires, imports and
-  other references in the `ns` forms at the top of your namespaces.
-  Defaults to false.
+* `:extra-indents` -
+  the same as `:indents`, except that this will **append** to the
+  default indents.
 
 * `:function-arguments-indentation` -
   - `:community` if cljfmt should follow the [community style recommendation][]
@@ -295,6 +250,51 @@ In order to load the standard configuration file from Leiningen, add the
     default behaviour.
 
   Defaults to `:community`
+
+* `:indent-line-comments?` -
+  true if cljfmt should align whole-line `;;` comments with the code.
+  Defaults to false.
+
+* `:indentation?` -
+  true if cljfmt should correct the indentation of your code.
+  Defaults to true.
+
+* `:indents` -
+  a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
+  See [INDENTS.md][] for a complete explanation. This will **replace**
+  the default indents.
+
+* `:remove-consecutive-blank-lines?` -
+  true if cljfmt should collapse consecutive blank lines. This will
+  convert `(foo)\n\n\n(bar)` to `(foo)\n\n(bar)`. Defaults to true.
+
+* `:insert-missing-whitespace?` -
+  true if cljfmt should insert whitespace missing from between
+  elements. This will convert `(foo(bar))` to `(foo (bar))`.
+  Defaults to true.
+
+* `:remove-multiple-non-indenting-spaces?` -
+  true if cljfmt should remove multiple non indenting spaces. For
+  example, this will convert <code>{:a 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:b 2}</code>
+  to `{:a 1 :b 2}`. Defaults to false.
+
+* `:remove-surrounding-whitespace?` -
+  true if cljfmt should remove whitespace surrounding inner
+  forms. This will convert <code>(&nbsp;&nbsp;foo&nbsp;&nbsp;)</code> to `(foo)`.
+  Defaults to true.
+
+* `:remove-trailing-whitespace?` -
+  true if cljfmt should remove trailing whitespace in lines. This will
+  convert <code>(foo)&nbsp;&nbsp;&nbsp;\n</code> to `(foo)\n`. Defaults to true.
+
+* `:sort-ns-references?` -
+  true if cljfmt should alphanumerically sort the requires, imports and
+  other references in the `ns` forms at the top of your namespaces.
+  Defaults to false.
+
+* `:split-keypairs-over-multiple-lines?` -
+  true if cljfmt should break hashmaps onto multiple lines. This will
+  convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
 
 [indents.md]: docs/INDENTS.md
 [community style recommendation]: https://guide.clojure.style/#one-space-indent
