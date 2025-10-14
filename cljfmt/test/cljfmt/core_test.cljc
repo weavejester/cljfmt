@@ -2032,3 +2032,152 @@
         "                 \"Help\"))"
         " (str \"🔢 \" (str \"email\""
         "                 \"Leverage\"))]"])))
+
+(deftest test-align-map-columns
+  (testing "empty maps"
+    (is (reformats-to?
+         ["{}"]
+         ["{}"]
+         {:align-map-columns? true})))
+  (testing "basic aligning"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x      1"
+          " :longer 2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:longer 1"
+          " :x 2}"]
+         ["{:longer 1"
+          " :x      2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:x 1 :longer 2}"]
+         ["{:x 1 :longer 2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:x 1 :y 2"
+          " :longer 2}"]
+         ["{:x      1 :y 2"
+          " :longer 2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:a 1 :b 2 :cc 3"
+          ":dd 4 :eee 5 :f 6"
+          ":ggg 7 :hh 8 :iii 9}"]
+         ["{:a   1 :b   2 :cc  3"
+          " :dd  4 :eee 5 :f   6"
+          " :ggg 7 :hh  8 :iii 9}"]
+         {:align-map-columns? true})))
+  (testing "wrong alignment"
+    (is (reformats-to?
+         ["{:f 1"
+          " :bar    2}"]
+         ["{:f   1"
+          " :bar 2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:foo     1"
+          " :b 2}"]
+         ["{:foo 1"
+          " :b   2}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{   :foo 1"
+          ":b       2}"]
+         ["{:foo 1"
+          " :b   2}"]
+         {:align-map-columns? true})))
+  (testing "commas"
+    (is (reformats-to?
+         ["{:a 1, :b 2, :cc 3"
+          ":dd 4, :eee 5, :f 6"
+          ":ggg 7, :hh 8, :iii 9}"]
+         ["{:a   1, :b   2, :cc  3"
+          " :dd  4, :eee 5, :f   6"
+          " :ggg 7, :hh  8, :iii 9}"]
+         {:align-map-columns? true})))
+  (testing "nested maps"
+    (is (reformats-to?
+         ["{:a {:b 1"
+          "     :c 2}"
+          " :ddd {:e 3}}"]
+         ["{:a   {:b 1"
+          "       :c 2}"
+          " :ddd {:e 3}}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:aaa {:b 1"
+          "       :c 2}"
+          " :d {:e 3}}"]
+         ["{:aaa {:b 1"
+          "       :c 2}"
+          " :d   {:e 3}}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{{:a 1"
+          "  :b 2} 3"
+          " {:ccc 4} 5}"]
+         ["{{:a 1"
+          "  :b 2}   3"
+          " {:ccc 4} 5}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{{:a 1"
+          "  :b 2} 3"
+          " :c 5}"]
+         ["{{:a 1"
+          "  :b 2} 3"
+          " :c     5}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:a {:b 1"
+          " :c 2} :ddd 3"
+          " :eee {:ff 3} :e 4}"]
+         ["{:a   {:b 1"
+          "       :c 2}  :ddd 3"
+          " :eee {:ff 3} :e   4}"]
+         {:align-map-columns? true})))
+  (testing "nested forms"
+    (is (reformats-to?
+         ["{:x (let [x 1]"
+          "      (+ x 1))"
+          " :yyy (let [y 2]"
+          "        (+ y 2))}"]
+         ["{:x   (let [x 1]"
+          "        (+ x 1))"
+          " :yyy (let [y 2]"
+          "        (+ y 2))}"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["(def m {:x 1"
+          ":longer 2})"]
+         ["(def m {:x      1"
+          "        :longer 2})"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["(def m {{:a 1"
+          ":b 2} 3"
+          ":d 4})"]
+         ["(def m {{:a 1"
+          "         :b 2} 3"
+          "        :d     4})"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["(def m {{:a 1"
+          ":b 2} [x"
+          "y]"
+          ":d [z]})"]
+         ["(def m {{:a 1"
+          "         :b 2} [x"
+          "                y]"
+          "        :d     [z]})"]
+         {:align-map-columns? true})))
+  (testing "comments"
+    (is (reformats-to?
+         ["{:x 1   ; a comment"
+          " :longer 2}"]
+         ["{:x      1   ; a comment"
+          " :longer 2}"]
+         {:align-map-columns? true}))))

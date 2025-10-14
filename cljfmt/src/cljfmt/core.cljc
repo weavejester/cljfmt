@@ -363,6 +363,7 @@
    :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
    :function-arguments-indentation        :community
+   :align-map-columns?                    false
    :indents       default-indents
    :extra-indents {}
    :alias-map     {}})
@@ -572,6 +573,90 @@
 (defn sort-ns-references [form]
   (transform form edit-all ns-reference? sort-arguments))
 
+(defn- skip-to-linebreak-or-element [zloc]
+  (z/skip z/right* (some-fn space? comma?) zloc))
+
+(defn- reduce-columns [zloc f init]
+  (loop [zloc zloc, col 0, acc init]
+    (if-some [zloc (skip-to-linebreak-or-element zloc)]
+      (if (line-break? zloc)
+        (recur (z/right* zloc) 0 acc)
+        (recur (z/right* zloc) (inc col) (f zloc col acc)))
+      acc)))
+
+(defn- count-columns [zloc]
+  (inc (reduce-columns zloc #(max %2 %3) 0)))
+
+(defn- trailing-commas [zloc]
+  (let [right (z/right* zloc)]
+    (if (and right (comma? right))
+      (-> right z/node n/string)
+      "")))
+
+(defn- node-end-position [zloc]
+  (let [lines (str (prior-line-string zloc)
+                   (n/string (z/node zloc))
+                   (trailing-commas zloc))]
+    (transduce (comp (remove #(str/starts-with? % ";"))
+                     (map count))
+               max 0 (str/split lines #"\r?\n"))))
+
+(defn- max-column-end-position [zloc col]
+  (reduce-columns zloc
+                  (fn [zloc c max-pos]
+                    (if (= c col)
+                      (max max-pos (node-end-position zloc))
+                      max-pos))
+                  0))
+
+(defn- update-space-left [zloc delta]
+  (let [left (z/left* zloc)]
+    (cond
+      (space? left) (let [n (-> left z/node n/string count)]
+                      (z/right* (z/replace* left (n/spaces (+ n delta)))))
+      (pos? delta)  (z/insert-space-left zloc delta)
+      :else         zloc)))
+
+(defn- skip-to-next-line-in-form [zloc]
+  (z/right (z/skip z/right* (complement line-break?) (z/right* zloc))))
+
+(defn- pad-node [zloc start-position]
+  (let [padding (- start-position (margin zloc))
+        zloc    (update-space-left zloc padding)]
+    (if-some [zloc (z/down zloc)]
+      (loop [zloc zloc]
+        (if-some [zloc (skip-to-next-line-in-form zloc)]
+          (let [zloc (update-space-left zloc padding)]
+            (if-some [zloc (z/right* zloc)]
+              (recur zloc)
+              (z/up zloc)))
+          (z/up zloc)))
+      zloc)))
+
+(defn- edit-column [zloc column f]
+  (loop [zloc zloc, col 0]
+    (if-some [zloc (skip-to-linebreak-or-element zloc)]
+      (let [zloc (if (and (= col column) (not (line-break? zloc)))
+                   (f zloc)
+                   zloc)
+            col  (if (line-break? zloc) 0 (inc col))]
+        (if-some [zloc (z/right* zloc)]
+          (recur zloc col)
+          zloc))
+      zloc)))
+
+(defn- align-column [zloc col]
+  (if-some [zloc (z/down zloc)]
+    (let [start-position (inc (max-column-end-position zloc (dec col)))]
+      (z/up (edit-column zloc col #(pad-node % start-position))))
+    zloc))
+
+(defn- align-form-columns [zloc]
+  (reduce align-column zloc (-> zloc z/down count-columns range rest)))
+
+(defn align-map-columns [form]
+  (transform form edit-all z/map? align-form-columns))
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -594,6 +679,8 @@
            (reindent (merge (:indents opts) (:extra-indents opts))
                      (:alias-map opts)
                      opts))
+         (cond-> (:align-map-columns? opts)
+           align-map-columns)
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 
