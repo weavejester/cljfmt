@@ -232,7 +232,7 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:align-map-columns?` -
   true if cljfmt should align the keys and values of maps such that they
-  line up in columns. Defaults to false.
+  line up in columns. Defaults to false. **Experimental.**
 
 * `:extra-indents` -
   the same as `:indents`, except that this will **append** to the
