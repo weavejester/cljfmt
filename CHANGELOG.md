@@ -1,3 +1,8 @@
+## 0.14.0 (2025-10-15)
+
+- Added `:align-map-columns?` option (#371)
+- Updated dependencies
+
 ## 0.13.4 (2025-09-24)
 
 - Reverted fix for multi-byte codepoints due to regression (#369)
