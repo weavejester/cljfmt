@@ -4,7 +4,7 @@
 
 ## 0.13.3 (2025-09-17)
 
-* Fixed ClojureScript indentation broken by 0.13.2
+- Fixed ClojureScript indentation broken by 0.13.2
 
 ## 0.13.2 (2025-09-17)
 
