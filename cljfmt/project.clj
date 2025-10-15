@@ -5,10 +5,10 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.11.4"]
-                 [org.clojure/tools.cli "1.1.230"]
+                 [org.clojure/tools.cli "1.2.245"]
                  [org.clojure/tools.reader "1.5.2"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
-                 [rewrite-clj "1.1.49"]]
+                 [rewrite-clj "1.2.50"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
