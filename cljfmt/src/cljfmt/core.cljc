@@ -352,6 +352,9 @@
          (read-resource "cljfmt/indents/compojure.clj")
          (read-resource "cljfmt/indents/fuzzy.clj")))
 
+(def default-binding-forms
+  (read-resource "cljfmt/binding_forms/clojure.clj"))
+
 (def default-options
   {:indentation?                          true
    :indent-line-comments?                 false
@@ -364,6 +367,8 @@
    :sort-ns-references?                   false
    :function-arguments-indentation        :community
    :align-map-columns?                    false
+   :binding-forms                         default-binding-forms
+   :extra-binding-forms                   {}
    :indents       default-indents
    :extra-indents {}
    :alias-map     {}})
@@ -660,6 +665,20 @@
 (defn align-map-columns [form]
   (transform form edit-all z/map? align-form-columns))
 
+(defn- binding-vector? [zloc binding-forms context]
+  (and (z/vector? zloc)
+       (z/list? (z/up zloc))
+       (some (fn [[k indexes]]
+               (and (form-matches-key? zloc k context)
+                    (contains? (set indexes) (dec (index-of zloc)))))
+             binding-forms)))
+
+(defn align-binding-columns [form binding-forms alias-map]
+  (let [ns-name  (find-namespace (z/of-node form))
+        context  {:alias-map alias-map, :ns-name ns-name}
+        binding? #(binding-vector? % binding-forms context)]
+    (transform form edit-all binding? align-form-columns)))
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -684,6 +703,10 @@
                      opts))
          (cond-> (:align-map-columns? opts)
            align-map-columns)
+         (cond-> (:align-binding-columns? opts)
+           (align-binding-columns (merge (:binding-forms opts)
+                                         (:extra-binding-forms opts))
+                                  (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 
