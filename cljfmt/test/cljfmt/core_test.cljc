@@ -2185,12 +2185,30 @@
 (deftest test-align-binding-columns
   (testing "basic alignment"
     (is (reformats-to?
+         ["(let [x 1]"
+          "  x)"]
+         ["(let [x 1]"
+          "  x)"]
+         {:align-binding-columns? true}))
+    (is (reformats-to?
          ["(let [longer 1"
           "      x 2]"
           "  (+ x longer))"]
          ["(let [longer 1"
           "      x      2]"
           "  (+ x longer))"]
+         {:align-binding-columns? true}))
+    (is (reformats-to?
+         ["(def foo [aaa bb"
+          "          c d]"
+          "  (let [longer 1"
+          "        x 2]"
+          "    (+ x longer)))"]
+         ["(def foo [aaa bb"
+          "          c d]"
+          "  (let [longer 1"
+          "        x      2]"
+          "    (+ x longer)))"]
          {:align-binding-columns? true})))
   (testing "alignment with maps"
     (is (reformats-to?
@@ -2203,4 +2221,17 @@
           "      y      3]"
           "  (+ x longer))"]
          {:align-binding-columns? true
-          :align-map-columns?     true}))))
+          :align-map-columns?     true})))
+  (testing "nested alignment"
+    (is (reformats-to?
+         ["(let [longer (let [x 1"
+          "                   yyy 2]"
+          "               (+ x yyy))"
+          "      y 3]"
+          "  (+ x longer))"]
+         ["(let [longer (let [x   1"
+          "                   yyy 2]"
+          "               (+ x yyy))"
+          "      y      3]"
+          "  (+ x longer))"]
+         {:align-binding-columns? true}))))
