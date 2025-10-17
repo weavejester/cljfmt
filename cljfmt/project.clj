@@ -9,7 +9,7 @@
                  [org.clojure/tools.reader "1.5.2"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [rewrite-clj "1.2.50"]]
-  :plugins [[lein-cljsbuild "1.1.7"]
+  :plugins [#_[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds

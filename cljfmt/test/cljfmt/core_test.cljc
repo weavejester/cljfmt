@@ -2181,3 +2181,26 @@
          ["{:x      1   ; a comment"
           " :longer 2}"]
          {:align-map-columns? true}))))
+
+(deftest test-align-binding-columns
+  (testing "basic alignment"
+    (is (reformats-to?
+         ["(let [longer 1"
+          "      x 2]"
+          "  (+ x longer))"]
+         ["(let [longer 1"
+          "      x      2]"
+          "  (+ x longer))"]
+         {:align-binding-columns? true})))
+  (testing "alignment with maps"
+    (is (reformats-to?
+         ["(let [longer {:x 1"
+          "              :wider 2}"
+          "      y 3]"
+          "  (+ x longer))"]
+         ["(let [longer {:x     1"
+          "              :wider 2}"
+          "      y      3]"
+          "  (+ x longer))"]
+         {:align-binding-columns? true
+          :align-map-columns?     true}))))
