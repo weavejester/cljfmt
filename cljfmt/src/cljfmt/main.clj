@@ -17,24 +17,38 @@
     :id :quiet?]
    ["-v" "--verbose"
     :id :verbose?]
-   [nil "--[no-]parallel"
-    :id :parallel?
-    :default (:parallel? defaults)]
-   [nil "--project-root PROJECT_ROOT"
-    :default (:project-root defaults)]
-   [nil "--file-pattern FILE_PATTERN"
-    :default (:file-pattern defaults)
-    :parse-fn re-pattern]
-   [nil "--config CONFIG_FILE"]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
+   [nil "--config CONFIG_FILE"]
+   [nil "--file-pattern FILE_PATTERN"
+    :default (:file-pattern defaults)
+    :parse-fn re-pattern]
+   [nil "--function-arguments-indentation STYLE"
+    "STYLE may be community, cursive, or zprint"
+    :default (:function-arguments-indentation defaults)
+    :default-desc (name (:function-arguments-indentation defaults))
+    :parse-fn keyword
+    :validate [#{:community :cursive :zprint}
+               "Must be one of community, cursive, or zprint"]
+    :id :function-arguments-indentation]
    [nil "--[no-]indentation"
     :default (:indentation? defaults)
     :id :indentation?]
    [nil "--[no-]indent-line-comments"
     :default (:indent-line-comments? defaults)
     :id :indent-line-comments?]
+   [nil "--[no-]insert-missing-whitespace"
+    :default (:insert-missing-whitespace? defaults)
+    :id :insert-missing-whitespace?]
+   [nil "--[no-]parallel"
+    :id :parallel?
+    :default (:parallel? defaults)]
+   [nil "--project-root PROJECT_ROOT"
+    :default (:project-root defaults)]
+   [nil "--[no-]remove-consecutive-blank-lines"
+    :default (:remove-consecutive-blank-lines? defaults)
+    :id :remove-consecutive-blank-lines?]
    [nil "--[no-]remove-multiple-non-indenting-spaces"
     :default (:remove-multiple-non-indenting-spaces? defaults)
     :id :remove-multiple-non-indenting-spaces?]
@@ -44,26 +58,12 @@
    [nil "--[no-]remove-trailing-whitespace"
     :default (:remove-trailing-whitespace? defaults)
     :id :remove-trailing-whitespace?]
-   [nil "--[no-]insert-missing-whitespace"
-    :default (:insert-missing-whitespace? defaults)
-    :id :insert-missing-whitespace?]
-   [nil "--[no-]remove-consecutive-blank-lines"
-    :default (:remove-consecutive-blank-lines? defaults)
-    :id :remove-consecutive-blank-lines?]
-   [nil "--[no-]split-keypairs-over-multiple-lines"
-    :default (:split-keypairs-over-multiple-lines? defaults)
-    :id :split-keypairs-over-multiple-lines?]
    [nil "--[no-]sort-ns-references"
     :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]
-   [nil "--function-arguments-indentation STYLE"
-    "STYLE may be community, cursive, or zprint"
-    :default (:function-arguments-indentation defaults)
-    :default-desc (name (:function-arguments-indentation defaults))
-    :parse-fn keyword
-    :validate [#{:community :cursive :zprint}
-               "Must be one of community, cursive, or zprint"]
-    :id :function-arguments-indentation]])
+   [nil "--[no-]split-keypairs-over-multiple-lines"
+    :default (:split-keypairs-over-multiple-lines? defaults)
+    :id :split-keypairs-over-multiple-lines?] ])
 
 (defn- abort [& msg]
   (binding [*out* *err*]
