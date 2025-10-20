@@ -69,7 +69,7 @@
     :id :sort-ns-references?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
     :default (:split-keypairs-over-multiple-lines? defaults)
-    :id :split-keypairs-over-multiple-lines?] ])
+    :id :split-keypairs-over-multiple-lines?]])
 
 (defn- abort [& msg]
   (binding [*out* *err*]
