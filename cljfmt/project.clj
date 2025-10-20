@@ -12,6 +12,7 @@
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
   :hooks [leiningen.cljsbuild]
+  :main cljfmt.main
   :cljsbuild {:builds
               {"dev" {:source-paths ["src" "test"]
                       :compiler {:main cljfmt.test-runner
