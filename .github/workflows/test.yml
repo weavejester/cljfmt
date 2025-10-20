@@ -32,6 +32,11 @@ jobs:
       - name: Check formatting
         run: bb fmt
 
+      - name: Setup linter dependencies
+        run: |
+          mkdir .clj-kondo
+          clj-kondo --lint $(clojure -Spath) --copy-configs --skip-lint
+
       - name: Lint sourcecode
         run: bb lint
 
