@@ -5,22 +5,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Prepare java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '8'
+          java-version: '11'
 
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@11.0
+        uses: DeLaGuardo/setup-clojure@13.4
         with:
           cli: latest
-          lein: 2.9.10
+          lein: 2.12.0
           bb: latest
-          clj-kondo: 2023.05.18
-          cljfmt: 0.10.4
+          clj-kondo: 2025.09.22
+          cljfmt: 0.14.0
 
       - name: Execute tests
         working-directory: ./cljfmt
