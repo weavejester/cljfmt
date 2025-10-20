@@ -230,9 +230,25 @@ In order to load the standard configuration file from Leiningen, add the
   symbols or strings. This option is unnecessary in most cases, because
   cljfmt will parse the `ns` declaration in each file. See [INDENTS.md][].
 
+* `:binding-forms` -
+  a map of symbols to indexes that tell cljfmt where to expect binding
+  forms. For example, `{'let #{0}}` indicates that `let` has a binding
+  vector found at the first argument (index 0). This will **replace**
+  the default binding forms. Used by `:align-binding-columns?`.
+
 * `:align-map-columns?` -
   true if cljfmt should align the keys and values of maps such that they
   line up in columns. Defaults to false. **Experimental.**
+
+* `:align-binding-columns?` -
+  true if cljfmt should align the symbols and values in binding forms
+  (such as `let`) so that they line up in columns. The binding forms
+  are defined via the `:binding-forms` and `:extra-binding-forms`
+  options. Defaults to false. **Experimental.**
+
+* `:extra-binding-forms` -
+  the same as `:binding-forms`, except that this will **append** to the
+  default binding forms.
 
 * `:extra-indents` -
   the same as `:indents`, except that this will **append** to the
