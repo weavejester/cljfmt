@@ -1,3 +1,9 @@
+## 0.14.1 (2025-10-20)
+
+- Added `:align-binding-columns?` option (#373)
+- Added default indentation for `let*` (#168)
+- Fixed bug with aligning columns where the newlines were deeply nested
+
 ## 0.14.0 (2025-10-15)
 
 - Added `:align-map-columns?` option (#371)
