@@ -744,6 +744,18 @@
           "    (str x 2"
           "         3 4)))"])))
 
+  (testing "let blocks"
+    (is (reformats-to?
+         ["(let [x 1]"
+          "(+ x 1))"]
+         ["(let [x 1]"
+          "  (+ x 1))"]))
+    (is (reformats-to?
+         ["(let* [x 1]"
+          "(+ x 1))"]
+         ["(let* [x 1]"
+          "  (+ x 1))"])))
+
   (testing "multiline right hand side forms"
     (is (reformats-to?
          ["(list foo :bar (fn a"
