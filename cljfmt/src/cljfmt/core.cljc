@@ -356,23 +356,23 @@
   (read-resource "cljfmt/binding_forms/clojure.clj"))
 
 (def default-options
-  {:indentation?                          true
+  {:alias-map                             {}
+   :align-binding-columns?                false
+   :align-map-columns?                    false
+   :binding-forms                         default-binding-forms
+   :extra-binding-forms                   {}
+   :extra-indents                         {}
+   :function-arguments-indentation        :community
    :indent-line-comments?                 false
+   :indentation?                          true
+   :indents                               default-indents
    :insert-missing-whitespace?            true
    :remove-consecutive-blank-lines?       true
    :remove-multiple-non-indenting-spaces? false
    :remove-surrounding-whitespace?        true
    :remove-trailing-whitespace?           true
-   :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
-   :function-arguments-indentation        :community
-   :align-binding-columns?                false
-   :align-map-columns?                    false
-   :binding-forms                         default-binding-forms
-   :extra-binding-forms                   {}
-   :indents       default-indents
-   :extra-indents {}
-   :alias-map     {}})
+   :split-keypairs-over-multiple-lines?   false})
 
 (defmulti ^:private indenter-fn
   (fn [_sym _context [type & _args]] type))
