@@ -357,18 +357,24 @@
 (def default-aligned-forms
   (read-resource "cljfmt/aligned_forms/clojure.clj"))
 
+(def blank-line-forms
+  (read-resource "cljfmt/blank_line_forms/clojure.clj"))
+
 (def default-options
   {:alias-map                             {}
    :align-binding-columns?                false
    :align-map-columns?                    false
    :aligned-forms                         default-aligned-forms
+   :blank-line-forms                      blank-line-forms
    :extra-aligned-forms                   {}
+   :extra-blank-line-forms                {}
    :extra-indents                         {}
    :function-arguments-indentation        :community
    :indent-line-comments?                 false
    :indentation?                          true
    :indents                               default-indents
    :insert-missing-whitespace?            true
+   :remove-blank-lines-in-forms?          false
    :remove-consecutive-blank-lines?       true
    :remove-multiple-non-indenting-spaces? false
    :remove-surrounding-whitespace?        true
@@ -681,6 +687,43 @@
         aligned? #(aligned-form? % aligned-forms context)]
     (transform form edit-all aligned? align-columns)))
 
+(defn- blank-line-rule [zloc blank-line-forms context]
+  (when-let [form-symb (form-symbol zloc)]
+    (some blank-line-forms
+          [(remove-namespace form-symb)
+           (fully-qualified-symbol form-symb context)])))
+
+(defn- blank-line-in-form? [zloc blank-line-forms context]
+  (and (z/linebreak? zloc)
+       (> (count-newlines zloc) 1)
+       (cond
+         (z/list? (z/up zloc))
+         (not= (blank-line-rule zloc blank-line-forms context) :all)
+
+         (z/list? (z/up (z/up zloc)))
+         (let [index           (dec (index-of (z/up zloc)))
+               rule            (blank-line-rule
+                                (z/up zloc)
+                                blank-line-forms
+                                context)
+               allowed-indexes (if (set? rule)
+                                 rule
+                                 #{})]
+           (not (allowed-indexes index))))))
+
+(defn- replace-blank-lines-in-forms [zloc]
+  (z/replace zloc (n/newline-node "\n")))
+
+(defn remove-blank-lines-in-forms
+  [form blank-line-forms alias-map]
+  (let [ns-name (find-namespace (z/of-node form))
+        context {:alias-map alias-map, :ns-name ns-name}]
+    (transform
+     form
+     edit-all
+     #(blank-line-in-form? % blank-line-forms context)
+     replace-blank-lines-in-forms)))
+
 (defn reformat-form
   ([form]
    (reformat-form form {}))
@@ -709,6 +752,10 @@
            (align-form-columns (merge (:aligned-forms opts)
                                       (:extra-aligned-forms opts))
                                (:alias-map opts)))
+         (cond-> (:remove-blank-lines-in-forms? opts)
+           (remove-blank-lines-in-forms (merge (:blank-line-forms opts)
+                                               (:extra-blank-line-forms opts))
+                                        (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 
