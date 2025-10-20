@@ -247,9 +247,22 @@ In order to load the standard configuration file from Leiningen, add the
   true if cljfmt should align the keys and values of maps such that they
   line up in columns. Defaults to false. **Experimental.**
 
+* `:blank-line-forms` - map of symbols that tell cljfmt which forms are allowed
+  to have blank lines inside of them. The value may be either `:all`, which
+  means blank lines are allowed between all elements in the form, e.g. `{'cond
+  :all}` to allow blank lines between any of the elements inside `cond`; or it
+  may be a set of element indexes that are allowed to have blank lines, e.g.
+  `{'let #{0}}`, to allow blank lines in the binding of a `let` form. This
+  option will **replace** the default blank line forms; use `:extra-blank-line`
+  forms to add additional ones. Used by `:remove-blank-lines-in-forms?`.
+  **Experimental.**
+
 * `:extra-aligned-forms` -
   the same as `:aligned-forms`, except that this will **append** to the
   default aligned forms. **Experimental.**
+
+* `:extra-blank-line-forms` - the same as `:blank-line-forms`, except that this
+  will **append** to the default blank line forms. **Experimental.**
 
 * `:extra-indents` -
   the same as `:indents`, except that this will **append** to the
@@ -280,6 +293,12 @@ In order to load the standard configuration file from Leiningen, add the
   a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
   See [INDENTS.md][] for a complete explanation. This will **replace**
   the default indents.
+
+* `:remove-blank-lines-in-forms?` - whether to remove blank lines inside forms
+  per the [community style recommendation][no-blank-lines]. By default, this
+  does not remove blank lines in pairwise constructs like `cond` or within
+  binding vectors; configure these with `:blank-line-forms` and/or
+  `:extra-blank-line-forms`. Defaults to false. **Experimental**.
 
 * `:remove-consecutive-blank-lines?` -
   true if cljfmt should collapse consecutive blank lines. This will
@@ -315,6 +334,7 @@ In order to load the standard configuration file from Leiningen, add the
 
 [indents.md]: docs/INDENTS.md
 [community style recommendation]: https://guide.clojure.style/#one-space-indent
+[no-blank-lines]: https://guide.clojure.style/#no-blank-lines-within-def-forms
 
 ### Runtime Options
 

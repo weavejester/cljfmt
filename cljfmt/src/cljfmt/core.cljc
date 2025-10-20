@@ -358,18 +358,24 @@
 (def default-aligned-forms
   (read-resource "cljfmt/aligned_forms/clojure.clj"))
 
+(def blank-line-forms
+  (read-resource "cljfmt/blank_line_forms/clojure.clj"))
+
 (def default-options
   {:alias-map                             {}
    :align-binding-columns?                false
    :align-map-columns?                    false
    :aligned-forms                         default-aligned-forms
+   :blank-line-forms                      blank-line-forms
    :extra-aligned-forms                   {}
+   :extra-blank-line-forms                {}
    :extra-indents                         {}
    :function-arguments-indentation        :community
    :indent-line-comments?                 false
    :indentation?                          true
    :indents                               default-indents
    :insert-missing-whitespace?            true
+   :remove-blank-lines-in-forms?          false
    :remove-consecutive-blank-lines?       true
    :remove-multiple-non-indenting-spaces? false
    :remove-surrounding-whitespace?        true
@@ -674,17 +680,22 @@
 (defn align-map-columns [form]
   (transform form edit-all z/map? align-columns))
 
-(defn- aligned-form? [zloc aligned-forms context]
-  (and (z/list? (z/up zloc))
-       (some (fn [[k indexes]]
-               (and (form-matches-key? zloc k context)
-                    (contains? (set indexes) (dec (index-of zloc)))))
-             aligned-forms)))
+(defn- matching-form-index? [zloc [k indexes] context]
+  (if (= :all indexes)
+    (and (z/list? zloc)
+         (form-matches-key? (z/down zloc) k context))
+    (and (z/list? (z/up zloc))
+         (form-matches-key? zloc k context)
+         (contains? (set indexes) (dec (index-of zloc))))))
+
+(defn- matching-form? [zloc form-indexes context]
+  (and (or (z/list? zloc) (z/list? (z/up zloc)))
+       (some #(matching-form-index? zloc % context) form-indexes)))
 
 (defn align-form-columns [form aligned-forms alias-map]
   (let [ns-name  (find-namespace (z/of-node form))
         context  {:alias-map alias-map, :ns-name ns-name}
-        aligned? #(aligned-form? % aligned-forms context)]
+        aligned? #(matching-form? % aligned-forms context)]
     (transform form edit-all aligned? align-columns)))
 
 (defn realign-form
@@ -701,6 +712,23 @@
   (-> form z/of-node z/down
       (edit-all non-indenting-whitespace? unalign-from-space z/right*)
       z/root))
+
+(defn- blank-line-in-form? [zloc blank-line-forms context]
+  (and (z/linebreak? zloc)
+       (> (count-newlines zloc) 1)
+       (not (z/map? (z/up zloc)))
+       (not (root? (z/up zloc)))
+       (not (matching-form? (z/up zloc) blank-line-forms context))))
+
+(defn- replace-with-single-newline [zloc]
+  (z/replace zloc (n/newline-node "\n")))
+
+(defn remove-blank-lines-in-forms
+  [form blank-line-forms alias-map]
+  (let [ns-name     (find-namespace (z/of-node form))
+        context     {:alias-map alias-map, :ns-name ns-name}
+        blank-line? #(blank-line-in-form? % blank-line-forms context)]
+    (transform form edit-all blank-line? replace-with-single-newline)))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
@@ -747,7 +775,7 @@
 (defn reformat-form
   "Reformats a rewrite-clj form data structure. Accepts a map of
   [formatting options][1]. See also: [[reformat-string]].
-  
+
   [1]: https://github.com/weavejester/cljfmt#formatting-options"
   ([form]
    (reformat-form form {}))
@@ -755,6 +783,8 @@
    (let [opts      (merge default-options options)
          indents   (merge (:indents opts) (:extra-indents opts))
          aligned   (merge (:aligned-forms opts) (:extra-aligned-forms opts))
+         blank     (merge (:blank-line-forms opts)
+                          (:extra-blank-line-forms opts))
          alias-map #?(:clj  (merge (alias-map-for-form form)
                                    (stringify-map (:alias-map opts)))
                       :cljs (stringify-map (:alias-map opts)))]
@@ -778,7 +808,9 @@
          (cond-> (:align-form-columns? opts)
            (align-form-columns aligned alias-map))
          (cond-> (:remove-trailing-whitespace? opts)
-           remove-trailing-whitespace)))))
+           remove-trailing-whitespace)
+         (cond-> (:remove-blank-lines-in-forms? opts)
+           (remove-blank-lines-in-forms blank alias-map))))))
 
 (defn reformat-string
   "Reformat a string. Accepts a map of [formatting options][1].
