@@ -617,21 +617,24 @@
       (pos? delta)  (z/insert-space-left zloc delta)
       :else         zloc)))
 
-(defn- skip-to-next-line-in-form [zloc]
-  (z/right (z/skip z/right* (complement line-break?) (z/right* zloc))))
+(defn- nil-if-end [zloc]
+  (when (and zloc (not (z/end? zloc))) zloc))
+
+(defn- skip-to-next-line [zloc]
+  (->> zloc (z/skip z/next* (complement line-break?)) z/next nil-if-end))
+
+(defn- pad-inner-node [zloc padding]
+  (if-some [zloc (z/down zloc)]
+    (loop [zloc zloc]
+      (if-some [zloc (skip-to-next-line zloc)]
+        (recur (update-space-left zloc padding))
+        zloc))
+    zloc))
 
 (defn- pad-node [zloc start-position]
   (let [padding (- start-position (margin zloc))
         zloc    (update-space-left zloc padding)]
-    (if-some [zloc (z/down zloc)]
-      (loop [zloc zloc]
-        (if-some [zloc (skip-to-next-line-in-form zloc)]
-          (let [zloc (update-space-left zloc padding)]
-            (if-some [zloc (z/right* zloc)]
-              (recur zloc)
-              (z/up zloc)))
-          (z/up zloc)))
-      zloc)))
+    (z/subedit-> zloc (pad-inner-node padding))))
 
 (defn- edit-column [zloc column f]
   (loop [zloc zloc, col 0]

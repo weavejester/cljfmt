@@ -2173,6 +2173,16 @@
           "         :b 2} [x"
           "                y]"
           "        :d     [z]})"]
+         {:align-map-columns? true}))
+    (is (reformats-to?
+         ["{:x (let [x 1"
+          "          y 2]"
+          "      (+ x y))"
+          " :longer 3}"]
+         ["{:x      (let [x 1"
+          "               y 2]"
+          "           (+ x y))"
+          " :longer 3}"]
          {:align-map-columns? true})))
   (testing "comments"
     (is (reformats-to?
