@@ -17,6 +17,12 @@
     :id :quiet?]
    ["-v" "--verbose"
     :id :verbose?]
+   [nil "--[no-]align-binding-columns"
+    :default (:align-binding-columns? defaults)
+    :id :align-binding-columns?]
+   [nil "--[no-]align-map-columns"
+    :default (:align-map-columns? defaults)
+    :id :align-map-columns?]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
