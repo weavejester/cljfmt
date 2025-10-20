@@ -366,6 +366,7 @@
    :split-keypairs-over-multiple-lines?   false
    :sort-ns-references?                   false
    :function-arguments-indentation        :community
+   :align-binding-columns?                false
    :align-map-columns?                    false
    :binding-forms                         default-binding-forms
    :extra-binding-forms                   {}
