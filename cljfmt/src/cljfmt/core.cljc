@@ -145,7 +145,7 @@
   (transform form edit-all consecutive-blank-line? replace-consecutive-blank-lines))
 
 (defn- indentation? [zloc]
-  (and (line-break? (z/prev* zloc)) (space? zloc)))
+  (and (line-break? (z/left* zloc)) (space? zloc)))
 
 (defn- comment-next? [zloc]
   (-> zloc z/next* skip-whitespace comment?))

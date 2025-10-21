@@ -512,7 +512,14 @@
           "    )"
           "  ;; test2"
           "  )"])
-        "indentation should not be lost after comment line"))
+        "indentation should not be lost after comment line")
+    (is (reformats-to?
+         ["{:keys [aa"
+          "        ;; bb"
+          "        ] :as context}"]
+         ["{:keys [aa"
+          "        ;; bb"
+          "        ] :as context}"])))
 
   (testing "shebang comment"
     (is (reformats-to?
