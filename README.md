@@ -248,8 +248,8 @@ In order to load the standard configuration file from Leiningen, add the
   line up in columns. Defaults to false. **Experimental.**
 
 * `:extra-aligned-forms` -
-  the same as `:binding-forms`, except that this will **append** to the
-  default binding forms. **Experimental.**
+  the same as `:aligned-forms`, except that this will **append** to the
+  default aligned forms. **Experimental.**
 
 * `:extra-indents` -
   the same as `:indents`, except that this will **append** to the
