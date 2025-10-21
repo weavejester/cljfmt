@@ -2204,14 +2204,14 @@
           " :longer 2}"]
          {:align-map-columns? true}))))
 
-(deftest test-align-binding-columns
+(deftest test-align-form-columns
   (testing "basic alignment"
     (is (reformats-to?
          ["(let [x 1]"
           "  x)"]
          ["(let [x 1]"
           "  x)"]
-         {:align-binding-columns? true}))
+         {:align-form-columns? true}))
     (is (reformats-to?
          ["(let [longer 1"
           "      x 2]"
@@ -2219,7 +2219,7 @@
          ["(let [longer 1"
           "      x      2]"
           "  (+ x longer))"]
-         {:align-binding-columns? true}))
+         {:align-form-columns? true}))
     (is (reformats-to?
          ["(def foo [aaa bb"
           "          c d]"
@@ -2231,7 +2231,7 @@
           "  (let [longer 1"
           "        x      2]"
           "    (+ x longer)))"]
-         {:align-binding-columns? true}))
+         {:align-form-columns? true}))
     (is (reformats-to?
          ["(for [x [0 1 2 3 4 5]"
           "      :let [y (* x 3)]"
@@ -2241,7 +2241,7 @@
           "      :let  [y (* x 3)]"
           "      :when (even? y)]"
           "  y)"]
-         {:align-binding-columns? true})))
+         {:align-form-columns? true})))
   (testing "alignment with maps"
     (is (reformats-to?
          ["(let [longer {:x 1"
@@ -2252,8 +2252,8 @@
           "              :wider 2}"
           "      y      3]"
           "  (+ x longer))"]
-         {:align-binding-columns? true
-          :align-map-columns?     true}))
+         {:align-form-columns? true
+          :align-map-columns?  true}))
     (is (reformats-to?
          ["{:x (let [x 1"
           "          wider 2]"
@@ -2263,8 +2263,8 @@
           "               wider 2]"
           "           (+ x 1))"
           " :longer 3}"]
-         {:align-binding-columns? true
-          :align-map-columns?     true})))
+         {:align-form-columns? true
+          :align-map-columns?  true})))
   (testing "nested alignment"
     (is (reformats-to?
          ["(let [longer (let [x 1"
@@ -2277,4 +2277,14 @@
           "               (+ x yyy))"
           "      y      3]"
           "  (+ x longer))"]
-         {:align-binding-columns? true}))))
+         {:align-form-columns? true})))
+  (testing "custom alignment"
+    (is (reformats-to?
+         ["(foobar"
+          " #{:x :a"
+          "   :yyy :b})"]
+         ["(foobar"
+          " #{:x   :a"
+          "   :yyy :b})"]
+         {:align-form-columns? true
+          :aligned-forms {'foobar #{0}}}))))
