@@ -1,3 +1,9 @@
+## 0.15.0 (2025-10-21)
+
+- Breaking changes:
+  - Changed `:align-binding-columns?` to `:align-form-columns?`
+  - Changed `:binding-forms` to `:aligned-forms`
+
 ## 0.14.1 (2025-10-20)
 
 - Added `:align-binding-columns?` option (#373)

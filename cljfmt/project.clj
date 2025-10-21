@@ -1,4 +1,4 @@
-(defproject dev.weavejester/cljfmt "0.14.1"
+(defproject dev.weavejester/cljfmt "0.15.0"
   :description "A library for formatting Clojure code"
   :url "https://github.com/weavejester/cljfmt"
   :scm {:dir ".."}
