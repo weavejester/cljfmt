@@ -24,7 +24,7 @@ jobs:
 
       - name: Execute tests
         working-directory: ./cljfmt
-        run: lein test
+        run: lein test-all
 
       - name: Execute babashka tests
         run: bb test

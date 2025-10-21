@@ -11,7 +11,6 @@
                  [rewrite-clj "1.2.50"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
-  :hooks [leiningen.cljsbuild]
   :cljsbuild {:builds
               {"dev" {:source-paths ["src" "test"]
                       :compiler {:main cljfmt.test-runner
@@ -32,9 +31,11 @@
           "-H:Log=registerResource:"
           "--no-fallback"
           "-J-Xmx3g"]}
+  :aliases {"test-all" ["with-profile" "+cljs" "test"]}
   :profiles
   {:uberjar {:main cljfmt.main
              :aot :all}
+   :cljs {:hooks [leiningen.cljsbuild]}
    :native-image {:aot :all
                   :main cljfmt.main
                   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
