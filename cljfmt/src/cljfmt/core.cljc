@@ -706,7 +706,7 @@
          (cond-> (:align-form-columns? opts)
            (align-form-columns (merge (:aligned-forms opts)
                                       (:extra-aligned-forms opts))
-                                  (:alias-map opts)))
+                               (:alias-map opts)))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)))))
 
