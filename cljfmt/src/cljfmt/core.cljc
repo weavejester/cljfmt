@@ -55,12 +55,17 @@
   (and (deref? zloc)
        (unquote? (z/up* zloc))))
 
+(defn- comment? [zloc]
+  (some-> zloc z/node n/comment?))
+
 (defn- surrounding-whitespace? [zloc]
   (and (not (top? zloc))
        (clojure-whitespace? zloc)
        (or (and (nil? (z/left* zloc))
                 ;; don't convert ~ @ to ~@
-                (not (unquote-deref? (z/right* zloc))))
+                (not (unquote-deref? (z/right* zloc)))
+                ;; ignore space before comments
+                (not (comment? (z/right* zloc))))
            (nil? (z/skip z/right* clojure-whitespace? zloc)))))
 
 (defn remove-surrounding-whitespace [form]
@@ -86,9 +91,6 @@
 
 (defn- space? [zloc]
   (= (z/tag zloc) :whitespace))
-
-(defn- comment? [zloc]
-  (some-> zloc z/node n/comment?))
 
 (defn- line-comment? [zloc]
   (and (comment? zloc) (re-matches #"(?s);;([^;].*)?" (z/string zloc))))

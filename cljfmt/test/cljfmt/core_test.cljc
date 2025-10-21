@@ -941,7 +941,15 @@
           "))"]
          ["(let [x 3"
           "      y 4]"
-          "  (+ (* x x) (* y y)))"]))))
+          "  (+ (* x x) (* y y)))"])))
+
+  (testing "spacing before comments left alone"
+    (is (reformats-to?
+         ["[  ; comment"
+          "1 2 3"
+          "]"]
+         ["[  ; comment"
+          " 1 2 3]"]))))
 
 (deftest test-missing-whitespace
   (testing "unglue inner"
