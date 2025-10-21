@@ -1,3 +1,7 @@
+## 0.15.1 (2025-10-21)
+
+- Fixed accidental AOT compilation of jar package
+
 ## 0.15.0 (2025-10-21)
 
 - Breaking changes:
