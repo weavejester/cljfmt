@@ -1,3 +1,9 @@
+## 0.15.2 (2025-10-22)
+
+- Added `realign-form` function to `cljfmt/core`
+- Fixed unindenting of nodes after empty forms (#245)
+- Fixed removing spacing before comments (#242)
+
 ## 0.15.1 (2025-10-21)
 
 - Fixed accidental AOT compilation of jar package
