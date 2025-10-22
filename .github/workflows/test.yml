@@ -34,7 +34,7 @@ jobs:
 
       - name: Setup linter dependencies
         run: |
-          mkdir .clj-kondo
+          mkdir -p .clj-kondo
           clj-kondo --lint $(clojure -Spath) --copy-configs --skip-lint
 
       - name: Lint sourcecode
