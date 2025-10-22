@@ -681,37 +681,6 @@
         aligned? #(aligned-form? % aligned-forms context)]
     (transform form edit-all aligned? align-columns)))
 
-(defn reformat-form
-  ([form]
-   (reformat-form form {}))
-  ([form opts]
-   (let [opts (merge default-options opts)]
-     (-> form
-         (cond-> (:sort-ns-references? opts)
-           sort-ns-references)
-         (cond-> (:split-keypairs-over-multiple-lines? opts)
-           split-keypairs-over-multiple-lines)
-         (cond-> (:remove-consecutive-blank-lines? opts)
-           remove-consecutive-blank-lines)
-         (cond-> (:remove-surrounding-whitespace? opts)
-           remove-surrounding-whitespace)
-         (cond-> (:insert-missing-whitespace? opts)
-           insert-missing-whitespace)
-         (cond-> (:remove-multiple-non-indenting-spaces? opts)
-           remove-multiple-non-indenting-spaces)
-         (cond-> (:indentation? opts)
-           (reindent (merge (:indents opts) (:extra-indents opts))
-                     (:alias-map opts)
-                     opts))
-         (cond-> (:align-map-columns? opts)
-           align-map-columns)
-         (cond-> (:align-form-columns? opts)
-           (align-form-columns (merge (:aligned-forms opts)
-                                      (:extra-aligned-forms opts))
-                               (:alias-map opts)))
-         (cond-> (:remove-trailing-whitespace? opts)
-           remove-trailing-whitespace)))))
-
 #?(:clj
    (defn- ns-require-form? [zloc]
      (and (some-> zloc top-level-form ns-form?)
@@ -754,18 +723,45 @@
 (defn- stringify-map [m]
   (into {} (map (fn [[k v]] [(str k) (str v)])) m))
 
+(defn reformat-form
+  ([form]
+   (reformat-form form {}))
+  ([form options]
+   (let [opts      (merge default-options options)
+         indents   (merge (:indents opts) (:extra-indents opts))
+         aligned   (merge (:aligned-forms opts) (:extra-aligned-forms opts))
+         alias-map #?(:clj  (merge (alias-map-for-form form)
+                                   (stringify-map (:alias-map opts)))
+                      :cljs (stringify-map (:alias-map opts)))]
+     (-> form
+         (cond-> (:sort-ns-references? opts)
+           sort-ns-references)
+         (cond-> (:split-keypairs-over-multiple-lines? opts)
+           split-keypairs-over-multiple-lines)
+         (cond-> (:remove-consecutive-blank-lines? opts)
+           remove-consecutive-blank-lines)
+         (cond-> (:remove-surrounding-whitespace? opts)
+           remove-surrounding-whitespace)
+         (cond-> (:insert-missing-whitespace? opts)
+           insert-missing-whitespace)
+         (cond-> (:remove-multiple-non-indenting-spaces? opts)
+           remove-multiple-non-indenting-spaces)
+         (cond-> (:indentation? opts)
+           (reindent indents alias-map opts))
+         (cond-> (:align-map-columns? opts)
+           align-map-columns)
+         (cond-> (:align-form-columns? opts)
+           (align-form-columns aligned alias-map))
+         (cond-> (:remove-trailing-whitespace? opts)
+           remove-trailing-whitespace)))))
+
 (defn reformat-string
   ([form-string]
    (reformat-string form-string {}))
   ([form-string options]
-   (let [parsed-form (p/parse-string-all form-string)
-         alias-map   #?(:clj  (merge (alias-map-for-form parsed-form)
-                                     (stringify-map (:alias-map options)))
-                        :cljs (stringify-map (:alias-map options)))]
-     (-> parsed-form
-         (reformat-form (cond-> options
-                          alias-map (assoc :alias-map alias-map)))
-         (n/string)))))
+   (-> (p/parse-string-all form-string)
+       (reformat-form options)
+       (n/string))))
 
 (def default-line-separator
   #?(:clj (System/lineSeparator) :cljs \newline))
