@@ -9,4 +9,5 @@ pom.xml.asc
 .nrepl-port
 reports
 .cpcache
-.clj-kondo
+**/.clj-kondo/**
+!**/.clj-kondo/config.edn
