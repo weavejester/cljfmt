@@ -4,8 +4,11 @@
                  :cljs (cljs.test :refer-macros)) [deftest testing is are]]
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
-                                 replace-newlines wrap-normalize-newlines]]
-            [cljfmt.test-util.common])
+                                 replace-newlines wrap-normalize-newlines
+                                 realign-form]]
+            [cljfmt.test-util.common]
+            [rewrite-clj.node :as n]
+            [rewrite-clj.parser :as p])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
@@ -2303,3 +2306,36 @@
           "   :yyy :b})"]
          {:align-form-columns? true
           :aligned-forms {'foobar #{0}}}))))
+
+(deftest test-realign-form
+  (is (= "
+{:x   1
+ :yyy 2}"
+         (-> "
+{:x   1
+ :yyy 2}"
+             p/parse-string-all
+             realign-form
+             n/string)))
+  (is (= "
+{:x   [1
+       2]
+ :yyy 3}"
+         (-> "
+{:x [1
+     2]
+ :yyy 3}"
+             p/parse-string-all
+             realign-form
+             n/string)))
+  (is (= "
+{:x   {:aaa 1
+       :b 2}
+ :yyy 3}"
+         (-> "
+{:x {:aaa 1
+     :b 2}
+ :yyy 3}"
+             p/parse-string-all
+             realign-form
+             n/string))))

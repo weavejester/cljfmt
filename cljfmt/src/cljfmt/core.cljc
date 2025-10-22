@@ -681,6 +681,11 @@
         aligned? #(aligned-form? % aligned-forms context)]
     (transform form edit-all aligned? align-columns)))
 
+(defn realign-form
+  "Realign a rewrite-clj form such that the columns line up."
+  [form]
+  (-> form z/of-node align-columns z/root))
+
 #?(:clj
    (defn- ns-require-form? [zloc]
      (and (some-> zloc top-level-form ns-form?)
