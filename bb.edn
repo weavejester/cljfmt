@@ -4,7 +4,7 @@
  {fmt  {:doc "Run cljfmt"
         :task (shell "cljfmt check")}
   lint {:doc "Run clj-kondo"
-        :task (shell "clj-kondo --lint cljfmt/src lein-cljfmt/src")}
+        :task (shell "clj-kondo --lint cljfmt/src cljfmt/test lein-cljfmt/src")}
   smoke {:doc "Run smoke tests"
          :task smoke-test/-main}
   test {:doc "Run babashka tests"
