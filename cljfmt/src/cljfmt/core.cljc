@@ -724,6 +724,10 @@
   (into {} (map (fn [[k v]] [(str k) (str v)])) m))
 
 (defn reformat-form
+  "Reformats a rewrite-clj form data structure. Accepts a map of
+  [formatting options][1]. See also: [[reformat-string]].
+  
+  [1]: https://github.com/weavejester/cljfmt#formatting-options"
   ([form]
    (reformat-form form {}))
   ([form options]
@@ -756,6 +760,9 @@
            remove-trailing-whitespace)))))
 
 (defn reformat-string
+  "Reformat a string. Accepts a map of [formatting options][1].
+
+  [1]: https://github.com/weavejester/cljfmt#formatting-options"
   ([form-string]
    (reformat-string form-string {}))
   ([form-string options]
