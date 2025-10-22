@@ -1,5 +1,5 @@
 (ns cljfmt.test-runner
-  (:require [cljfmt.core-test :as ct]
+  (:require [cljfmt.core-test]
             [cljs.nodejs :as nodejs]
             [cljs.test :refer-macros [run-tests]]))
 

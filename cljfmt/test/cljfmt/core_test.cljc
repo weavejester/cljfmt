@@ -5,7 +5,7 @@
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines]]
-            [cljfmt.test-util.common :as common])
+            [cljfmt.test-util.common])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
 
 (deftest test-indent
