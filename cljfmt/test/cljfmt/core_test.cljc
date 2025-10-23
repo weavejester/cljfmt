@@ -177,6 +177,13 @@
           "  Closeable"
           "  (close [_]"
           "    (prn x)))"]))
+    (is (reformats-to?
+         ["(defprotocol Testing"
+          "(^:example"
+          "test-method [x]))"]
+         ["(defprotocol Testing"
+          "  (^:example"
+          "   test-method [x]))"]))
     (testing "nested rules like [:inner 1] (#349)"
       (is (reformats-to?
            ["(ns my.namespace)"

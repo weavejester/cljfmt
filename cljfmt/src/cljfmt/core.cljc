@@ -326,7 +326,8 @@
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
-    (when (and (form-matches-key? top key context)
+    (when (and (z/left zloc)
+               (form-matches-key? top key context)
                (or (nil? idx) (index-matches-top-argument? zloc depth idx)))
       (let [zup (z/up zloc)]
         (+ (margin zup) (indent-width zup))))))
