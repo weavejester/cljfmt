@@ -5,7 +5,7 @@
             [cljfmt.core :refer [reformat-string default-line-separator
                                  normalize-newlines find-line-separator
                                  replace-newlines wrap-normalize-newlines
-                                 realign-form]]
+                                 realign-form unalign-form]]
             [cljfmt.test-util.common]
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p])
@@ -2312,7 +2312,7 @@
 {:x   1
  :yyy 2}"
          (-> "
-{:x   1
+{:x 1
  :yyy 2}"
              p/parse-string-all
              realign-form
@@ -2338,4 +2338,55 @@
  :yyy 3}"
              p/parse-string-all
              realign-form
+             n/string))))
+
+(deftest test-unalign-form
+  (is (= "
+{:x 1
+ :yyy 2}"
+         (-> "
+{:x   1
+ :yyy 2}"
+             p/parse-string-all
+             unalign-form
+             n/string)))
+  (is (= "
+{:xxx 1
+ :y 2}"
+         (-> "
+{:xxx 1
+ :y   2}"
+             p/parse-string-all
+             unalign-form
+             n/string)))
+  (is (= "
+{:xxx 1, :a 3
+ :y 2, :bbb 4}"
+         (-> "
+{:xxx 1, :a   3
+ :y   2, :bbb 4}"
+             p/parse-string-all
+             unalign-form
+             n/string)))
+  (is (= "
+{:x [1
+     2]
+ :yyy 3}"
+         (-> "
+{:x   [1
+       2]
+ :yyy 3}"
+             p/parse-string-all
+             unalign-form
+             n/string)))
+  (is (= "
+{:x {:aaa 1
+     :b 2}
+ :yyy 3}"
+         (-> "
+{:x   {:aaa 1
+       :b 2}
+ :yyy 3}"
+             p/parse-string-all
+             unalign-form
              n/string))))

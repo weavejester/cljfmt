@@ -24,11 +24,14 @@
                 (z/next* zloc))
          matches))))
 
-(defn- edit-all [zloc p? f]
-  (loop [zloc (if (p? zloc) (f zloc) zloc)]
-    (if-let [zloc (z/find-next zloc z/next* p?)]
-      (recur (f zloc))
-      zloc)))
+(defn- edit-all
+  ([zloc p? f]
+   (edit-all zloc p? f z/next*))
+  ([zloc p? f nextf]
+   (loop [zloc (if (p? zloc) (f zloc) zloc)]
+     (if-let [zloc (z/find-next zloc nextf p?)]
+       (recur (f zloc))
+       zloc))))
 
 (defn- transform [form zf & args]
   (z/root (apply zf (z/of-node form) args)))
@@ -617,11 +620,14 @@
                       max-pos))
                   0))
 
+(defn- node-str-length [zloc]
+  (-> zloc z/node n/string count))
+
 (defn- update-space-left [zloc delta]
   (let [left (z/left* zloc)]
     (cond
-      (space? left) (let [n (-> left z/node n/string count)]
-                      (z/right* (z/replace* left (n/spaces (+ n delta)))))
+      (space? left) (let [n (max 0 (+ delta (node-str-length left)))]
+                      (z/right* (z/replace* left (n/spaces n))))
       (pos? delta)  (z/insert-space-left zloc delta)
       :else         zloc)))
 
@@ -631,7 +637,7 @@
 (defn- skip-to-next-line [zloc]
   (->> zloc (z/skip z/next* (complement line-break?)) z/next nil-if-end))
 
-(defn- pad-inner-node [zloc padding]
+(defn- pad-inside-node [zloc padding]
   (if-some [zloc (z/down zloc)]
     (loop [zloc zloc]
       (if-some [zloc (skip-to-next-line zloc)]
@@ -639,10 +645,12 @@
         zloc))
     zloc))
 
-(defn- pad-node [zloc start-position]
-  (let [padding (- start-position (margin zloc))
-        zloc    (update-space-left zloc padding)]
-    (z/subedit-> zloc (pad-inner-node padding))))
+(defn- pad-node [zloc padding]
+  (-> (update-space-left zloc padding)
+      (z/subedit-> (pad-inside-node padding))))
+
+(defn- pad-to-position [zloc start-position]
+  (pad-node zloc (- start-position (margin zloc))))
 
 (defn- edit-column [zloc column f]
   (loop [zloc zloc, col 0]
@@ -659,7 +667,7 @@
 (defn- align-one-column [zloc col]
   (if-some [zloc (z/down zloc)]
     (let [start-position (inc (max-column-end-position zloc (dec col)))]
-      (z/up (edit-column zloc col #(pad-node % start-position))))
+      (z/up (edit-column zloc col #(pad-to-position % start-position))))
     zloc))
 
 (defn- align-columns [zloc]
@@ -682,9 +690,19 @@
     (transform form edit-all aligned? align-columns)))
 
 (defn realign-form
-  "Realign a rewrite-clj form such that the columns line up."
+  "Realign a rewrite-clj form such that the columns line up into columns."
   [form]
   (-> form z/of-node align-columns z/root))
+
+(defn- unalign-from-space [zloc]
+  (pad-node (z/right* zloc) (- 1 (node-str-length zloc))))
+
+(defn unalign-form
+  "Remove any consecutive non-indenting whitespace within the form."
+  [form]
+  (-> form z/of-node z/down
+      (edit-all non-indenting-whitespace? unalign-from-space z/right*)
+      z/root))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
