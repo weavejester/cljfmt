@@ -1,3 +1,9 @@
+## 0.15.3 (2025-10-24)
+
+- Added `unalign-form` function to `cljfmt.core`
+- Fixed incorrect :inner indenting of first element (#342)
+- Fixed regex indents matching namespace (#267)
+
 ## 0.15.2 (2025-10-22)
 
 - Added `realign-form` function to `cljfmt.core`
