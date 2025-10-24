@@ -1,6 +1,6 @@
 ## 0.15.2 (2025-10-22)
 
-- Added `realign-form` function to `cljfmt/core`
+- Added `realign-form` function to `cljfmt.core`
 - Fixed unindenting of nodes after empty forms (#245)
 - Fixed removing spacing before comments (#242)
 
