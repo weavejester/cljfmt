@@ -279,7 +279,21 @@
           "  (close [_]"
           "    (prn x)))"])
         "namespaced defrecord")
-
+    (is (reformats-to?
+         ["(ns foo)"
+          "(-> 1"
+          "prn)"]
+         ["(ns foo)"
+          "(-> 1"
+          "    prn)"]
+         {:indents {#"^\w" [[:inner 0]]}}))
+    (is (reformats-to?
+         ["(ns def)"
+          "(-> 1"
+          "prn)"]
+         ["(ns def)"
+          "(-> 1"
+          "    prn)"]))
     (is (reformats-to?
          ["(ns example"
           "(:require [thing.core :as t]))"

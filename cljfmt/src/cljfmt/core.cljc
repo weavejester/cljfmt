@@ -313,16 +313,13 @@
         (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
     possible-sym))
 
-(defn- symbol-matches-key? [sym key]
-  (when (symbol? sym)
-    (cond
-      (symbol? key)  (= key sym)
-      (pattern? key) (re-find key (str sym)))))
-
 (defn form-matches-key? [zloc key context]
-  (let [possible-sym (form-symbol zloc)]
-    (or (symbol-matches-key? (fully-qualified-symbol possible-sym context) key)
-        (symbol-matches-key? (remove-namespace possible-sym) key))))
+  (when-some [possible-sym (form-symbol zloc)]
+    (let [bare-sym (remove-namespace possible-sym)]
+      (if (pattern? key)
+        (re-find key (str bare-sym))
+        (or (= key (fully-qualified-symbol possible-sym context))
+            (= key bare-sym))))))
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
