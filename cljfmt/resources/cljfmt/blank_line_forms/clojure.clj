@@ -1,0 +1,11 @@
+{binding         #{0}
+ comment         :all
+ cond            :all
+ doseq           #{0}
+ for             #{0}
+ go-loop         #{0}
+ let             #{0}
+ loop            #{0}
+ with-local-vars #{0}
+ with-open       #{0}
+ with-redefs     #{0}}
