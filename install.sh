@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION=0.15.3
+VERSION=0.15.4
 
 case $(uname -s) in
     Linux*)

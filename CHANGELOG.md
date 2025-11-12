@@ -1,3 +1,8 @@
+## 0.15.4 (2025-11-12)
+
+- Added vector keys for indent rules (#377)
+- Fixed `:remove-multiple-non-indenting-spaces?` affecting comments (#376)
+
 ## 0.15.3 (2025-10-24)
 
 - Added `unalign-form` function to `cljfmt.core`
