@@ -882,7 +882,26 @@
           " @foo"]))
     (is (reformats-to?
          ["~#_a@foo"]
-         ["~#_a @foo"]))))
+         ["~#_a @foo"])))
+
+  (testing "indents with vector keys"
+    (is (reformats-to? ["(example.core/foo bar" "baz)"]
+                       ["(example.core/foo bar" "  baz)"]
+                       {:indents '{[example.core #".*"] [[:inner 0]]}}))
+    (is (reformats-to? ["(example.core/foo bar" "baz)"]
+                       ["(example.core/foo bar" "  baz)"]
+                       {:indents '{[example.core foo] [[:inner 0]]}}))
+    (is (reformats-to? ["(example.core/foo bar" "baz)"]
+                       ["(example.core/foo bar" "  baz)"]
+                       {:indents '{[#".*" foo] [[:inner 0]]}}))
+    (is (reformats-to? ["(example.core/foo bar" "baz)"]
+                       ["(example.core/foo bar"
+                        "                  baz)"]
+                       {:indents '{[example.test foo] [[:inner 0]]}}))
+    (is (reformats-to? ["(example.core/foo bar" "baz)"]
+                       ["(example.core/foo bar"
+                        "                  baz)"]
+                       {:indents '{[example.core bar] [[:inner 0]]}}))))
 
 (deftest test-remove-multiple-non-indenting-spaces
   (let [opts {:remove-multiple-non-indenting-spaces? true}]

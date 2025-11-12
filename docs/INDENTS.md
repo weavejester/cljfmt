@@ -18,7 +18,7 @@ For example:
 {:extra-indents {when [[:block 1]]}}
 ```
 
-The key can be either a symbol or a regular expression. For example:
+The key can be a symbol or a regular expression. For example:
 
 ```clojure
 {:extra-indents {#"^with-" [[:inner 0]]}}
@@ -54,6 +54,21 @@ all indentation rules with a constant 2-space indentation:
 ```clojure
 {:indents {#".*" [[:inner 0]]}}
 ```
+
+The key can also be a vector of two elements: the first matching the
+symbol's namespace, and the second matching the symbol's name. For
+example:
+
+```clojure
+{:extra-indents {[com.example #"^foo"] [[:inner 0]]}}
+```
+
+This will match any symbol with a namespace of `com.example` and a name
+beginning with `foo`. So `com.example/foobar` will be matched, but
+`com.other/foobar` or `com.example/barfoo` will not.
+
+You can use symbols or regular expressions in both elements of the
+vector.
 
 [clojure style guide]: https://github.com/bbatsov/clojure-style-guide
 

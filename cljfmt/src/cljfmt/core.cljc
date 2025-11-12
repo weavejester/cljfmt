@@ -248,9 +248,6 @@
     :list indent-size
     :fn   (inc indent-size)))
 
-(defn- remove-namespace [x]
-  (if (symbol? x) (symbol (name x)) x))
-
 (defn pattern? [v]
   (instance? #?(:clj Pattern :cljs js/RegExp) v))
 
@@ -291,9 +288,10 @@
           (z/sexpr value-loc))))))
 
 (defn- form-symbol [zloc]
-  (let [zloc (z/leftmost zloc)]
-    (or (token-value zloc)
-        (first-symbol-in-reader-conditional zloc))))
+  (let [zloc (z/leftmost zloc)
+        sym  (or (token-value zloc)
+                 (first-symbol-in-reader-conditional zloc))]
+    (when (symbol? sym) sym)))
 
 (defn- index-matches-top-argument? [zloc depth idx]
   (and (> depth 0)
@@ -303,23 +301,30 @@
   (when-let [ns-str (namespace possible-sym)]
     (symbol (get alias-map ns-str ns-str) (name possible-sym))))
 
-(defn- qualify-symbol-by-ns-name [possible-sym ns-name]
-  (when ns-name
-    (symbol (name ns-name) (name possible-sym))))
+(defn- qualify-symbol-by-ns-name [sym ns-name]
+  (when ns-name (symbol (name ns-name) (name sym))))
 
-(defn- fully-qualified-symbol [possible-sym context]
-  (if (symbol? possible-sym)
-    (or (qualify-symbol-by-alias-map possible-sym (:alias-map context))
-        (qualify-symbol-by-ns-name possible-sym (:ns-name context)))
-    possible-sym))
+(defn- fully-qualified-symbol [sym context]
+  (or (qualify-symbol-by-alias-map sym (:alias-map context))
+      (qualify-symbol-by-ns-name sym (:ns-name context))))
 
-(defn form-matches-key? [zloc key context]
-  (when-some [possible-sym (form-symbol zloc)]
-    (let [bare-sym (remove-namespace possible-sym)]
-      (if (pattern? key)
-        (re-find key (str bare-sym))
-        (or (= key (fully-qualified-symbol possible-sym context))
-            (= key bare-sym))))))
+(defn- string-matches-key-part? [s key-part]
+  (if (pattern? key-part) (re-find key-part s) (= s (name key-part))))
+
+(defn- parts-match-vector-key? [sym-ns sym-name [ns-key name-key]]
+  (and (string-matches-key-part? sym-ns ns-key)
+       (string-matches-key-part? sym-name name-key)))
+
+(defn- form-matches-key? [zloc key context]
+  (when-some [sym (form-symbol zloc)]
+    (let [full-sym (fully-qualified-symbol sym context)
+          sym-name (name sym)
+          sym-ns   (or (namespace sym) (some-> full-sym namespace))]
+      (cond
+        (vector? key)           (parts-match-vector-key? sym-ns sym-name key)
+        (pattern? key)          (re-find key sym-name)
+        (qualified-symbol? key) (= key full-sym)
+        (symbol? key)           (= (name key) sym-name)))))
 
 (defn- inner-indent [zloc key depth idx context]
   (let [top (nth (iterate z/up zloc) depth)]
