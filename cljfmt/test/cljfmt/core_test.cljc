@@ -921,7 +921,12 @@
                         "             ;; foo"
                         "   (bar? a b) :baz)"]
                        (assoc opts :indentation? false))
-        "custom indentation is respected")))
+        "custom indentation is respected")
+    (is (reformats-to? ["(def a 1)   ;; comment"
+                        "(def bbb 2) ;; comment"]
+                       ["(def a 1)   ;; comment"
+                        "(def bbb 2) ;; comment"]
+                       opts))))
 
 (deftest test-surrounding-whitespace
   (testing "surrounding whitespace removed"

@@ -493,7 +493,9 @@
   (z/replace* zloc (whitespace 1)))
 
 (defn- non-indenting-whitespace? [zloc]
-  (and (space? zloc) (not (indentation? zloc))))
+  (and (space? zloc)
+       (not (indentation? zloc))
+       (not (comment? (z/right* zloc)))))
 
 (defn remove-multiple-non-indenting-spaces [form]
   (transform form edit-all non-indenting-whitespace? replace-with-one-space))
