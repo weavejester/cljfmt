@@ -1,3 +1,7 @@
+## 0.15.5 (2025-11-16)
+
+- Fixed vector keys not working with alias map
+
 ## 0.15.4 (2025-11-12)
 
 - Added vector keys for indent rules (#377)
