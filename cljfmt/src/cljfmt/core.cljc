@@ -319,7 +319,7 @@
   (when-some [sym (form-symbol zloc)]
     (let [full-sym (fully-qualified-symbol sym context)
           sym-name (name sym)
-          sym-ns   (or (namespace sym) (some-> full-sym namespace))]
+          sym-ns   (or (some-> full-sym namespace) (namespace sym))]
       (cond
         (vector? key)           (parts-match-vector-key? sym-ns sym-name key)
         (pattern? key)          (re-find key sym-name)

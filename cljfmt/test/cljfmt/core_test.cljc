@@ -901,7 +901,22 @@
     (is (reformats-to? ["(example.core/foo bar" "baz)"]
                        ["(example.core/foo bar"
                         "                  baz)"]
-                       {:indents '{[example.core bar] [[:inner 0]]}}))))
+                       {:indents '{[example.core bar] [[:inner 0]]}}))
+    (is (reformats-to? ["(ec/foo bar" "baz)"]
+                       ["(ec/foo bar" "  baz)"]
+                       {:indents '{[example.core #".*"] [[:inner 0]]}
+                        :alias-map '{ec example.core}}))
+    #?(:clj
+       (is (reformats-to?
+            ["(ns example.demo"
+             "(:require [example.core :as ec]))"
+             "(ec/foo bar"
+             "baz)"]
+            ["(ns example.demo"
+             "  (:require [example.core :as ec]))"
+             "(ec/foo bar"
+             "  baz)"]
+            {:extra-indents '{[example.core #".*"] [[:inner 0]]}})))))
 
 (deftest test-remove-multiple-non-indenting-spaces
   (let [opts {:remove-multiple-non-indenting-spaces? true}]
