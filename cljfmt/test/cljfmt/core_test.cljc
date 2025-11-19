@@ -1227,6 +1227,125 @@
         ""])
       "blank lines at end of string are not affected by :remove-consecutive-blank-lines?"))
 
+(deftest test-blank-lines-in-forms
+  (is (reformats-to?
+       ["(defn x []"
+        "  (do-something!)"
+        ""
+        "  (do-something-else!)"
+        ""
+        ""
+        "  (do-a-third-thing!))"]
+       ["(defn x []"
+        "  (do-something!)"
+        "  (do-something-else!)"
+        "  (do-a-third-thing!))"]
+       {:remove-blank-lines-in-forms? true}))
+  (is (reformats-to?
+       ["(let [x 1"
+        "      y 2]"
+        "  (do-something!)"
+        ""
+        "  (do-something-else!))"]
+       ["(let [x 1"
+        "      y 2]"
+        "  (do-something!)"
+        "  (do-something-else!))"]
+       {:remove-blank-lines-in-forms? true}))
+  (testing "ignore pairwise forms"
+    (testing "known clojure.core forms"
+      (testing "cond"
+        (let [form ["(cond"
+                    "  (map? x)"
+                    "  :map"
+                    ""
+                    "  (sequential? x)"
+                    "  :seq)"]]
+          (is (reformats-to? form form {:remove-blank-lines-in-forms? true})))))
+    (testing "custom forms in :extra-blank-line-forms"
+      (testing "from another namespace"
+        (let [form ["(ns x"
+                    "  (:require [better-cond.core :as b]))"
+                    ""
+                    "(b/cond*"
+                    "  (map? x)"
+                    "  :map"
+                    ""
+                    "  (sequential? x)"
+                    "  :seq)"]]
+          (is (reformats-to?
+               form
+               form
+               {:remove-blank-lines-in-forms? true
+                :extra-indents '{better-cond.core/cond* [[:block 0]]}
+                :extra-blank-line-forms '{better-cond.core/cond* :all}
+                #?@(:cljs [:alias-map {"b" "better-cond.core"}])}))))
+      (testing "from the current namespace"
+        (let [form ["(ns better-cond.core)"
+                    ""
+                    "(cond*"
+                    "  (map? x)"
+                    "  :map"
+                    ""
+                    "  (sequential? x)"
+                    "  :seq)"]]
+          (is (reformats-to?
+               form
+               form
+               {:remove-blank-lines-in-forms? true
+                :extra-indents '{better-cond.core/cond* [[:block 0]]}
+                :extra-blank-line-forms '{better-cond.core/cond* :all}})))))
+    (testing "handle reader conditionals"
+      (let [form ["(#?(:clj cond :cljs cond)"
+                  "  (map? x)"
+                  "  :map"
+                  ""
+                  "  (sequential? x)"
+                  "  :seq)"]]
+        (is (reformats-to? form form {:remove-blank-lines-in-forms? true}))))
+    (testing (str ":blank-line-forms :all should only exempt the immediate"
+                  " children of the form")
+      (is (reformats-to?
+           ["(cond"
+            "  (= x :a)"
+            "  :a"
+            ""
+            "  (= x :b)"
+            "  (do"
+            "    (do-something!)"
+            ""
+            "    {:x x}))"]
+           ["(cond"
+            "  (= x :a)"
+            "  :a"
+            ""
+            "  (= x :b)"
+            "  (do"
+            "    (do-something!)"
+            "    {:x x}))"]
+           {:remove-blank-lines-in-forms? true}))))
+  (testing "ignore binding forms"
+    (let [form ["(let [a"
+                "      1"
+                ""
+                "      b"
+                "      2]"
+                "  (+ a b))"]]
+      (is (reformats-to? form form {:remove-blank-lines-in-forms? true}))))
+  (testing "ignore top-level newlines"
+    (let [form ["(def x 1)"
+                ""
+                "(def x 2)"]]
+      (is (reformats-to? form form {:remove-blank-lines-in-forms? true}))))
+  (testing "Ignore blank lines in maps"
+    (let [form ["[:a"
+                " {:b"
+                "  :c"
+                ""
+                "  :d"
+                "  :e}]"]]
+      (is (reformats-to? form form {:remove-blank-lines-in-forms? true})))))
+
 (deftest test-trailing-whitespace
   (testing "trailing-whitespace removed"
     (is (reformats-to?
