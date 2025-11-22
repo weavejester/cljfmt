@@ -1,3 +1,8 @@
+## 0.15.6 (2025-11-22)
+
+- Added `:remove-blank-lines-in-forms?` option (#375)
+- Added `:blank-line-forms` and `:extra-blank-line-forms` options
+
 ## 0.15.5 (2025-11-16)
 
 - Fixed vector keys not working with alias map
