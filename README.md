@@ -60,6 +60,16 @@ Linux or MacOS, you can run the following command to install the binary into
 
 You can also run this command to update cljfmt to the latest version.
 
+Alternatively, you can install cljfmt via [Homebrew][]. It's **highly
+recommended** that you use the `weavejester/brew` tap:
+
+```bash
+brew install weavejester/brew/cljfmt
+```
+
+This will be a lot more performant than the Homebrew core `cljfmt`
+package, which is not natively compiled.
+
 If you're using Windows, there's a [zipped up binary][] you can download and
 extract manually.
 
@@ -79,6 +89,7 @@ Use `--help` for a list of all the command-line options.
 
 For persistent configuration, you can use a [configuration file][].
 
+[homebrew]: https://brew.sh/
 [zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.15.6/cljfmt-0.15.6-win-amd64.zip
 [configuration file]: #configuration
 
