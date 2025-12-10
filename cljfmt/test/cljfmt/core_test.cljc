@@ -1039,7 +1039,144 @@
          ["#?(:cljs (bar 1) :clj (foo 2))"]))
     (is (reformats-to?
          ["#?@(:cljs[foo bar] :clj[baz quux])"]
-         ["#?@(:cljs [foo bar] :clj [baz quux])"]))))
+         ["#?@(:cljs [foo bar] :clj [baz quux])"])))
+
+  (testing "uneval on own line"
+    (is (reformats-to?
+         ["#_"
+          "(defn foobar []"
+          "  (do-this)"
+          "  (let [x 1]"
+          "    (with-blah []"
+          "      (stuff))))"]
+         ["#_"
+          "(defn foobar []"
+          "  (do-this)"
+          "  (let [x 1]"
+          "    (with-blah []"
+          "      (stuff))))"]))
+    (is (reformats-to?
+         ["#_"
+          "{:foo :bar}"]
+         ["#_"
+          "{:foo :bar}"]))
+    (is (reformats-to?
+         ["(foo #_"
+          "     bar"
+          "     baz)"]
+         ["(foo #_"
+          "      bar"
+          "      baz)"]))
+    (testing "uneval on same line still gets whitespace"
+      (is (reformats-to?
+           ["(foo #_bar baz)"]
+           ["(foo #_bar baz)"])))
+    (testing "multiple unevals on own lines"
+      (is (reformats-to?
+           ["#_"
+            "(defn foo [])"
+            "#_"
+            "(defn bar [])"]
+           ["#_"
+            "(defn foo [])"
+            "#_"
+            "(defn bar [])"])))
+    (testing "uneval with vector"
+      (is (reformats-to?
+           ["#_"
+            "[1 2 3]"]
+           ["#_"
+            "[1 2 3]"])))
+    (testing "uneval with map"
+      (is (reformats-to?
+           ["#_"
+            "{:a 1"
+            " :b 2}"]
+           ["#_"
+            "{:a 1"
+            " :b 2}"])))
+    (testing "uneval as function argument"
+      (is (reformats-to?
+           ["(foo"
+            " #_"
+            " bar"
+            " baz)"]
+           ["(foo"
+            " #_"
+            " bar"
+            " baz)"]))
+      (testing "with more than one argument"
+        (is (reformats-to?
+             ["(foo"
+              " #_"
+              " x"
+              " y"
+              " z)"]
+             ["(foo"
+              " #_"
+              " x"
+              " y"
+              " z)"]))))
+    (testing "uneval before closing paren"
+      (is (reformats-to?
+           ["(foo bar"
+            " #_"
+            " baz)"]
+           ["(foo bar"
+            "     #_"
+            "     baz)"])))
+    (testing "multiple unevals inline"
+      (is (reformats-to?
+           ["(foo #_ bar #_ baz qux)"]
+           ["(foo #_bar #_baz qux)"])))
+    (testing "uneval with reader conditional"
+      (is (reformats-to?
+           ["#_"
+            "#?(:clj (foo)"
+            "   :cljs (bar))"]
+           ["#_"
+            "#?(:clj (foo)"
+            "   :cljs (bar))"])))
+    (testing "uneval with cursive indentation"
+      (is (reformats-to?
+           ["(foo"
+            " #_"
+            " bar"
+            " baz)"]
+           ["(foo"
+            "  #_"
+            "  bar"
+            "  baz)"]
+           {:function-arguments-indentation :cursive})))
+    (testing "uneval inline with cursive indentation"
+      (is (reformats-to?
+           ["(foo #_"
+            "     bar"
+            "     baz)"]
+           ["(foo #_"
+            "      bar"
+            "      baz)"]
+           {:function-arguments-indentation :cursive})))
+    (testing "uneval with zprint indentation"
+      (is (reformats-to?
+           ["(foo"
+            " #_"
+            " bar"
+            " baz)"]
+           ["(foo"
+            "  #_"
+            "  bar"
+            "  baz)"]
+           {:function-arguments-indentation :zprint})))
+    (testing "uneval inline with zprint indentation"
+      (is (reformats-to?
+           ["(foo #_"
+            "     bar"
+            "     baz)"]
+           ["(foo #_"
+            "      bar"
+            "      baz)"]
+           {:function-arguments-indentation :zprint})))))
 
 (deftest test-consecutive-blank-lines
   (is (reformats-to?

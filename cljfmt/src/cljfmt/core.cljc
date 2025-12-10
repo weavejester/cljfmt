@@ -61,9 +61,16 @@
 (defn- comment? [zloc]
   (some-> zloc z/node n/comment?))
 
+(defn- uneval? [zloc]
+  (= (z/tag zloc) :uneval))
+
 (defn- surrounding-whitespace? [zloc]
   (and (not (top? zloc))
        (clojure-whitespace? zloc)
+       ;; Don't remove linebreak after uneval
+       (not (and (z/linebreak? zloc)
+                 (nil? (z/left* zloc))
+                 (uneval? (z/up* zloc))))
        (or (and (nil? (z/left* zloc))
                 ;; don't convert ~ @ to ~@
                 (not (unquote-deref? (z/right* zloc)))
@@ -87,6 +94,8 @@
   (and (element? zloc)
        (not (reader-macro? (z/up* zloc)))
        (not (namespaced-map? (z/up* zloc)))
+       ;; Don't insert whitespace after uneval if it's followed by a linebreak
+       (not (and (uneval? zloc) (some-> zloc z/right* z/linebreak?)))
        (element? (z/right* zloc))))
 
 (defn insert-missing-whitespace [form]
@@ -209,9 +218,6 @@
 (defn- coll-indent [zloc]
   (-> zloc z/leftmost* margin))
 
-(defn- uneval? [zloc]
-  (= (z/tag zloc) :uneval))
-
 (defn- index-of [zloc]
   (->> (iterate z/left zloc)
        (remove uneval?)
@@ -236,11 +242,36 @@
     :cursive (cursive-two-space-list-indent? zloc)
     :zprint (zprint-two-space-list-indent? zloc)))
 
+(defn- first-form-in-line? [zloc]
+  (and (some? zloc)
+       (if-let [zloc (z/left* zloc)]
+         (if (space? zloc)
+           (recur zloc)
+           (or (z/linebreak? zloc) (comment? zloc)))
+         true)))
+
 (defn- list-indent [zloc context]
-  (if (> (index-of zloc) 1)
-    (-> zloc z/leftmost* z/right margin)
-    (cond-> (coll-indent zloc)
-      (two-space-list-indent? zloc context) inc)))
+  (let [idx (index-of zloc)
+        first-arg (-> zloc
+                      z/leftmost*
+                      z/right)
+        ;; Check if there's an uneval before this element
+        has-uneval-before? (and (= idx 1)
+                                (some-> zloc
+                                        z/left*
+                                        uneval?))]
+    (if (or (> idx 1) has-uneval-before?)
+      ;;  If index > 1, or if at index 1 but there's an uneval before us,
+      ;; align with the first argument position
+      (if (uneval? first-arg)
+        ;; If uneval is first on its own line, its child is already at the
+        ;; correct margin. Otherwise, add space after the #_ token.
+        (if (first-form-in-line? first-arg)
+          (margin first-arg)
+          (inc (margin first-arg)))
+        (margin first-arg))
+      (cond-> (coll-indent zloc)
+        (two-space-list-indent? zloc context) inc))))
 
 (def indent-size 2)
 
@@ -340,14 +371,6 @@
           (z/leftmost zloc)
           (repeat n z/right)))
 
-(defn- first-form-in-line? [zloc]
-  (and (some? zloc)
-       (if-let [zloc (z/left* zloc)]
-         (if (space? zloc)
-           (recur zloc)
-           (or (z/linebreak? zloc) (comment? zloc)))
-         true)))
-
 (defn- block-indent [zloc key idx context]
   (when (form-matches-key? zloc key context)
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
@@ -433,6 +456,11 @@
       (reader-conditional? gp) (coll-indent zloc)
       (#{:list :fn} tag)       (custom-indent zloc indents context)
       (= :meta tag)            (indent-amount (z/up zloc) indents context)
+      ;; For uneval: if it's the first element on the line, don't indent
+      ;; the child form. Otherwise, indent to align after the #_ token.
+      (= :uneval tag)          (if (first-form-in-line? (z/up zloc))
+                                 (margin (z/up zloc))
+                                 (inc (margin (z/up zloc))))
       :else                    (coll-indent zloc))))
 
 (defn- indent-line [zloc indents context]
