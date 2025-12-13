@@ -67,7 +67,10 @@
   (print-file-status context data)
   (update context :results conj data))
 
-(defmethod console :fix/summary [_ context _] context)
+(defmethod console :fix/summary [_ context _]
+  (when (some :exception (:results context))
+    (System/exit 2))
+  context)
 
 (defn- merge-statuses [results {:keys [file diff exception counts]}]
   (let [path (some-> file .getPath)]
