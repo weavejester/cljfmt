@@ -107,8 +107,9 @@
 (defn- skip-whitespace [zloc]
   (z/skip z/next* space? zloc))
 
-(defn- skip-whitespace-and-commas [zloc]
-  (z/skip z/next* #(or (space? %) (comma? %)) zloc))
+(defn- skip-whitespace-and-commas
+  ([zloc] (skip-whitespace-and-commas zloc z/next*))
+  ([zloc f] (z/skip f (some-fn space? comma?) zloc)))
 
 (defn- skip-clojure-whitespace
   ([zloc] (skip-clojure-whitespace zloc z/next*))
@@ -370,6 +371,7 @@
   {:alias-map                             {}
    :align-binding-columns?                false
    :align-map-columns?                    false
+   :align-single-column-lines?            false
    :aligned-forms                         default-aligned-forms
    :blank-line-forms                      blank-line-forms
    :extra-aligned-forms                   {}
@@ -595,12 +597,9 @@
 (defn sort-ns-references [form]
   (transform form edit-all ns-reference? sort-arguments))
 
-(defn- skip-to-linebreak-or-element [zloc]
-  (z/skip z/right* (some-fn space? comma?) zloc))
-
 (defn- reduce-columns [zloc f init]
   (loop [zloc zloc, col 0, acc init]
-    (if-some [zloc (skip-to-linebreak-or-element zloc)]
+    (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
       (if (line-break? zloc)
         (recur (z/right* zloc) 0 acc)
         (recur (z/right* zloc) (inc col) (f zloc col acc)))
@@ -623,10 +622,16 @@
                      (map count))
                max 0 (str/split lines #"\r?\n"))))
 
-(defn- max-column-end-position [zloc col]
+(defn- single-column-line? [zloc]
+  (and (line-break? (skip-whitespace-and-commas (z/right* zloc) z/right*))
+       (line-break? (skip-whitespace-and-commas (z/left* zloc) z/left*))))
+
+(defn- max-column-end-position [zloc col align-single-column-lines?]
   (reduce-columns zloc
                   (fn [zloc c max-pos]
-                    (if (= c col)
+                    (if (and (= c col)
+                             (or align-single-column-lines?
+                                 (not (single-column-line? zloc))))
                       (max max-pos (node-end-position zloc))
                       max-pos))
                   0))
@@ -665,7 +670,7 @@
 
 (defn- edit-column [zloc column f]
   (loop [zloc zloc, col 0]
-    (if-some [zloc (skip-to-linebreak-or-element zloc)]
+    (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
       (let [zloc (if (and (= col column) (not (line-break? zloc)))
                    (f zloc)
                    zloc)
@@ -675,17 +680,24 @@
           zloc))
       zloc)))
 
-(defn- align-one-column [zloc col]
+(defn- align-one-column [zloc col align-single-column-lines?]
   (if-some [zloc (z/down zloc)]
-    (let [start-position (inc (max-column-end-position zloc (dec col)))]
+    (let [start-position (inc (max-column-end-position
+                               zloc (dec col) align-single-column-lines?))]
       (z/up (edit-column zloc col #(pad-to-position % start-position))))
     zloc))
 
-(defn- align-columns [zloc]
-  (reduce align-one-column zloc (-> zloc z/down count-columns range rest)))
+(defn- align-columns [zloc align-single-column-lines?]
+  (reduce #(align-one-column %1 %2 align-single-column-lines?)
+          zloc
+          (-> zloc z/down count-columns range rest)))
 
-(defn align-map-columns [form]
-  (transform form edit-all z/map? align-columns))
+(defn align-map-columns
+  ([form]
+   (align-map-columns form default-options))
+  ([form {:keys [align-single-column-lines?]}]
+   (let [align #(align-columns % align-single-column-lines?)]
+     (transform form edit-all z/map? align))))
 
 (defn- matching-form-index? [zloc [k indexes] context]
   (if (= :all indexes)
@@ -699,16 +711,22 @@
   (and (or (z/list? zloc) (z/list? (z/up zloc)))
        (some #(matching-form-index? zloc % context) form-indexes)))
 
-(defn align-form-columns [form aligned-forms alias-map]
-  (let [ns-name  (find-namespace (z/of-node form))
-        context  {:alias-map alias-map, :ns-name ns-name}
-        aligned? #(matching-form? % aligned-forms context)]
-    (transform form edit-all aligned? align-columns)))
+(defn align-form-columns
+  ([form aligned-forms alias-map]
+   (align-form-columns form aligned-forms alias-map default-options))
+  ([form aligned-forms alias-map {:keys [align-single-column-lines?]}]
+   (let [ns-name  (find-namespace (z/of-node form))
+         context  {:alias-map alias-map, :ns-name ns-name}
+         aligned? #(matching-form? % aligned-forms context)
+         align    #(align-columns % align-single-column-lines?)]
+     (transform form edit-all aligned? align))))
 
 (defn realign-form
   "Realign a rewrite-clj form such that the columns line up into columns."
-  [form]
-  (-> form z/of-node align-columns z/root))
+  ([form]
+   (realign-form form default-options))
+  ([form {:keys [align-single-column-lines?]}]
+   (-> form z/of-node (align-columns align-single-column-lines?) z/root)))
 
 (defn- unalign-from-space [zloc]
   (pad-node (z/right* zloc) (- 1 (node-str-length zloc))))
@@ -811,9 +829,9 @@
          (cond-> (:indentation? opts)
            (reindent indents alias-map opts))
          (cond-> (:align-map-columns? opts)
-           align-map-columns)
+           (align-map-columns opts))
          (cond-> (:align-form-columns? opts)
-           (align-form-columns aligned alias-map))
+           (align-form-columns aligned alias-map opts))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)
          (cond-> (:remove-blank-lines-in-forms? opts)

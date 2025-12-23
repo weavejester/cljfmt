@@ -256,6 +256,13 @@ In order to load the standard configuration file from Leiningen, add the
   true if cljfmt should align the keys and values of maps such that they
   line up in columns. Defaults to false. **Experimental.**
 
+* `:align-single-column-lines?` -  
+  true if cljfmt should include lines with single columns (where the  
+  value is on the next line) when calculating column alignment. When  
+  false, forms with wrapped values won't cause excessive horizontal  
+  padding in other lines. Only applies when `:align-form-columns?` or  
+  `:align-map-columns?` is true. Defaults to false. **Experimental.**  
+
 * `:blank-line-forms` - map of symbols that tell cljfmt which forms are allowed
   to have blank lines inside of them. The value may be either `:all`, which
   means blank lines are allowed between all elements in the form, e.g. `{'cond
