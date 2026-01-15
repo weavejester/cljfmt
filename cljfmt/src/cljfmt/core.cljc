@@ -42,6 +42,17 @@
 (defn- top? [zloc]
   (some-> zloc z/up root?))
 
+(defn- token? [zloc]
+  (= (z/tag zloc) :token))
+
+(defn- comment-token? [zloc]
+  (and (token? zloc)
+       (= 'comment (z/sexpr zloc))))
+
+(defn- comment-form? [zloc]
+  (and (= (z/tag zloc) :list)
+       (some-> zloc z/down comment-token?)))
+
 (defn- root [zloc]
   (if (root? zloc) zloc (recur (z/up zloc))))
 
@@ -71,8 +82,26 @@
                 (not (comment? (z/right* zloc))))
            (nil? (z/skip z/right* clojure-whitespace? zloc)))))
 
-(defn remove-surrounding-whitespace [form]
-  (transform form edit-all surrounding-whitespace? z/remove*))
+(defn- indent-rich-comment-closing-paren? [zloc opts]
+  (and (:indent-rich-comments? opts)
+       (z/linebreak? zloc)
+       (nil? (z/skip z/right* clojure-whitespace? zloc))
+       (comment-form? (z/up* zloc))))
+
+(defn- insert-rich-comment-newlines [form opts]
+  (transform form edit-all
+             #(and (:indent-rich-comments? opts)
+                   (comment-form? %)
+                   (let [children (n/children (z/node %))]
+                     (and (> (count (remove (some-fn n/comment? n/whitespace?) children)) 1)
+                          (not (n/linebreak? (last children))))))
+             #(z/append-child % (n/newlines 1))))
+
+(defn remove-surrounding-whitespace [form opts]
+  (transform form edit-all
+             #(and (surrounding-whitespace? %)
+                   (not (indent-rich-comment-closing-paren? % opts)))
+             z/remove*))
 
 (defn- element? [zloc]
   (and zloc (not (z/whitespace-or-comment? zloc))))
@@ -159,13 +188,20 @@
     (and (comment? znext) (not (line-comment? znext)))))
 
 (defn- should-indent? [zloc opts]
-  (and (line-break? zloc)
-       (if (:indent-line-comments? opts)
-         (not (comment-next-other-than-line-comment? zloc))
-         (not (comment-next? zloc)))))
+  (or (and (:indent-rich-comments? opts)
+           (z/linebreak? zloc)
+           (nil? (z/skip z/right* clojure-whitespace? zloc))
+           (comment-form? (z/up* zloc)))
+      (and (line-break? zloc)
+           (if (:indent-line-comments? opts)
+             (not (comment-next-other-than-line-comment? zloc))
+             (not (comment-next? zloc))))))
 
 (defn- should-unindent? [zloc opts]
   (and (indentation? zloc)
+       (not (and (:indent-rich-comments? opts)
+                 (nil? (z/skip z/right* clojure-whitespace? zloc))
+                 (comment-form? (z/up* zloc))))
        (if (:indent-line-comments? opts)
          (not (comment-next-other-than-line-comment? zloc))
          (not (comment-next? zloc)))))
@@ -258,9 +294,6 @@
           (iterate z/up)
           (take-while (complement root?))
           last)))
-
-(defn- token? [zloc]
-  (= (z/tag zloc) :token))
 
 (defn- ns-token? [zloc]
   (and (token? zloc)
@@ -379,6 +412,7 @@
    :extra-indents                         {}
    :function-arguments-indentation        :community
    :indent-line-comments?                 false
+   :indent-rich-comments?                 true
    :indentation?                          true
    :indents                               default-indents
    :insert-missing-whitespace?            true
@@ -429,10 +463,22 @@
   (let [tag (-> zloc z/up z/tag)
         gp  (-> zloc z/up z/up)]
     (cond
-      (reader-conditional? gp) (coll-indent zloc)
-      (#{:list :fn} tag)       (custom-indent zloc indents context)
-      (= :meta tag)            (indent-amount (z/up zloc) indents context)
-      :else                    (coll-indent zloc))))
+      (reader-conditional? gp)
+      (coll-indent zloc)
+
+      (#{:list :fn} tag)
+      (custom-indent zloc indents context)
+
+      (= :meta tag)
+      (indent-amount (z/up zloc) indents context)
+
+      (and (:indent-rich-comments? context)
+           (nil? (z/skip z/right* clojure-whitespace? zloc))
+           (comment-form? (z/up* zloc)))
+      (+ (margin (z/up* zloc)) indent-size)
+
+      :else
+      (coll-indent zloc))))
 
 (defn- indent-line [zloc indents context]
   (let [width (indent-amount zloc indents context)]
@@ -453,7 +499,8 @@
   ([form indents alias-map opts]
    (let [ns-name (find-namespace (z/of-node form))
          sorted-indents (sort-by indent-order indents)
-         context (merge (select-keys opts [:function-arguments-indentation])
+         context (merge (select-keys opts [:function-arguments-indentation
+                                           :indent-rich-comments?])
                         {:alias-map alias-map
                          :ns-name ns-name})]
      (transform form edit-all #(should-indent? % opts)
@@ -821,7 +868,9 @@
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
          (cond-> (:remove-surrounding-whitespace? opts)
-           remove-surrounding-whitespace)
+           (remove-surrounding-whitespace opts))
+         (cond-> (:indent-rich-comments? opts)
+           (insert-rich-comment-newlines opts))
          (cond-> (:insert-missing-whitespace? opts)
            insert-missing-whitespace)
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
