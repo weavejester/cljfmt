@@ -250,26 +250,16 @@
 
 (defn- list-indent [zloc context]
   (let [idx (index-of zloc)
-        first-arg (-> zloc
-                      z/leftmost*
-                      z/right)
-        ;; Check if there's an uneval before this element
-        has-uneval-before? (and (= idx 1)
-                                (some-> zloc
-                                        z/left*
-                                        uneval?))]
-    (if (or (> idx 1) has-uneval-before?)
-      ;;  If index > 1, or if at index 1 but there's an uneval before us,
-      ;; align with the first argument position
-      (if (uneval? first-arg)
-        ;; If uneval is first on its own line, its child is already at the
-        ;; correct margin. Otherwise, add space after the #_ token.
-        (if (first-form-in-line? first-arg)
+        has-uneval-before? #(and (= idx 1) (-> zloc z/left* uneval?))]
+    (if (or (> idx 1) (has-uneval-before?))
+      (let [first-arg (-> zloc z/leftmost* z/right)]
+        (if (or (not (uneval? first-arg))
+                (first-form-in-line? first-arg))
           (margin first-arg)
-          (inc (margin first-arg)))
-        (margin first-arg))
+          (inc (margin first-arg))))
       (cond-> (coll-indent zloc)
-        (two-space-list-indent? zloc context) inc))))
+        (two-space-list-indent? zloc context)
+        inc))))
 
 (def indent-size 2)
 
@@ -455,8 +445,6 @@
       (reader-conditional? gp) (coll-indent zloc)
       (#{:list :fn} tag)       (custom-indent zloc indents context)
       (= :meta tag)            (indent-amount (z/up zloc) indents context)
-      ;; For uneval: if it's the first element on the line, don't indent
-      ;; the child form. Otherwise, indent to align after the #_ token.
       (= :uneval tag)          (if (first-form-in-line? (z/up zloc))
                                  (margin (z/up zloc))
                                  (inc (margin (z/up zloc))))
