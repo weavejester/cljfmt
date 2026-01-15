@@ -78,9 +78,6 @@
                 (not (comment? (z/right* zloc))))
            (nil? (z/skip z/right* clojure-whitespace? zloc)))))
 
-(defn remove-surrounding-whitespace [form opts]
-  (transform form edit-all #(surrounding-whitespace? % opts) z/remove*))
-
 (defn- element? [zloc]
   (and zloc (not (z/whitespace-or-comment? zloc))))
 
@@ -416,6 +413,12 @@
   (fn [zloc]
     (when (form-matches-key? zloc sym context)
       (list-indent zloc context))))
+
+(defn remove-surrounding-whitespace
+  ([form]
+   (remove-surrounding-whitespace form default-options))
+  ([form opts]
+   (transform form edit-all #(surrounding-whitespace? % opts) z/remove*)))
 
 (defn- make-indenter [[key opts] context]
   (apply some-fn (map (partial indenter-fn key context) opts)))
