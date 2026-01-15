@@ -1054,23 +1054,27 @@
           "  (do-this)"
           "  (let [x 1]"
           "    (with-blah []"
-          "      (stuff))))"]))
+          "      (stuff))))"]
+         {:ignore-lines-with-only-uneval-tags? true}))
     (is (reformats-to?
          ["#_"
           "{:foo :bar}"]
          ["#_"
-          "{:foo :bar}"]))
+          "{:foo :bar}"]
+         {:ignore-lines-with-only-uneval-tags? true}))
     (is (reformats-to?
          ["(foo #_"
           "     bar"
           "     baz)"]
          ["(foo #_"
           "      bar"
-          "      baz)"]))
+          "      baz)"]
+         {:ignore-lines-with-only-uneval-tags? true}))
     (testing "uneval on same line still gets whitespace"
       (is (reformats-to?
            ["(foo #_bar baz)"]
-           ["(foo #_bar baz)"])))
+           ["(foo #_bar baz)"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "multiple unevals on own lines"
       (is (reformats-to?
            ["#_"
@@ -1080,13 +1084,15 @@
            ["#_"
             "(defn foo [])"
             "#_"
-            "(defn bar [])"])))
+            "(defn bar [])"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval with vector"
       (is (reformats-to?
            ["#_"
             "[1 2 3]"]
            ["#_"
-            "[1 2 3]"])))
+            "[1 2 3]"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval with map"
       (is (reformats-to?
            ["#_"
@@ -1094,7 +1100,8 @@
             " :b 2}"]
            ["#_"
             "{:a 1"
-            " :b 2}"])))
+            " :b 2}"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval as function argument"
       (is (reformats-to?
            ["(foo"
@@ -1104,7 +1111,8 @@
            ["(foo"
             " #_"
             " bar"
-            " baz)"]))
+            " baz)"]
+           {:ignore-lines-with-only-uneval-tags? true}))
       (testing "with more than one argument"
         (is (reformats-to?
              ["(foo"
@@ -1116,7 +1124,8 @@
               " #_"
               " x"
               " y"
-              " z)"]))))
+              " z)"]
+             {:ignore-lines-with-only-uneval-tags? true}))))
     (testing "uneval before closing paren"
       (is (reformats-to?
            ["(foo bar"
@@ -1124,11 +1133,13 @@
             " baz)"]
            ["(foo bar"
             "     #_"
-            "     baz)"])))
+            "     baz)"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "multiple unevals inline"
       (is (reformats-to?
            ["(foo #_ bar #_ baz qux)"]
-           ["(foo #_bar #_baz qux)"])))
+           ["(foo #_bar #_baz qux)"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval with reader conditional"
       (is (reformats-to?
            ["#_"
@@ -1136,7 +1147,8 @@
             "   :cljs (bar))"]
            ["#_"
             "#?(:clj (foo)"
-            "   :cljs (bar))"])))
+            "   :cljs (bar))"]
+           {:ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval with cursive indentation"
       (is (reformats-to?
            ["(foo"
@@ -1147,7 +1159,8 @@
             "  #_"
             "  bar"
             "  baz)"]
-           {:function-arguments-indentation :cursive})))
+           {:function-arguments-indentation :cursive
+            :ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval inline with cursive indentation"
       (is (reformats-to?
            ["(foo #_"
@@ -1156,7 +1169,8 @@
            ["(foo #_"
             "      bar"
             "      baz)"]
-           {:function-arguments-indentation :cursive})))
+           {:function-arguments-indentation :cursive
+            :ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval with zprint indentation"
       (is (reformats-to?
            ["(foo"
@@ -1167,7 +1181,8 @@
             "  #_"
             "  bar"
             "  baz)"]
-           {:function-arguments-indentation :zprint})))
+           {:function-arguments-indentation :zprint
+            :ignore-lines-with-only-uneval-tags? true})))
     (testing "uneval inline with zprint indentation"
       (is (reformats-to?
            ["(foo #_"
@@ -1176,7 +1191,8 @@
            ["(foo #_"
             "      bar"
             "      baz)"]
-           {:function-arguments-indentation :zprint})))))
+           {:function-arguments-indentation :zprint
+            :ignore-lines-with-only-uneval-tags? true})))))
 
 (deftest test-consecutive-blank-lines
   (is (reformats-to?

@@ -64,11 +64,11 @@
 (defn- uneval? [zloc]
   (= (z/tag zloc) :uneval))
 
-(defn- surrounding-whitespace? [zloc]
+(defn- surrounding-whitespace? [zloc opts]
   (and (not (top? zloc))
        (clojure-whitespace? zloc)
-       ;; Don't remove linebreak after uneval
-       (not (and (z/linebreak? zloc)
+       (not (and (:ignore-lines-with-only-uneval-tags? opts)
+                 (z/linebreak? zloc)
                  (nil? (z/left* zloc))
                  (uneval? (z/up* zloc))))
        (or (and (nil? (z/left* zloc))
@@ -78,8 +78,8 @@
                 (not (comment? (z/right* zloc))))
            (nil? (z/skip z/right* clojure-whitespace? zloc)))))
 
-(defn remove-surrounding-whitespace [form]
-  (transform form edit-all surrounding-whitespace? z/remove*))
+(defn remove-surrounding-whitespace [form opts]
+  (transform form edit-all #(surrounding-whitespace? % opts) z/remove*))
 
 (defn- element? [zloc]
   (and zloc (not (z/whitespace-or-comment? zloc))))
@@ -94,8 +94,6 @@
   (and (element? zloc)
        (not (reader-macro? (z/up* zloc)))
        (not (namespaced-map? (z/up* zloc)))
-       ;; Don't insert whitespace after uneval if it's followed by a linebreak
-       (not (and (uneval? zloc) (some-> zloc z/right* z/linebreak?)))
        (element? (z/right* zloc))))
 
 (defn insert-missing-whitespace [form]
@@ -401,6 +399,7 @@
    :extra-blank-line-forms                {}
    :extra-indents                         {}
    :function-arguments-indentation        :community
+   :ignore-lines-with-only-uneval-tags?   true
    :indent-line-comments?                 false
    :indentation?                          true
    :indents                               default-indents
@@ -854,10 +853,10 @@
            split-keypairs-over-multiple-lines)
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
-         (cond-> (:remove-surrounding-whitespace? opts)
-           remove-surrounding-whitespace)
-         (cond-> (:insert-missing-whitespace? opts)
-           insert-missing-whitespace)
+          (cond-> (:remove-surrounding-whitespace? opts)
+            (remove-surrounding-whitespace opts))
+          (cond-> (:insert-missing-whitespace? opts)
+            insert-missing-whitespace)
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
            remove-multiple-non-indenting-spaces)
          (cond-> (:indentation? opts)
