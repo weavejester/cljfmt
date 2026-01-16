@@ -744,17 +744,16 @@
       (z/up (edit-column zloc col #(pad-to-position % (start-position-fn %)))))
     zloc))
 
-(defn- align-columns
-  ([zloc] (align-columns zloc #(align-one-column %1 %2 default-options)))
-  ([zloc alignf]
-   (reduce alignf zloc (-> zloc z/down count-columns range rest))))
+(defn- align-columns [zloc opts]
+  (reduce #(align-one-column %1 %2 opts)
+          zloc
+          (-> zloc z/down count-columns range rest)))
 
 (defn align-map-columns
   ([form]
    (align-map-columns form default-options))
   ([form opts]
-   (let [alignf #(align-one-column %1 %2 opts)]
-     (transform form edit-all z/map? #(align-columns % alignf)))))
+   (transform form edit-all z/map? #(align-columns % opts))))
 
 (defn- matching-form-index? [zloc [k indexes] context]
   (if (= :all indexes)
@@ -774,17 +773,15 @@
   ([form aligned-forms alias-map opts]
    (let [ns-name  (find-namespace (z/of-node form))
          context  {:alias-map alias-map, :ns-name ns-name}
-         aligned? #(matching-form? % aligned-forms context)
-         alignf   #(align-one-column %1 %2 opts)]
-     (transform form edit-all aligned? #(align-columns % alignf)))))
+         aligned? #(matching-form? % aligned-forms context)]
+     (transform form edit-all aligned? #(align-columns % opts)))))
 
 (defn realign-form
   "Realign a rewrite-clj form such that the columns line up into columns."
   ([form]
    (realign-form form default-options))
   ([form opts]
-   (let [alignf #(align-one-column %1 %2 opts)]
-     (-> form z/of-node (align-columns alignf) z/root))))
+   (-> form z/of-node (align-columns opts) z/root)))
 
 (defn- unalign-from-space [zloc]
   (pad-node (z/right* zloc) (- 1 (node-str-length zloc))))
