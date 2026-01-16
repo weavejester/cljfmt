@@ -671,8 +671,7 @@
 (defn- edit-column [zloc column f]
   (loop [zloc zloc, col 0]
     (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
-      (let [zloc (if (and (= col column)
-                          (not (line-break? zloc)))
+      (let [zloc (if (and (= col column) (not (line-break? zloc)))
                    (f zloc)
                    zloc)
             col  (if (line-break? zloc) 0 (inc col))]
