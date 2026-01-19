@@ -589,7 +589,8 @@
       (remove-node-metadata)
       (nodes-string)
       (str/replace #"[\[\]\(\)\{\}]" "")
-      (str/trim)))
+      (str/trim)
+      (str/lower-case)))
 
 (defn sort-arguments [zloc]
   (update-children zloc #(sort-node-arguments-by node-sort-string %)))
