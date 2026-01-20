@@ -1877,7 +1877,17 @@
         "    ^{:x 1} b"
         "    [c]))"]
        {:sort-ns-references? true
-        :function-arguments-indentation :cursive})))
+        :function-arguments-indentation :cursive}))
+  (is (reformats-to?
+       ["(ns example"
+        "  (:require"
+        "   [com.example.ERP.service :as erp]"
+        "   [com.example.answers :as answers]))"]
+       ["(ns example"
+        "  (:require"
+        "   [com.example.answers :as answers]"
+        "   [com.example.ERP.service :as erp]))"]
+       {:sort-ns-references? true})))
 
 (deftest cursive-and-zprint-function-argument-indents-depend-on-first-element
   (let [input ["(foo"
