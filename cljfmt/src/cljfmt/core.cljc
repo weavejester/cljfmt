@@ -700,37 +700,28 @@
           (recur (z/right* zloc) (inc col) (f zloc col acc))))
       acc)))
 
-(defn- column-start-position [zloc col {:keys [align-single-column-lines?]}]
-  (inc
-   (reduce-columns zloc
-                   (fn [zloc c max-pos]
-                     (if (and (= c col)
-                              (or align-single-column-lines?
-                                  (not (single-column-line? zloc))))
-                       (max max-pos (node-end-position zloc))
-                       max-pos))
-                   0)))
-
-(defn- column-group-start-position [zloc col opts]
-  (inc
-   (let [align-single-column-lines? (:align-single-column-lines? opts)
-         maximizer (fn [zloc c max-pos]
-                     (if (and (= c col)
-                              (not (and (pos? c)
-                                        (preceded-by-linebreak? zloc)))
-                              (not (comment? zloc))
-                              (or align-single-column-lines?
-                                  (not (single-column-line? zloc))))
-                       (max max-pos (node-end-position zloc))
-                       max-pos))]
-     (reduce-column-group zloc maximizer 0))))
+(defn- column-start-position [zloc col opts]
+  (let [align-single-column-lines? (:align-single-column-lines? opts)
+        reduce-fn (if (:blank-lines-separate-alignment? opts)
+                    reduce-column-group
+                    reduce-columns)
+        maximizer (fn [zloc c max-pos]
+                    (if (and (= c col)
+                             (not (and (pos? c)
+                                       (preceded-by-linebreak? zloc)))
+                             (not (comment? zloc))
+                             (or align-single-column-lines?
+                                 (not (single-column-line? zloc))))
+                      (max max-pos (node-end-position zloc))
+                      max-pos))]
+    (inc (reduce-fn zloc maximizer 0))))
 
 (defn- align-one-column
   [zloc col {:keys [blank-lines-separate-alignment?] :as opts}]
   (if-some [zloc (z/down zloc)]
     (let [start-position-fn (let [col (dec col)]
                               (if blank-lines-separate-alignment?
-                                #(column-group-start-position % col opts)
+                                #(column-start-position % col opts)
                                 (constantly
                                  (column-start-position zloc col opts))))]
       (z/up (edit-column zloc col #(pad-to-position % (start-position-fn %)))))
