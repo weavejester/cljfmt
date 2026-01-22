@@ -680,25 +680,18 @@
           zloc))
       zloc)))
 
-(defn- has-blank-line-after? [zloc]
-  (when (line-break? zloc)
-    (> (count-newlines zloc) 1)))
-
 (defn- end-of-column-group? [zloc]
-  (or (nil? zloc)
-      (has-blank-line-after? zloc)))
+  (line-break? zloc) (> (count-newlines zloc) 1))
 
 (defn- find-start-of-column-group [zloc]
-  (loop [z zloc]
-    (let [prev (when z (z/left* z))]
-      (if (or (nil? prev) (has-blank-line-after? prev))
-        z
-        (recur prev)))))
+  (z/skip z/left*
+          #(when-let [prev (z/left* %)]
+             (not (end-of-column-group? prev)))
+          zloc))
 
 (defn- reduce-column-group [zloc f init]
   (loop [zloc (find-start-of-column-group zloc)
-         col 0
-         acc init]
+         col 0, acc init]
     (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
       (if (end-of-column-group? zloc)
         acc
