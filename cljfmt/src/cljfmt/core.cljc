@@ -692,13 +692,12 @@
 (defn- reduce-column-group [zloc f init]
   (loop [zloc (find-start-of-column-group zloc)
          col 0, acc init]
-    (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
-      (if (end-of-column-group? zloc)
+    (let [zloc (skip-whitespace-and-commas zloc z/right*)]
+      (if (or (nil? zloc) (end-of-column-group? zloc))
         acc
         (if (line-break? zloc)
           (recur (z/right* zloc) 0 acc)
-          (recur (z/right* zloc) (inc col) (f zloc col acc))))
-      acc)))
+          (recur (z/right* zloc) (inc col) (f zloc col acc)))))))
 
 (defn- column-start-position [zloc col opts]
   (let [reduce-fn (if (:blank-lines-separate-alignment? opts)
