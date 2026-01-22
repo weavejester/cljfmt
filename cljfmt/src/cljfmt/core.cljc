@@ -701,8 +701,7 @@
       acc)))
 
 (defn- column-start-position [zloc col opts]
-  (let [align-single-column-lines? (:align-single-column-lines? opts)
-        reduce-fn (if (:blank-lines-separate-alignment? opts)
+  (let [reduce-fn (if (:blank-lines-separate-alignment? opts)
                     reduce-column-group
                     reduce-columns)
         maximizer (fn [zloc c max-pos]
@@ -710,7 +709,7 @@
                              (not (and (pos? c)
                                        (preceded-by-linebreak? zloc)))
                              (not (comment? zloc))
-                             (or align-single-column-lines?
+                             (or (:align-single-column-lines? opts)
                                  (not (single-column-line? zloc))))
                       (max max-pos (node-end-position zloc))
                       max-pos))]
