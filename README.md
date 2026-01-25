@@ -216,6 +216,10 @@ files in the current and parent directories:
 
 The configuration file should contain a map of options.
 
+**Note:** By default, `.clj` config files are ignored because they can
+execute arbitrary code. To enable reading `.clj` config files, use the
+`--read-clj-config-files` command-line option.
+
 ### Leiningen
 
 In Leiningen, the configuration is found in on the `:cljfmt` key in the
@@ -367,6 +371,11 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:parallel?` -
   true if cljfmt should process files in parallel. Defaults to false.
+
+* `:read-clj-config-files?` -
+  true if cljfmt should read `.clj` config files. For security reasons,
+  `.clj` config files are ignored by default, as they can execute arbitrary
+  code. Set this to true to enable reading `.clj` config files. Defaults to false.
 
 * `:paths` -
   determines which files and directories to recursively search for

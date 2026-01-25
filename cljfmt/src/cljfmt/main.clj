@@ -72,7 +72,10 @@
     :id :sort-ns-references?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
     :default (:split-keypairs-over-multiple-lines? defaults)
-    :id :split-keypairs-over-multiple-lines?]])
+    :id :split-keypairs-over-multiple-lines?]
+   [nil "--[no-]read-clj-config-files"
+    :default (:read-clj-config-files? defaults)
+    :id :read-clj-config-files?]])
 
 (defn- abort [& msg]
   (binding [*out* *err*]
@@ -101,7 +104,7 @@
 (defn- find-config-file [args]
   (let [opts (cli/parse-opts args (cli-options config/default-config))]
     (or (some-> opts :options :config jio/file)
-        (config/find-config-file))))
+        (config/find-config-file "" opts))))
 
 (defn -main [& args]
   (let [config-file   (find-config-file args)
