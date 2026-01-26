@@ -30,6 +30,7 @@
           "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
           "--no-fallback"
+          "-H:PageSize=65536"
           "-J-Xmx3g"]}
   :aliases {"test-all" ["with-profile" "+cljs" "test"]}
   :profiles
