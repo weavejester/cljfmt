@@ -64,6 +64,9 @@
    [nil "--[no-]remove-trailing-whitespace"
     :default (:remove-trailing-whitespace? defaults)
     :id :remove-trailing-whitespace?]
+   [nil "--[no-]normalize-newlines-at-file-end"
+    :default (:normalize-newlines-at-file-end? defaults)
+    :id :normalize-newlines-at-file-end?]
    [nil "--[no-]sort-ns-references"
     :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]

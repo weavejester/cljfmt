@@ -381,6 +381,7 @@
    :indent-line-comments?                 false
    :indentation?                          true
    :indents                               default-indents
+   :normalize-newlines-at-file-end?       false
    :insert-missing-whitespace?            true
    :remove-blank-lines-in-forms?          false
    :remove-consecutive-blank-lines?       true
@@ -501,6 +502,10 @@
 
 (defn remove-trailing-whitespace [form]
   (transform form edit-all trailing-whitespace? z/remove*))
+
+(defn normalize-newlines-at-file-end [s]
+  (cond-> (str/trimr s)
+    (not (str/blank? s)) (str "\n")))
 
 (defn- replace-with-one-space [zloc]
   (z/replace* zloc (whitespace 1)))
@@ -847,7 +852,9 @@
   ([form-string options]
    (-> (p/parse-string-all form-string)
        (reformat-form options)
-       (n/string))))
+       n/string
+       (cond-> (:normalize-newlines-at-file-end? options)
+         normalize-newlines-at-file-end))))
 
 (def default-line-separator
   #?(:clj (System/lineSeparator) :cljs \newline))

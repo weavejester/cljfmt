@@ -1411,6 +1411,72 @@
           :function-arguments-indentation :cursive})
         "indents properly with :function-arguments-indentation :cursive")))
 
+(deftest test-normalize-newlines-at-file-end
+  (testing "ensure exactly one newline at end of file"
+    (testing "newline when missing"
+      (is (reformats-to?
+           ["(foo bar)"]
+           ["(foo bar)"
+            ""]
+           {:normalize-newlines-at-file-end? true})))
+    (testing "does not add extra newline when already present"
+      (is (reformats-to?
+           ["(foo bar)"
+            ""]
+           ["(foo bar)"
+            ""]
+           {:normalize-newlines-at-file-end? true})))
+    (testing "removes extra newlines when more than one present"
+      (is (reformats-to?
+           ["(foo bar)"
+            ""
+            ""
+            ""]
+           ["(foo bar)"
+            ""]
+           {:normalize-newlines-at-file-end? true})))
+    (testing "removes space if present on last line"
+      (is (reformats-to?
+           ["(foo bar)"
+            " "]
+           ["(foo bar)"
+            ""]
+           {:normalize-newlines-at-file-end? true}))))
+
+  (testing "preserve when disabled"
+    (is (reformats-to?
+         ["(foo bar)"
+          ""
+          ""]
+         ["(foo bar)"
+          ""
+          ""]
+         {:normalize-newlines-at-file-end? false}))
+    (is (reformats-to?
+         ["(foo bar)"]
+         ["(foo bar)"]
+         {:normalize-newlines-at-file-end? false})))
+
+  (testing "edge cases"
+    (testing "empty file remains empty"
+      (is (reformats-to?
+           [""]
+           [""]
+           {:normalize-newlines-at-file-end? true})))
+    (testing "file with only whitespace and newlines"
+      (is (reformats-to?
+           [""
+            " "
+            ""]
+           [""]
+           {:normalize-newlines-at-file-end? true})))
+    (testing "file with trailing whitespace on content line"
+      (is (reformats-to?
+           ["(foo bar) "]
+           ["(foo bar)"
+            ""]
+           {:normalize-newlines-at-file-end? true})))))
+
 (deftest test-options
   (is (reformats-to?
        ["(foo)"

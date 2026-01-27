@@ -310,6 +310,11 @@ In order to load the standard configuration file from Leiningen, add the
   See [INDENTS.md][] for a complete explanation. This will **replace**
   the default indents.
 
+* `:normalize-newlines-at-file-end?` -
+  true if cljfmt should ensure files end with exactly one newline
+  character. This will remove multiple trailing blank lines and ensure
+  a final newline exists. Defaults to false.
+
 * `:remove-blank-lines-in-forms?` - whether to remove blank lines inside forms
   per the [community style recommendation][no-blank-lines]. By default, this
   does not remove blank lines in pairwise constructs like `cond` or within
