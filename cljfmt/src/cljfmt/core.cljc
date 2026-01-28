@@ -684,10 +684,7 @@
   (line-break? zloc) (> (count-newlines zloc) 1))
 
 (defn- find-start-of-column-group [zloc]
-  (z/skip z/left*
-          #(when-let [prev (z/left* %)]
-             (not (end-of-column-group? prev)))
-          zloc))
+  (z/skip z/left* #(some-> % z/left* end-of-column-group? not) zloc))
 
 (defn- reduce-column-group [zloc f init]
   (loop [zloc (find-start-of-column-group zloc)
