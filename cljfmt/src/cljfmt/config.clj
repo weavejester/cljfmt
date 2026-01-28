@@ -1,5 +1,6 @@
 (ns cljfmt.config
   (:require [cljfmt.core :as cljfmt]
+            [cljfmt.report :as report]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]))
@@ -11,6 +12,10 @@
           :file-pattern #"\.clj[csx]?$"
           :ansi?        true
           :parallel?    false}))
+
+(def ^:private clj-config-warning-message
+  (str "Warning: .clj config file '%s' detected but --read-clj-config-files is "
+       "not set. Ignoring config file."))
 
 (defn- filename-ext [file]
   (let [filename (str file)]
@@ -43,8 +48,13 @@
 (def ^:private valid-config-files
   [".cljfmt.edn" ".cljfmt.clj" "cljfmt.edn" "cljfmt.clj"])
 
-(defn- find-config-file-in-dir ^java.io.File [^java.io.File dir]
-  (some #(find-file-in-dir dir %) valid-config-files))
+(defn- find-config-file-in-dir ^java.io.File [^java.io.File dir safe?]
+  (let [^java.io.File file (some #(find-file-in-dir dir %) valid-config-files)]
+    (if (and file (not safe?) (str/ends-with? (.getName file) ".clj"))
+      (do (report/warn (format clj-config-warning-message (.getName file)))
+          (some #(find-file-in-dir dir %)
+                (remove #(str/ends-with? % ".clj") valid-config-files)))
+      file)))
 
 (defn find-config-file
   "Find a configuration file in the current directory or in the first parent
@@ -54,7 +64,9 @@
   - `cljfmt.edn`
   - `cljfmt.clj`"
   ([] (find-config-file ""))
-  ([path] (some->> (parent-dirs path) (some find-config-file-in-dir))))
+  ([path] (find-config-file path {}))
+  ([path {safe? :read-clj-config-files?}]
+   (some->> (parent-dirs path) (some #(find-config-file-in-dir % safe?)))))
 
 (defn- directory? [path]
   (some-> path io/file .getAbsoluteFile .isDirectory))
@@ -64,9 +76,10 @@
   an path to a config file, or to a directory to search. If no argument
   is supplied, it uses the current directory. See: [[find-config-file]]."
   ([] (load-config ""))
-  ([path]
+  ([path] (load-config path {}))
+  ([path opts]
    (let [path (if (directory? path)
-                (find-config-file path)
+                (find-config-file path opts)
                 path)]
      (->> (some-> path read-config)
           (merge default-config)
