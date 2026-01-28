@@ -302,11 +302,17 @@
   (when-let [ns-str (namespace possible-sym)]
     (symbol (get alias-map ns-str ns-str) (name possible-sym))))
 
+(defn- qualify-symbol-by-refer-map [possible-sym refer-map]
+  (when-not (namespace possible-sym)
+    (when-let [ns-str (get refer-map (str possible-sym))]
+      (symbol ns-str (name possible-sym)))))
+
 (defn- qualify-symbol-by-ns-name [sym ns-name]
   (when ns-name (symbol (name ns-name) (name sym))))
 
 (defn- fully-qualified-symbol [sym context]
   (or (qualify-symbol-by-alias-map sym (:alias-map context))
+      (qualify-symbol-by-refer-map sym (:refer-map context))
       (qualify-symbol-by-ns-name sym (:ns-name context))))
 
 (defn- string-matches-key-part? [s key-part]
@@ -456,6 +462,7 @@
          sorted-indents (sort-by indent-order indents)
          context (merge (select-keys opts [:function-arguments-indentation])
                         {:alias-map alias-map
+                         :refer-map (:refer-map opts)
                          :ns-name ns-name})]
      (transform form edit-all #(should-indent? % opts)
                 #(indent-line % sorted-indents context)))))
@@ -720,9 +727,11 @@
 (defn align-form-columns
   ([form aligned-forms alias-map]
    (align-form-columns form aligned-forms alias-map default-options))
-  ([form aligned-forms alias-map {:keys [align-single-column-lines?]}]
+  ([form aligned-forms alias-map {:keys [align-single-column-lines? refer-map]}]
    (let [ns-name  (find-namespace (z/of-node form))
-         context  {:alias-map alias-map, :ns-name ns-name}
+         context  {:alias-map alias-map
+                   :refer-map refer-map
+                   :ns-name ns-name}
          aligned? #(matching-form? % aligned-forms context)
          align    #(align-columns % align-single-column-lines?)]
      (transform form edit-all aligned? align))))
@@ -755,11 +764,16 @@
   (z/replace zloc (n/newline-node "\n")))
 
 (defn remove-blank-lines-in-forms
-  [form blank-line-forms alias-map]
-  (let [ns-name     (find-namespace (z/of-node form))
-        context     {:alias-map alias-map, :ns-name ns-name}
-        blank-line? #(blank-line-in-form? % blank-line-forms context)]
-    (transform form edit-all blank-line? replace-with-single-newline)))
+  ([form blank-line-forms alias-map]
+   (remove-blank-lines-in-forms form blank-line-forms alias-map
+                                default-options))
+  ([form blank-line-forms alias-map opts]
+   (let [ns-name     (find-namespace (z/of-node form))
+         context     {:alias-map alias-map
+                      :refer-map (:refer-map opts)
+                      :ns-name ns-name}
+         blank-line? #(blank-line-in-form? % blank-line-forms context)]
+     (transform form edit-all blank-line? replace-with-single-newline))))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
@@ -772,6 +786,11 @@
           (= :as (z/sexpr zloc)))))
 
 #?(:clj
+   (defn- refer-keyword? [zloc]
+     (and (= :token (z/tag zloc))
+          (= :refer (z/sexpr zloc)))))
+
+#?(:clj
    (defn- symbol-node? [zloc]
      (some-> zloc z/node n/symbol-node?)))
 
@@ -780,18 +799,44 @@
      (some-> zloc z/leftmost (z/find (comp symbol-node? skip-meta)))))
 
 #?(:clj
+   (do
+     (defn- current-namespace [as-zloc]
+       (some-> as-zloc leftmost-symbol z/sexpr))
+
+     (defn- parent-namespace [grandparent-node]
+       (when-not (ns-require-form? grandparent-node)
+         (when (or (z/vector? grandparent-node)
+                   (z/list? grandparent-node))
+           (first (z/child-sexprs grandparent-node)))))
+
+     (defn- ns-str [parent-namespace current-ns]
+       (if parent-namespace
+         (format "%s.%s" parent-namespace current-ns)
+         (str current-ns)))
+
+     (defn- refer-zloc->refer-mapping [refer-zloc]
+       (let [refer-vec         (some-> refer-zloc z/right z/sexpr)
+             current-ns        (current-namespace refer-zloc)
+             grandparent-node  (some-> refer-zloc z/up z/up)
+             parent-ns         (parent-namespace grandparent-node)]
+         (when (and (vector? refer-vec) (symbol? current-ns))
+           (let [ns-str (ns-str parent-ns current-ns)]
+             (->> refer-vec (map (fn [sym] [(str sym) ns-str])) (into {}))))))
+
+     (defn- refer-map-for-form [form]
+       (when-let [req-zloc (-> form z/of-node (z/find z/next ns-require-form?))]
+         (->> (find-all req-zloc refer-keyword?)
+              (map refer-zloc->refer-mapping)
+              (apply merge))))))
+
+#?(:clj
    (defn- as-zloc->alias-mapping [as-zloc]
      (let [alias             (some-> as-zloc z/right z/sexpr)
-           current-namespace (some-> as-zloc leftmost-symbol z/sexpr)
+           current-ns        (current-namespace as-zloc)
            grandparent-node  (some-> as-zloc z/up z/up)
-           parent-namespace  (when-not (ns-require-form? grandparent-node)
-                               (when (or (z/vector? grandparent-node)
-                                         (z/list? grandparent-node))
-                                 (first (z/child-sexprs grandparent-node))))]
-       (when (and (symbol? alias) (symbol? current-namespace))
-         {(str alias) (if parent-namespace
-                        (format "%s.%s" parent-namespace current-namespace)
-                        (str current-namespace))}))))
+           parent-ns         (parent-namespace grandparent-node)]
+       (when (and (symbol? alias) (symbol? current-ns))
+         {(str alias) (ns-str parent-ns current-ns)}))))
 
 #?(:clj
    (defn- alias-map-for-form [form]
@@ -818,7 +863,12 @@
                           (:extra-blank-line-forms opts))
          alias-map #?(:clj  (merge (alias-map-for-form form)
                                    (stringify-map (:alias-map opts)))
-                      :cljs (stringify-map (:alias-map opts)))]
+                      :cljs (stringify-map (:alias-map opts)))
+         refer-map #?(:clj  (merge (refer-map-for-form form)
+                                   (stringify-map (:refer-map opts)))
+                      :cljs (stringify-map (:refer-map opts)))
+
+         opts      (assoc opts :refer-map refer-map)]
      (-> form
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
@@ -841,7 +891,7 @@
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)
          (cond-> (:remove-blank-lines-in-forms? opts)
-           (remove-blank-lines-in-forms blank alias-map))))))
+           (remove-blank-lines-in-forms blank alias-map opts))))))
 
 (defn reformat-string
   "Reformat a string. Accepts a map of [formatting options][1].
