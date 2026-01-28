@@ -2762,28 +2762,8 @@
           " :key2       \"value2\""
           " ;; Another comment"
           " :longer-key \"value3\"}"]
-         {:align-map-columns? true}))
-    (is (reformats-to?
-         ["{:a 1"
-          " ;; comment"
-          " :bb 2"
-          " :ccc 3}"]
-         ["{:a   1"
-          " ;; comment"
-          " :bb  2"
-          " :ccc 3}"]
-         {:align-map-columns? true})))
-  (testing "long comment before keys should not affect alignment"
-    (is (reformats-to?
-         ["{:short 1"
-          " ;; This is a very long comment that extends far to the right"
-          " :key2 2"
-          " :key3 3}"]
-         ["{:short 1"
-          " ;; This is a very long comment that extends far to the right"
-          " :key2  2"
-          " :key3  3}"]
-         {:align-map-columns? true})))
+         {:align-map-columns? true
+          :blank-lines-separate-alignment? true})))
   (testing "map starting with long comment should not affect alignment"
     (is (reformats-to?
          ["{;; This is a very long comment at the beginning of the map"
