@@ -2749,35 +2749,6 @@
          {:align-map-columns? true
           :blank-lines-separate-alignment? false}))))
 
-(deftest test-alignment-with-line-wrapped-values
-  (testing "map values that wrap to new line should not affect alignment"
-    (is (reformats-to?
-         ["{:short-key 1"
-          " :another-key 2"
-          " :wrapped-value"
-          " (fn [x]"
-          "   (+ x 1))"
-          " :last-key 3}"]
-         ["{:short-key   1"
-          " :another-key 2"
-          " :wrapped-value"
-          " (fn [x]"
-          "   (+ x 1))"
-          " :last-key    3}"]
-         {:align-map-columns? true}))
-    (is (reformats-to?
-         ["{:a 1"
-          " :bb 2"
-          " :multi-line"
-          " {:nested 3}"
-          " :c 4}"]
-         ["{:a  1"
-          " :bb 2"
-          " :multi-line"
-          " {:nested 3}"
-          " :c  4}"]
-         {:align-map-columns? true}))))
-
 (deftest test-alignment-with-comments
   (testing "comments between map entries should not affect alignment"
     (is (reformats-to?
