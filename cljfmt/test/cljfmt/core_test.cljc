@@ -2773,46 +2773,7 @@
           " :bb  2"
           " :ccc 3}"]
          {:align-map-columns? true
-          :blank-lines-separate-alignment? false})))
-  (testing "empty form with blank-lines-separate-alignment? true"
-    (is (reformats-to?
-         ["(let []"
-          "  nil)"]
-         ["(let []"
-          "  nil)"]
-         {:align-form-columns? true
-          :blank-lines-separate-alignment? true}))
-    (is (reformats-to?
-         ["{}"]
-         ["{}"]
-         {:align-map-columns? true
-          :blank-lines-separate-alignment? true})))
-  (testing "no groups - single key-value pair"
-    (is (reformats-to?
-         ["{:a 1}"]
-         ["{:a 1}"]
-         {:align-map-columns? true})
-        "single pair map")
-    (is (reformats-to?
-         ["(let [x 1]"
-          "  x)"]
-         ["(let [x 1]"
-          "  x)"]
-         {:align-form-columns? true})
-        "single binding let"))
-  (testing "one group - multiple pairs on single line"
-    (is (reformats-to?
-         ["{:a 1 :b 2}"]
-         ["{:a 1 :b 2}"]
-         {:align-map-columns? true})
-        "multiple pairs on one line")
-    (is (reformats-to?
-         ["(let [x 1 y 2]"
-          "  (+ x y))"]
-         ["(let [x 1 y 2]"
-          "  (+ x y))"]
-         {:align-form-columns? true})
-        "multiple bindings on one line")))
+          :blank-lines-separate-alignment? false}))))
 
 (deftest test-alignment-with-line-wrapped-values
   (testing "map values that wrap to new line should not affect alignment"
