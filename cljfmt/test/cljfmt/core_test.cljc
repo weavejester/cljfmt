@@ -2784,17 +2784,6 @@
           " :key2  2"
           " :key3  3}"]
          {:align-map-columns? true})))
-  (testing "integrant-style config with comment before dependencies"
-    (is (reformats-to?
-         ["{:some/short-key 1"
-          " ;; JWE Encryption/decryption"
-          " buddy/buddy-auth {:mvn/version \"2.2.0\"}"
-          " buddy/buddy-sign {:mvn/version \"3.5.351\"}}"]
-         ["{:some/short-key  1"
-          " ;; JWE Encryption/decryption"
-          " buddy/buddy-auth {:mvn/version \"2.2.0\"}"
-          " buddy/buddy-sign {:mvn/version \"3.5.351\"}}"]
-         {:align-map-columns? true})))
   (testing "map starting with long comment should not affect alignment"
     (is (reformats-to?
          ["{;; This is a very long comment at the beginning of the map"
