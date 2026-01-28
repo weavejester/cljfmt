@@ -236,13 +236,19 @@
     :cursive (cursive-two-space-list-indent? zloc)
     :zprint (zprint-two-space-list-indent? zloc)))
 
-(defn- list-indent [zloc context]
-  (if (> (index-of zloc) 1)
-    (-> zloc z/leftmost* z/right margin)
-    (cond-> (coll-indent zloc)
-      (two-space-list-indent? zloc context) inc)))
-
 (def indent-size 2)
+
+(defn- inside-case-form? [zloc]
+  (z/skip z/up
+          #(not (and (= :list (z/tag %)) (-> % z/leftmost z/sexpr (= 'case))))
+          zloc))
+
+(defn- list-indent [zloc context]
+  (cond
+    (<= (index-of zloc) 1)   (cond-> (coll-indent zloc)
+                               (two-space-list-indent? zloc context) inc)
+    (inside-case-form? zloc) (inc (margin (z/up zloc)))
+    :else                    (-> zloc z/leftmost* z/right margin)))
 
 (defn- indent-width [zloc]
   (case (z/tag zloc)
