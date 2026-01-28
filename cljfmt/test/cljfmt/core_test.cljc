@@ -244,6 +244,25 @@
          ["{:foo [:bar"
           "       :baz]}"])))
 
+  (testing "case multiple values for the same condition in multiple lines"
+    (is (reformats-to?
+         ["(case x"
+          "  ([:a :b] [:c :d] [:e :f]"
+          "           [:g :h]) (do-something))"]
+         ["(case x"
+          "  ([:a :b] [:c :d] [:e :f]"
+          "   [:g :h]) (do-something))"]))
+    (testing "nested into other forms"
+      (is (reformats-to?
+           ["(defn x []"
+            "(case x"
+            "  ([:a :b] [:c :d] [:e :f]"
+            "           [:g :h]) (do-something)))"]
+           ["(defn x []"
+            "  (case x"
+            "    ([:a :b] [:c :d] [:e :f]"
+            "     [:g :h]) (do-something)))"]))))
+
   (testing "embedded structures"
     (is (reformats-to?
          ["(let [foo {:x 1"
