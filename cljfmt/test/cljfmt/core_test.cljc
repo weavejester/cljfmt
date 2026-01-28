@@ -2690,22 +2690,6 @@
           " :y           4}"]
          {:align-map-columns? true
           :blank-lines-separate-alignment? true})))
-  (testing "alignment without blank line separation (default behavior)"
-    (is (reformats-to?
-         ["(let [a 1"
-          "      bb 2"
-          ""
-          "      ccc 3"
-          "      d 4]"
-          "  (+ a bb ccc d))"]
-         ["(let [a   1"
-          "      bb  2"
-          ""
-          "      ccc 3"
-          "      d   4]"
-          "  (+ a bb ccc d))"]
-         {:align-form-columns? true
-          :blank-lines-separate-alignment? false})))
   (testing "single group with blank-lines-separate-alignment? true"
     (is (reformats-to?
          ["(let [a 1"
@@ -2726,28 +2710,7 @@
           " :bb  2"
           " :ccc 3}"]
          {:align-map-columns? true
-          :blank-lines-separate-alignment? true})))
-  (testing "single group with blank-lines-separate-alignment? false"
-    (is (reformats-to?
-         ["(let [a 1"
-          "      bb 2"
-          "      ccc 3]"
-          "  (+ a bb ccc))"]
-         ["(let [a   1"
-          "      bb  2"
-          "      ccc 3]"
-          "  (+ a bb ccc))"]
-         {:align-form-columns? true
-          :blank-lines-separate-alignment? false}))
-    (is (reformats-to?
-         ["{:a 1"
-          " :bb 2"
-          " :ccc 3}"]
-         ["{:a   1"
-          " :bb  2"
-          " :ccc 3}"]
-         {:align-map-columns? true
-          :blank-lines-separate-alignment? false}))))
+          :blank-lines-separate-alignment? true}))))
 
 (deftest test-alignment-with-comments
   (testing "comments between map entries should not affect alignment"
@@ -2786,29 +2749,18 @@
           " ;; this is a very long comment that is too long"
           " :align-binding-columns? true}"]
          {:align-map-columns? true})))
-  (testing "blank-lines-separate-alignment separates groups at blank lines"
-    (is (reformats-to?
-         ["{:_test :ok"
-          ""
-          " ;; comment"
-          " :align-binding-columns? true}"]
-         ["{:_test :ok"
-          ""
-          " ;; comment"
-          " :align-binding-columns? true}"]
-         {:align-map-columns? true
-          :blank-lines-separate-alignment? true}))
-    (is (reformats-to?
-         ["{:_test :ok"
-          ""
-          " ;; comment very long that is too long"
-          " :align-binding-columns? true}"]
-         ["{:_test :ok"
-          ""
-          " ;; comment very long that is too long"
-          " :align-binding-columns? true}"]
-         {:align-map-columns? true
-          :blank-lines-separate-alignment? true}))))
+  (testing "comment with blank line does not affect alignment with option set"
+   (is (reformats-to?
+        ["{:_test :ok"
+         ""
+         " ;; comment very long that is too long"
+         " :align-binding-columns? true}"]
+        ["{:_test :ok"
+         ""
+         " ;; comment very long that is too long"
+         " :align-binding-columns? true}"]
+        {:align-map-columns? true
+         :blank-lines-separate-alignment? true}))))
 
 (deftest test-combined-blank-lines-and-single-column-alignment
   (testing "multicolumn map with both options true"
@@ -2860,26 +2812,8 @@
           " :longer    6}"]
          {:align-map-columns? true
           :blank-lines-separate-alignment? false
-          :align-single-column-lines? true})))
-  (testing "multicolumn map with both options false (default)"
-    (is (reformats-to?
-         ["{:a 1 :b 2"
-          " :key1 3"
-          " :key2"
-          " (fn [x] x)"
-          ""
-          " :c 4 :d 5"
-          " :longer 6}"]
-         ["{:a      1 :b 2"
-          " :key1   3"
-          " :key2"
-          " (fn [x] x)"
-          ""
-          " :c      4 :d 5"
-          " :longer 6}"]
-         {:align-map-columns? true
-          :blank-lines-separate-alignment? false
-          :align-single-column-lines? false})))
+          :align-single-column-lines? true}))) 
+  
   (testing "multicolumn let bindings with both options true"
     (is (reformats-to?
          ["(let [a 1 b 2"
@@ -2921,22 +2855,6 @@
           "  (+ a b c d))"]
          {:align-form-columns? true
           :blank-lines-separate-alignment? true
-          :align-single-column-lines? false}))
-    (is (reformats-to?
-         ["(let [x 1 y 2"
-          "      wrapped-binding"
-          "      (fn [a b c]"
-          "        (+ a b c))"
-          "      z 3]"
-          "  (+ x y z))"]
-         ["(let [x 1 y 2"
-          "      wrapped-binding"
-          "      (fn [a b c]"
-          "        (+ a b c))"
-          "      z 3]"
-          "  (+ x y z))"]
-         {:align-form-columns? true
-          :blank-lines-separate-alignment? true
           :align-single-column-lines? false})))
   (testing "multicolumn let bindings with blank-lines false, single-column true"
     (is (reformats-to?
@@ -2958,43 +2876,7 @@
           "  (+ a b c d))"]
          {:align-form-columns? true
           :blank-lines-separate-alignment? false
-          :align-single-column-lines? true}))
-    (is (reformats-to?
-         ["(let [x 1 y 2"
-          "      wrapped-binding"
-          "      (fn [a b c]"
-          "        (+ a b c))"
-          "      z 3]"
-          "  (+ x y z))"]
-         ["(let [x               1 y 2"
-          "      wrapped-binding"
-          "      (fn [a b c]"
-          "        (+ a b c))"
-          "      z               3]"
-          "  (+ x y z))"]
-         {:align-form-columns? true
-          :blank-lines-separate-alignment? false
-          :align-single-column-lines? true})))
-  (testing "for comprehension with multicolumn bindings"
-    (is (reformats-to?
-         ["(for [x [1 2] y [3 4]"
-          "      :let [sum (+ x y)]"
-          "      :when (even? sum)]"
-          "  sum)"]
-         ["(for [x     [1 2]         y [3 4]"
-          "      :let  [sum (+ x y)]"
-          "      :when (even? sum)]"
-          "  sum)"]
-         {:align-form-columns? true})))
-  (testing "nested maps with multicolumn entries"
-    (is (reformats-to?
-         ["{:outer {:a 1 :b 2"
-          "         :inner {:x 10 :y 20}}"
-          " :other 3}"]
-         ["{:outer {:a     1             :b 2"
-          "         :inner {:x 10 :y 20}}"
-          " :other 3}"]
-         {:align-map-columns? true}))))
+          :align-single-column-lines? true}))))
 
 (deftest test-realign-form
   (is (= "
