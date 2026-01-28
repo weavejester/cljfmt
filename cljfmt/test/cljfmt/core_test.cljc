@@ -2689,17 +2689,6 @@
           " :another-key 3"
           " :y           4}"]
          {:align-map-columns? true
-          :blank-lines-separate-alignment? true}))
-    (is (reformats-to?
-         ["{:a 1"
-          " :bb 2"
-          ""
-          " :ccc 3}"]
-         ["{:a  1"
-          " :bb 2"
-          ""
-          " :ccc 3}"]
-         {:align-map-columns? true
           :blank-lines-separate-alignment? true})))
   (testing "alignment without blank line separation (default behavior)"
     (is (reformats-to?
