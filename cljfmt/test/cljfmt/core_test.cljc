@@ -2676,6 +2676,7 @@
           "  ...)"]
          {:align-form-columns? true
           :blank-lines-separate-alignment? true})))
+
   (testing "maps with blank line separation"
     (is (reformats-to?
          ["{:x 1"
@@ -2690,6 +2691,7 @@
           " :y           4}"]
          {:align-map-columns? true
           :blank-lines-separate-alignment? true})))
+
   (testing "single group with blank-lines-separate-alignment? true"
     (is (reformats-to?
          ["(let [a 1"
@@ -2727,6 +2729,7 @@
           " :longer-key \"value3\"}"]
          {:align-map-columns? true
           :blank-lines-separate-alignment? true})))
+
   (testing "map starting with long comment should not affect alignment"
     (is (reformats-to?
          ["{;; This is a very long comment at the beginning of the map"
@@ -2738,6 +2741,7 @@
           " :bb  2"
           " :ccc 3}"]
          {:align-map-columns? true})))
+
   (testing "comment with blank line causes alignment across entire map by default"
     (is (reformats-to?
          ["{:_test :ok"
@@ -2749,18 +2753,19 @@
           " ;; this is a very long comment that is too long"
           " :align-binding-columns? true}"]
          {:align-map-columns? true})))
+
   (testing "comment with blank line does not affect alignment with option set"
-   (is (reformats-to?
-        ["{:_test :ok"
-         ""
-         " ;; comment very long that is too long"
-         " :align-binding-columns? true}"]
-        ["{:_test :ok"
-         ""
-         " ;; comment very long that is too long"
-         " :align-binding-columns? true}"]
-        {:align-map-columns? true
-         :blank-lines-separate-alignment? true}))))
+    (is (reformats-to?
+         ["{:_test :ok"
+          ""
+          " ;; comment very long that is too long"
+          " :align-binding-columns? true}"]
+         ["{:_test :ok"
+          ""
+          " ;; comment very long that is too long"
+          " :align-binding-columns? true}"]
+         {:align-map-columns? true
+          :blank-lines-separate-alignment? true}))))
 
 (deftest test-combined-blank-lines-and-single-column-alignment
   (testing "multicolumn map with both options true"
@@ -2781,6 +2786,7 @@
          {:align-map-columns? true
           :blank-lines-separate-alignment? true
           :align-single-column-lines? true})))
+
   (testing "multicolumn map with blank-lines true, single-column false"
     (is (reformats-to?
          ["{:short 1 :x 2"
@@ -2794,6 +2800,7 @@
          {:align-map-columns? true
           :blank-lines-separate-alignment? true
           :align-single-column-lines? false})))
+
   (testing "multicolumn map with blank-lines false, single-column true"
     (is (reformats-to?
          ["{:a 1 :b 2"
@@ -2812,8 +2819,8 @@
           " :longer    6}"]
          {:align-map-columns? true
           :blank-lines-separate-alignment? false
-          :align-single-column-lines? true}))) 
-  
+          :align-single-column-lines? true})))
+
   (testing "multicolumn let bindings with both options true"
     (is (reformats-to?
          ["(let [a 1 b 2"
@@ -2835,6 +2842,7 @@
          {:align-form-columns? true
           :blank-lines-separate-alignment? true
           :align-single-column-lines? true})))
+
   (testing "multicolumn let bindings with blank-lines true, single-column false"
     (is (reformats-to?
          ["(let [a 1 b 2"
@@ -2856,6 +2864,7 @@
          {:align-form-columns? true
           :blank-lines-separate-alignment? true
           :align-single-column-lines? false})))
+
   (testing "multicolumn let bindings with blank-lines false, single-column true"
     (is (reformats-to?
          ["(let [a 1 b 2"
