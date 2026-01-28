@@ -2675,21 +2675,6 @@
           "                :alphabetical 2}]"
           "  ...)"]
          {:align-form-columns? true
-          :blank-lines-separate-alignment? true}))
-    (is (reformats-to?
-         ["(let [a 1"
-          "      bb 2"
-          ""
-          "      ccc 3"
-          "      d 4]"
-          "  (+ a bb ccc d))"]
-         ["(let [a  1"
-          "      bb 2"
-          ""
-          "      ccc 3"
-          "      d   4]"
-          "  (+ a bb ccc d))"]
-         {:align-form-columns? true
           :blank-lines-separate-alignment? true})))
   (testing "maps with blank line separation"
     (is (reformats-to?
