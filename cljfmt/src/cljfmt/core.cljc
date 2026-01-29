@@ -238,22 +238,20 @@
     :zprint (zprint-two-space-list-indent? zloc)))
 
 (defn- first-form-in-line? [zloc]
-  (and (some? zloc)
-       (if-let [zloc (z/left* zloc)]
-         (if (space? zloc)
-           (recur zloc)
-           (or (z/linebreak? zloc) (comment? zloc)))
-         true)))
+  (if-let [zloc (z/left* zloc)]
+    (if (space? zloc)
+      (recur zloc)
+      (or (z/linebreak? zloc) (comment? zloc)))
+    true))
 
 (defn- list-indent [zloc context]
   (let [idx (index-of zloc)
         has-uneval-before? #(and (= idx 1) (-> zloc z/left* uneval?))]
     (if (or (> idx 1) (has-uneval-before?))
       (let [first-arg (-> zloc z/leftmost* z/right)]
-        (if (or (not (uneval? first-arg))
-                (first-form-in-line? first-arg))
-          (margin first-arg)
-          (inc (margin first-arg))))
+        (cond-> (margin first-arg)
+          (not (or (not (uneval? first-arg)) (first-form-in-line? first-arg)))
+          inc))
       (cond-> (coll-indent zloc)
         (two-space-list-indent? zloc context)
         inc))))
@@ -448,9 +446,8 @@
       (reader-conditional? gp) (coll-indent zloc)
       (#{:list :fn} tag)       (custom-indent zloc indents context)
       (= :meta tag)            (indent-amount (z/up zloc) indents context)
-      (= :uneval tag)          (if (first-form-in-line? (z/up zloc))
-                                 (margin (z/up zloc))
-                                 (inc (margin (z/up zloc))))
+      (= :uneval tag)          (cond-> (margin (z/up zloc))
+                                 (not (first-form-in-line? (z/up zloc))) inc)
       :else                    (coll-indent zloc))))
 
 (defn- indent-line [zloc indents context]
