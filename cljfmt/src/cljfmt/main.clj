@@ -23,6 +23,9 @@
    [nil "--[no-]align-map-columns"
     :default (:align-map-columns? defaults)
     :id :align-map-columns?]
+   [nil "--[no-]blank-lines-separate-alignment"
+    :default (:blank-lines-separate-alignment? defaults)
+    :id :blank-lines-separate-alignment?]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
