@@ -2728,7 +2728,8 @@
           " ;; Another comment"
           " :longer-key \"value3\"}"]
          {:align-map-columns? true
-          :blank-lines-separate-alignment? true})))
+          :blank-lines-separate-alignment? true
+          :align-single-column-lines? false})))
 
   (testing "map starting with long comment should not affect alignment"
     (is (reformats-to?
@@ -2752,7 +2753,8 @@
           ""
           " ;; this is a very long comment that is too long"
           " :align-binding-columns? true}"]
-         {:align-map-columns? true})))
+         {:align-map-columns? true
+          :align-single-column-lines? false})))
 
   (testing "comment with blank line does not affect alignment with option set"
     (is (reformats-to?

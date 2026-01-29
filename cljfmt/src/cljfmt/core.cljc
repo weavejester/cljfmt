@@ -702,9 +702,6 @@
                     reduce-columns)
         maximizer (fn [zloc c max-pos]
                     (if (and (= c col)
-                             (not (and (pos? c)
-                                       (preceded-by-linebreak? zloc)))
-                             (not (comment? zloc))
                              (or (:align-single-column-lines? opts)
                                  (not (single-column-line? zloc))))
                       (max max-pos (node-end-position zloc))
