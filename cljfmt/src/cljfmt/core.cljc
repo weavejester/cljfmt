@@ -599,14 +599,6 @@
 (defn sort-ns-references [form]
   (transform form edit-all ns-reference? sort-arguments))
 
-(defn- preceded-by-linebreak? [zloc]
-  (loop [z (z/left* zloc)]
-    (cond
-      (nil? z) false
-      (line-break? z) true
-      (or (space? z) (comma? z)) (recur (z/left* z))
-      :else false)))
-
 (defn- reduce-columns [zloc f init]
   (loop [zloc zloc, col 0, acc init]
     (if-some [zloc (skip-whitespace-and-commas zloc z/right*)]
