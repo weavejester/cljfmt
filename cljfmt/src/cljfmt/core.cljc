@@ -693,7 +693,7 @@
                     reduce-column-group
                     reduce-columns)
         maximizer (fn [zloc c max-pos]
-                    (if (and (= c col)
+                    (if (and (= c (dec col))
                              (or (:align-single-column-lines? opts)
                                  (not (single-column-line? zloc))))
                       (max max-pos (node-end-position zloc))
@@ -703,11 +703,10 @@
 (defn- align-one-column
   [zloc col {:keys [blank-lines-separate-alignment?] :as opts}]
   (if-some [zloc (z/down zloc)]
-    (let [start-position-fn (let [col (dec col)]
-                              (if blank-lines-separate-alignment?
-                                #(column-start-position % col opts)
-                                (constantly
-                                 (column-start-position zloc col opts))))]
+    (let [start-position-fn (if blank-lines-separate-alignment?
+                              #(column-start-position % col opts)
+                              (constantly
+                               (column-start-position zloc col opts)))]
       (z/up (edit-column zloc col #(pad-to-position % (start-position-fn %)))))
     zloc))
 
