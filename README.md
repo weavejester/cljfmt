@@ -210,15 +210,19 @@ In most environments, cljfmt will look for the following configuration
 files in the current and parent directories:
 
 * `.cljfmt.edn`
-* `.cljfmt.clj`
 * `cljfmt.edn`
-* `cljfmt.clj`
 
 The configuration file should contain a map of options.
 
-**Note:** By default, `.clj` config files are ignored because they can
-execute arbitrary code. To enable reading `.clj` config files, use the
-`--read-clj-config-files` command-line option.
+Since 0.16.0, only `.edn` configuration files are loaded by default.
+You can enable reading of `.clj` configuration files with the
+`--read-clj-config-files` flag:
+
+* `.cljfmt.clj`
+* `cljfmt.clj`
+
+If a `.clj` configuration file is detected without this flag, a warning
+is printed.
 
 ### Leiningen
 
