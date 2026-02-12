@@ -1,3 +1,13 @@
+## 0.16.0 (2026-02-12)
+
+- Breaking change: ignore .clj config files by default (#391)
+- Added `:blank-lines-separate-alignment?` option (#378)
+- Added `:normalize-newlines-at-file-end?` option (#358)
+- Added `:align-single-column-lines?` option (#384)
+- Fixed case-sensitive sorting of ns references (#388)
+- Fixed exit code for `:fix/summary` (#385)
+- Increased native-image PageSize to 64K (#395)
+
 ## 0.15.6 (2025-11-22)
 
 - Added `:remove-blank-lines-in-forms?` option (#375)
