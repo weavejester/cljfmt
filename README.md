@@ -320,6 +320,10 @@ In order to load the standard configuration file from Leiningen, add the
   true if cljfmt should correct the indentation of your code.
   Defaults to true.
 
+* `:indent-rich-comments?` -
+  true if cljfmt should indent the closing parenthesis of `(comment ...)`
+  forms. Defaults to true.
+
 * `:indents` -
   a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
   See [INDENTS.md][] for a complete explanation. This will **replace**

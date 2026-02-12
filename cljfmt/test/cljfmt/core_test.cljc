@@ -1041,6 +1041,38 @@
          ["#?@(:cljs[foo bar] :clj[baz quux])"]
          ["#?@(:cljs [foo bar] :clj [baz quux])"]))))
 
+(deftest test-indent-rich-comments
+  (testing "indent-rich-comments?"
+    (is (reformats-to?
+         ["(comment"
+          "  (range 5"
+          "         )"
+          "    (interpose '* (range 5))"
+          "  (->> (range 5) (interpose '*))"
+          "  (= *1 *2)"
+          "  )"]
+         ["(comment"
+          "  (range 5)"
+          "  (interpose '* (range 5))"
+          "  (->> (range 5) (interpose '*))"
+          "  (= *1 *2)"
+          "  )"]
+         {:indent-rich-comments? true}))
+    (is (reformats-to?
+         ["(comment"
+          "  (foo)"
+          "  )"]
+         ["(comment"
+          "  (foo))"]
+         {:indent-rich-comments? false}))
+    (is (reformats-to?
+         ["(comment"
+          "  (foo))"]
+         ["(comment"
+          "  (foo)"
+          "  )"]
+         {:indent-rich-comments? true}))))
+
 (deftest test-consecutive-blank-lines
   (is (reformats-to?
        ["(foo)"
