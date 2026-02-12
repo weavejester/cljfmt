@@ -267,6 +267,12 @@ In order to load the standard configuration file from Leiningen, add the
   padding in other lines. Only applies when `:align-form-columns?` or  
   `:align-map-columns?` is true. Defaults to false. **Experimental.**  
 
+* `blank-lines-separate-alignment` -
+  true if cljfmt should treat blank lines as separators when
+  aligning columns. When enabled, alignment groups are separated by
+  blank lines, allowing independent alignment within each group.
+  Defaults to false. **Experimental.**
+
 * `:blank-line-forms` - map of symbols that tell cljfmt which forms are allowed
   to have blank lines inside of them. The value may be either `:all`, which
   means blank lines are allowed between all elements in the form, e.g. `{'cond
