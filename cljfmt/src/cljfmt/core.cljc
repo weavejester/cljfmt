@@ -783,17 +783,13 @@
 (defn- replace-with-single-newline [zloc]
   (z/replace zloc (n/newline-node "\n")))
 
-(defn remove-blank-lines-in-forms
-  ([form blank-line-forms alias-map]
-   (remove-blank-lines-in-forms form blank-line-forms alias-map
-                                default-options))
-  ([form blank-line-forms alias-map opts]
-   (let [ns-name     (find-namespace (z/of-node form))
-         context     {:alias-map alias-map
-                      :refer-map (:refer-map opts)
-                      :ns-name ns-name}
-         blank-line? #(blank-line-in-form? % blank-line-forms context)]
-     (transform form edit-all blank-line? replace-with-single-newline))))
+(defn remove-blank-lines-in-forms [form blank-line-forms opts]
+  (let [ns-name     (find-namespace (z/of-node form))
+        context     {:alias-map (:alias-map opts)
+                     :refer-map (:refer-map opts)
+                     :ns-name ns-name}
+        blank-line? #(blank-line-in-form? % blank-line-forms context)]
+    (transform form edit-all blank-line? replace-with-single-newline)))
 
 #?(:clj
    (defn- ns-require-form? [zloc]
@@ -888,7 +884,7 @@
                                    (stringify-map (:refer-map opts)))
                       :cljs (stringify-map (:refer-map opts)))
 
-         opts      (assoc opts :refer-map refer-map)]
+         opts      (assoc opts :refer-map refer-map :alias-map alias-map)]
      (-> form
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
@@ -911,7 +907,7 @@
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)
          (cond-> (:remove-blank-lines-in-forms? opts)
-           (remove-blank-lines-in-forms blank alias-map opts))))))
+           (remove-blank-lines-in-forms blank opts))))))
 
 (defn reformat-string
   "Reformat a string. Accepts a map of [formatting options][1].
