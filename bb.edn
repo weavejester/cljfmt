@@ -11,8 +11,10 @@
         :extra-deps {eftest/eftest {:mvn/version "0.6.0"}}
         :extra-paths ["cljfmt/test"]
         :requires ([clojure.test :as t]
-                   [cljfmt.core-test])
-        :task (let [{:keys [fail error]} (t/run-tests 'cljfmt.core-test)]
+                   [cljfmt.core-test]
+                   [cljfmt.config-test])
+        :task (let [{:keys [fail error]} (t/run-tests 'cljfmt.config-test
+                                                      'cljfmt.core-test)]
                 (when (or (pos? fail)
                           (pos? error))
                   (throw (ex-info "Tests failed" {:babashka/exit 1}))))}}}

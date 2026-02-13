@@ -1,4 +1,4 @@
-(defproject dev.weavejester/cljfmt "0.15.6"
+(defproject dev.weavejester/cljfmt "0.16.0"
   :description "A library for formatting Clojure code"
   :url "https://github.com/weavejester/cljfmt"
   :scm {:dir ".."}
@@ -30,6 +30,7 @@
           "--report-unsupported-elements-at-runtime"
           "-H:Log=registerResource:"
           "--no-fallback"
+          "-H:PageSize=65536"
           "-J-Xmx3g"]}
   :aliases {"test-all" ["with-profile" "+cljs" "test"]}
   :profiles

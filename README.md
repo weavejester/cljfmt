@@ -88,7 +88,7 @@ Use `--help` for a list of all the command-line options.
 For persistent configuration, you can use a [configuration file][].
 
 [homebrew]: https://brew.sh/
-[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.15.6/cljfmt-0.15.6-win-amd64.zip
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.16.0/cljfmt-0.16.0-win-amd64.zip
 [configuration file]: #configuration
 
 ### Clojure Tools
@@ -97,7 +97,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.15.6"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.16.0"}' :as cljfmt
 ```
 
 To use the tool to check for formatting errors in your project, run:
@@ -120,7 +120,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[dev.weavejester/lein-cljfmt "0.15.6"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.16.0"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -148,7 +148,7 @@ recursively checks / fixes paths like the CLI tool.
 First, add the dependency:
 
 ```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.15.6"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.16.0"}}}
 ```
 
 Then use the library:
@@ -210,11 +210,19 @@ In most environments, cljfmt will look for the following configuration
 files in the current and parent directories:
 
 * `.cljfmt.edn`
-* `.cljfmt.clj`
 * `cljfmt.edn`
-* `cljfmt.clj`
 
 The configuration file should contain a map of options.
+
+Since 0.16.0, only `.edn` configuration files are loaded by default.
+You can enable reading of `.clj` configuration files with the
+`--read-clj-config-files` flag:
+
+* `.cljfmt.clj`
+* `cljfmt.clj`
+
+If a `.clj` configuration file is detected without this flag, a warning
+is printed.
 
 ### Leiningen
 
@@ -263,22 +271,29 @@ In order to load the standard configuration file from Leiningen, add the
   true if cljfmt should align the keys and values of maps such that they
   line up in columns. Defaults to false. **Experimental.**
 
-* `:align-single-column-lines?` -  
-  true if cljfmt should include lines with single columns (where the  
-  value is on the next line) when calculating column alignment. When  
-  false, forms with wrapped values won't cause excessive horizontal  
-  padding in other lines. Only applies when `:align-form-columns?` or  
-  `:align-map-columns?` is true. Defaults to false. **Experimental.**  
+* `:align-single-column-lines?` -
+  true if cljfmt should include lines with single columns (where the
+  value is on the next line) when calculating column alignment. When
+  false, forms with wrapped values won't cause excessive horizontal
+  padding in other lines. Only applies when `:align-form-columns?` or
+  `:align-map-columns?` is true. Defaults to false. **Experimental.**
 
-* `:blank-line-forms` - map of symbols that tell cljfmt which forms are allowed
-  to have blank lines inside of them. The value may be either `:all`, which
-  means blank lines are allowed between all elements in the form, e.g. `{'cond
-  :all}` to allow blank lines between any of the elements inside `cond`; or it
-  may be a set of element indexes that are allowed to have blank lines, e.g.
-  `{'let #{0}}`, to allow blank lines in the binding of a `let` form. This
-  option will **replace** the default blank line forms; use `:extra-blank-line`
-  forms to add additional ones. Used by `:remove-blank-lines-in-forms?`.
+* `blank-lines-separate-alignment` -
+  true if cljfmt should treat blank lines as separators when aligning
+  columns. When enabled, alignment groups are separated by blank lines,
+  allowing independent alignment within each group. Defaults to false.
   **Experimental.**
+
+* `:blank-line-forms` -
+  a map of symbols that tell cljfmt which forms are allowed to have
+  blank lines inside of them. The value may be either `:all`, which
+  means blank lines are allowed between all elements in the form, e.g.
+  `{'cond :all}` to allow blank lines between any of the elements
+  inside `cond`; or it may be a set of element indexes that are allowed
+  to have blank lines, e.g. `{'let #{0}}`, to allow blank lines in the
+  binding of a `let` form. This option will **replace** the default
+  blank line forms; use `:extra-blank-line` forms to add additional
+  ones. Used by `:remove-blank-lines-in-forms?`. **Experimental.**
 
 * `:extra-aligned-forms` -
   the same as `:aligned-forms`, except that this will **append** to the
@@ -316,6 +331,11 @@ In order to load the standard configuration file from Leiningen, add the
   a map of var symbols to indentation rules, i.e. `{symbol [& rules]}`.
   See [INDENTS.md][] for a complete explanation. This will **replace**
   the default indents.
+
+* `:normalize-newlines-at-file-end?` -
+  true if cljfmt should ensure files end with exactly one newline
+  character. This will remove multiple trailing blank lines and ensure
+  a final newline exists. Defaults to false.
 
 * `:remove-blank-lines-in-forms?` - whether to remove blank lines inside forms
   per the [community style recommendation][no-blank-lines]. By default, this
@@ -369,6 +389,11 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:parallel?` -
   true if cljfmt should process files in parallel. Defaults to false.
+
+* `:read-clj-config-files?` -
+  true if cljfmt should read `.clj` config files. For security reasons,
+  `.clj` config files are ignored by default, as they can execute arbitrary
+  code. Set this to true to enable reading `.clj` config files. Defaults to false.
 
 * `:paths` -
   determines which files and directories to recursively search for

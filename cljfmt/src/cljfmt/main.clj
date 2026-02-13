@@ -8,7 +8,7 @@
             [clojure.tools.cli :as cli])
   (:gen-class))
 
-(def ^:const VERSION "0.15.6")
+(def ^:const VERSION "0.16.0")
 
 (defn- cli-options [defaults]
   [["-h" "--help"]
@@ -23,6 +23,9 @@
    [nil "--[no-]align-map-columns"
     :default (:align-map-columns? defaults)
     :id :align-map-columns?]
+   [nil "--[no-]blank-lines-separate-alignment"
+    :default (:blank-lines-separate-alignment? defaults)
+    :id :blank-lines-separate-alignment?]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
@@ -64,12 +67,18 @@
    [nil "--[no-]remove-trailing-whitespace"
     :default (:remove-trailing-whitespace? defaults)
     :id :remove-trailing-whitespace?]
+   [nil "--[no-]normalize-newlines-at-file-end"
+    :default (:normalize-newlines-at-file-end? defaults)
+    :id :normalize-newlines-at-file-end?]
    [nil "--[no-]sort-ns-references"
     :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]
    [nil "--[no-]split-keypairs-over-multiple-lines"
     :default (:split-keypairs-over-multiple-lines? defaults)
-    :id :split-keypairs-over-multiple-lines?]])
+    :id :split-keypairs-over-multiple-lines?]
+   [nil "--[no-]read-clj-config-files"
+    :default (:read-clj-config-files? defaults)
+    :id :read-clj-config-files?]])
 
 (defn- abort [& msg]
   (binding [*out* *err*]
@@ -98,7 +107,7 @@
 (defn- find-config-file [args]
   (let [opts (cli/parse-opts args (cli-options config/default-config))]
     (or (some-> opts :options :config jio/file)
-        (config/find-config-file))))
+        (config/find-config-file "" opts))))
 
 (defn -main [& args]
   (let [config-file   (find-config-file args)
