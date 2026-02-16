@@ -453,18 +453,15 @@
 
 (defn indent
   ([form]
-   (indent form default-indents {}))
+   (indent form default-indents default-options))
   ([form indents]
-   (indent form indents {}))
-  ([form indents alias-map]
-   (indent form indents alias-map default-options))
-  ([form indents alias-map opts]
+   (indent form indents default-options))
+  ([form indents opts]
    (let [ns-name (find-namespace (z/of-node form))
          sorted-indents (sort-by indent-order indents)
-         context (merge (select-keys opts [:function-arguments-indentation])
-                        {:alias-map alias-map
-                         :refer-map (:refer-map opts)
-                         :ns-name ns-name})]
+         context (merge (select-keys opts [:function-arguments-indentation
+                                           :alias-map :refer-map])
+                        {:ns-name ns-name})]
      (transform form edit-all #(should-indent? % opts)
                 #(indent-line % sorted-indents context)))))
 
@@ -496,10 +493,8 @@
    (indent (unindent form)))
   ([form indents]
    (indent (unindent form) indents))
-  ([form indents alias-map]
-   (indent (unindent form) indents alias-map))
-  ([form indents alias-map opts]
-   (indent (unindent form opts) indents alias-map opts)))
+  ([form indents opts]
+   (indent (unindent form opts) indents opts)))
 
 (defn final? [zloc]
   (and (nil? (z/right* zloc)) (root? (z/up* zloc))))
@@ -745,16 +740,13 @@
   (and (or (z/list? zloc) (z/list? (z/up zloc)))
        (some #(matching-form-index? zloc % context) form-indexes)))
 
-(defn align-form-columns
-  ([form aligned-forms alias-map]
-   (align-form-columns form aligned-forms alias-map default-options))
-  ([form aligned-forms alias-map opts]
-   (let [ns-name  (find-namespace (z/of-node form))
-         context  {:alias-map alias-map
-                   :refer-map (:refer-map opts)
-                   :ns-name ns-name}
-         aligned? #(matching-form? % aligned-forms context)]
-     (transform form edit-all aligned? #(align-columns % opts)))))
+(defn align-form-columns [form aligned-forms opts]
+  (let [ns-name  (find-namespace (z/of-node form))
+        context  {:alias-map (:alias-map opts)
+                  :refer-map (:refer-map opts)
+                  :ns-name ns-name}
+        aligned? #(matching-form? % aligned-forms context)]
+    (transform form edit-all aligned? #(align-columns % opts))))
 
 (defn realign-form
   "Realign a rewrite-clj form such that the columns line up into columns."
@@ -899,11 +891,11 @@
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
            remove-multiple-non-indenting-spaces)
          (cond-> (:indentation? opts)
-           (reindent indents alias-map opts))
+           (reindent indents opts))
          (cond-> (:align-map-columns? opts)
            (align-map-columns opts))
          (cond-> (:align-form-columns? opts)
-           (align-form-columns aligned alias-map opts))
+           (align-form-columns aligned opts))
          (cond-> (:remove-trailing-whitespace? opts)
            remove-trailing-whitespace)
          (cond-> (:remove-blank-lines-in-forms? opts)
