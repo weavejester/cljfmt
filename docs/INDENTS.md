@@ -47,6 +47,17 @@ example:
 
 This rule would match both `com.example/foo` and `ex/foo`.
 
+Similarly, you can supply a refer map for matching unqualified symbols
+that have been referred from other namespaces:
+
+```clojure
+{:extra-indents {com.example/foo [[:inner 0]]}
+ :refer-map {foo com.example}}
+```
+
+This rule would match `com.example/foo`, `ex/foo` (if `ex` is aliased),
+and the unqualified symbol `foo` (if it's referred from `com.example`).
+
 If we want to replace the existing indentation rules, we can use the
 `:indents` option instead of `:extra-indents`. For example, to replace
 all indentation rules with a constant 2-space indentation:
