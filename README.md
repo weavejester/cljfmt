@@ -319,6 +319,13 @@ In order to load the standard configuration file from Leiningen, add the
 
   Defaults to `:community`
 
+* `:ignore-lines-with-only-uneval-tags?` -
+  true if cljfmt should preserve linebreaks after `#_` uneval tags that
+  appear on their own line. When true (default), `#_` followed by a newline
+  will not be moved to the same line as the following form. When false,
+  `#_` tags will be formatted onto the same line as the form they comment
+  out. Defaults to true.
+
 * `:indent-line-comments?` -
   true if cljfmt should align whole-line `;;` comments with the code.
   Defaults to false.
