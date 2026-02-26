@@ -392,6 +392,63 @@
           #?@(:cljs [:alias-map {"t" "thing.core"}])})
         "applies custom indentation to namespaced defrecord")
     (is (reformats-to?
+         ["(ns example"
+          "(:require [thing.core :refer [timed]]))"
+          ""
+          "(timed \"x\""
+          ":a"
+          ":b)"]
+         ["(ns example"
+          "    (:require [thing.core :refer [timed]]))"
+          ""
+          "(timed \"x\""
+          "  :a"
+          "  :b)"]
+         {:indents {'thing.core/timed [[:inner 0]]}
+          #?@(:cljs [:refer-map {"timed" "thing.core"}])})
+        "applies custom indentation to referred vars")
+    (is (reformats-to?
+         ["(ns example"
+          "(:require [thing.core :refer [timed another]]))"
+          ""
+          "(timed \"x\""
+          ":a"
+          ":b)"
+          ""
+          "(another \"y\""
+          ":c"
+          ":d)"]
+         ["(ns example"
+          "    (:require [thing.core :refer [timed another]]))"
+          ""
+          "(timed \"x\""
+          "  :a"
+          "  :b)"
+          ""
+          "(another \"y\""
+          "  :c"
+          "  :d)"]
+         {:indents {'thing.core/timed [[:inner 0]]
+                    'thing.core/another [[:inner 0]]}
+          #?@(:cljs [:refer-map {"timed" "thing.core", "another" "thing.core"}])})
+        "applies custom indentation to multiple referred vars")
+    (is (reformats-to?
+         ["(ns example"
+          "(:require [thing [core :refer [timed]]]))"
+          ""
+          "(timed \"x\""
+          ":a"
+          ":b)"]
+         ["(ns example"
+          "    (:require [thing [core :refer [timed]]]))"
+          ""
+          "(timed \"x\""
+          "  :a"
+          "  :b)"]
+         {:indents {'thing.core/timed [[:inner 0]]}
+          #?@(:cljs [:refer-map {"timed" "thing.core"}])})
+        "applies custom indentation to referred vars from nested requires")
+    (is (reformats-to?
          ["(let [ns subs]"
           "  (ns \"string\"))"
           ""

@@ -247,6 +247,13 @@ In order to load the standard configuration file from Leiningen, add the
   symbols or strings. This option is unnecessary in most cases, because
   cljfmt will parse the `ns` declaration in each file. See [INDENTS.md][].
 
+* `:refer-map` -
+  a map of referred symbol names to fully qualified namespace names. May be
+  symbols or strings. This option is unnecessary in most cases, because
+  cljfmt will parse the `ns` declaration in each file to extract `:refer`
+  mappings. Used for indentation rules when unqualified symbols need to be
+  matched against qualified indent rules. See [INDENTS.md][].
+
 * `:aligned-forms` -
   a map of symbols to indexes that tell cljfmt where to expect forms it
   should align. For example, `{'let #{0}}` indicates that the first
