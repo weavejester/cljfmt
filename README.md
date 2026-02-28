@@ -278,6 +278,23 @@ In order to load the standard configuration file from Leiningen, add the
   padding in other lines. Only applies when `:align-form-columns?` or
   `:align-map-columns?` is true. Defaults to false. **Experimental.**
 
+* `:max-column-alignment-gap` -
+  an integer that limits the maximum number of spaces that can be
+  inserted between a key and its aligned value. When alignment would
+  require more spaces than this limit on a given row (e.g. due to a
+  long destructuring key), that row falls back to a single space
+  instead. Other rows with shorter keys are still aligned normally.
+  Useful for preventing `:align-map-columns?` from producing excessive
+  horizontal padding in maps that contain outlier keys such as
+  destructuring forms. Defaults to nil (no limit). **Experimental.**
+
+  ```clojure
+  ;; With :align-map-columns? true and :max-column-alignment-gap 10
+  {{:keys [several things here]} :sub-map   ;; gap is 0, aligned
+   :keys [direct values]                    ;; gap would be 25, falls back to 1 space
+   :as everything}                          ;; gap would be 27, falls back to 1 space
+  ```
+
 * `blank-lines-separate-alignment` -
   true if cljfmt should treat blank lines as separators when aligning
   columns. When enabled, alignment groups are separated by blank lines,

@@ -379,6 +379,7 @@
    :align-map-columns?                    false
    :align-single-column-lines?            false
    :aligned-forms                         default-aligned-forms
+   :max-column-alignment-gap              nil
    :blank-line-forms                      blank-line-forms
    :blank-lines-separate-alignment?       false
    :extra-aligned-forms                   {}
@@ -664,8 +665,15 @@
   (-> (update-space-left zloc padding)
       (z/subedit-> (pad-inside-node padding))))
 
-(defn- pad-to-position [zloc start-position]
-  (pad-node zloc (- start-position (margin zloc))))
+(defn- pad-to-position [zloc start-position opts]
+  (let [delta   (- start-position (margin zloc))
+        max-gap (:max-column-alignment-gap opts)]
+    (if max-gap
+      (let [left (z/left* zloc)
+            s    (if (space? left) (node-str-length left) 0)
+            gap  (+ delta s -1)]
+        (pad-node zloc (if (> gap max-gap) (- 1 s) delta)))
+      (pad-node zloc delta))))
 
 (defn- edit-column [zloc column f]
   (loop [zloc zloc, col 0]
@@ -713,8 +721,9 @@
     (let [start-position-fn (if blank-lines-separate-alignment?
                               #(column-start-position % col opts)
                               (constantly
-                               (column-start-position zloc col opts)))]
-      (z/up (edit-column zloc col #(pad-to-position % (start-position-fn %)))))
+                               (column-start-position zloc col opts)))
+          edit-column-fn    #(pad-to-position % (start-position-fn %) opts)]
+      (z/up (edit-column zloc col edit-column-fn)))
     zloc))
 
 (defn- align-columns [zloc opts]
