@@ -26,6 +26,10 @@
    [nil "--[no-]blank-lines-separate-alignment"
     :default (:blank-lines-separate-alignment? defaults)
     :id :blank-lines-separate-alignment?]
+   [nil "--max-column-alignment-gap"
+    :default (:max-column-alignment-gap defaults)
+    :parse-fn #(cond-> % (string? %) parse-long)
+    :id :max-column-alignment-gap]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
