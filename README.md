@@ -88,7 +88,7 @@ Use `--help` for a list of all the command-line options.
 For persistent configuration, you can use a [configuration file][].
 
 [homebrew]: https://brew.sh/
-[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.16.0/cljfmt-0.16.0-win-amd64.zip
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.16.1/cljfmt-0.16.1-win-amd64.zip
 [configuration file]: #configuration
 
 ### Clojure Tools
@@ -97,7 +97,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.16.0"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.16.1"}' :as cljfmt
 ```
 
 To use the tool to check for formatting errors in your project, run:
@@ -120,7 +120,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[dev.weavejester/lein-cljfmt "0.16.0"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.16.1"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -148,7 +148,7 @@ recursively checks / fixes paths like the CLI tool.
 First, add the dependency:
 
 ```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.16.0"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.16.1"}}}
 ```
 
 Then use the library:
@@ -214,7 +214,7 @@ files in the current and parent directories:
 
 The configuration file should contain a map of options.
 
-Since 0.16.0, only `.edn` configuration files are loaded by default.
+Since 0.16.1, only `.edn` configuration files are loaded by default.
 You can enable reading of `.clj` configuration files with the
 `--read-clj-config-files` flag:
 

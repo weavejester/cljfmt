@@ -1,3 +1,7 @@
+## 0.16.1 (2026-03-02)
+
+- Added `:refer-map` for recognizing referred symbols (#368)
+
 ## 0.16.0 (2026-02-12)
 
 - Breaking change: ignore .clj config files by default (#391)
