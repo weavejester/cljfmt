@@ -133,58 +133,10 @@ jobs:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.2
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
-  macos_amd64:
-    macos:
-      xcode: 14.2.0
-    resource_class: macos.m1.medium.gen1
-    working_directory: ~/repo
-    environment:
-      GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.2/Contents/Home
-    steps:
-      - macos/install-rosetta
-      - checkout
-      - restore_cache:
-          keys:
-            - macos-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
-      - run:
-          name: Download Leiningen
-          working_directory: ~/
-          command: |
-            curl -O -sL https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
-            chmod +x lein
-      - run:
-          name: Download GraalVM
-          working_directory: ~/
-          command: |
-            if ! [ -d graalvm-ce-java17-22.3.2 ]; then
-              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.2/graalvm-ce-java17-darwin-amd64-22.3.2.tar.gz
-              tar xzf graalvm-ce-java17-darwin-amd64-22.3.2.tar.gz
-            fi
-      - run:
-          name: Install GraalVM native-image
-          working_directory: ~/graalvm-ce-java17-22.3.2/Contents/Home
-          command: bin/gu install native-image
-      - run:
-          name: Compile native image
-          working_directory: ~/repo/cljfmt
-          command: ~/lein native-image
-      - run:
-          name: Create artifact
-          working_directory: ~/repo/cljfmt/target
-          command: tar -czf cljfmt-${CIRCLE_TAG}-darwin-amd64.tar.gz cljfmt
-      - persist_to_workspace:
-          root: cljfmt/target
-          paths:
-            - cljfmt-*.tar.gz
-      - save_cache:
-          paths:
-            - ~/.m2
-            - ~/graalvm-ce-java17-22.3.2
-          key: macos-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
   macos_aarch64:
     macos:
-      xcode: 14.2.0
-    resource_class: macos.m1.large.gen1
+      xcode: 16.4.0
+    resource_class: m4pro.large
     working_directory: ~/repo
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.1/Contents/Home
@@ -317,12 +269,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v?\d+\.\d+\.\d+$/
-      - macos_amd64:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?\d+\.\d+\.\d+$/
       - macos_aarch64:
           filters:
             branches:
@@ -340,7 +286,6 @@ workflows:
             - uberjar
             - linux_amd64
             - linux_aarch64
-            - macos_amd64
             - macos_aarch64
             - windows
           filters:
