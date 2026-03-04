@@ -3012,6 +3012,61 @@
           :blank-lines-separate-alignment? false
           :align-single-column-lines? true}))))
 
+(deftest test-max-column-alignment-gap
+  (testing "short keys align when gap is within limit"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x      1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 10})))
+  (testing "outlier key falls back to 1 space; others stay aligned"
+    (is (reformats-to?
+         ["{{:keys [several things here]} :sub-map"
+          " {:keys [several things]} :sub-map2"
+          " :keys                         [direct values]"
+          " :as                           everything}"]
+         ["{{:keys [several things here]} :sub-map"
+          " {:keys [several things]}      :sub-map2"
+          " :keys [direct values]"
+          " :as everything}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 10})))
+  (testing "nil gap (default) aligns all columns regardless of width"
+    (is (reformats-to?
+         ["{{:keys [several things here]} :sub-map"
+          " :keys [direct values]"
+          " :as everything}"]
+         ["{{:keys [several things here]} :sub-map"
+          " :keys                         [direct values]"
+          " :as                           everything}"]
+         {:align-map-columns? true})))
+  (testing "gap of 1 resets all alignment to 1 space"
+    (is (reformats-to?
+         ["{:x      1"
+          " :longer 2}"]
+         ["{:x 1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 1})))
+  (testing "gap limit: aligns when new-gap equals limit"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x      1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 6})))
+  (testing "gap limit: falls back when new-gap exceeds limit by 1"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x 1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 5}))))
+
 (deftest test-realign-form
   (is (= "
 {:x   1
