@@ -665,14 +665,16 @@
   (-> (update-space-left zloc padding)
       (z/subedit-> (pad-inside-node padding))))
 
-(defn- pad-to-position [zloc start-position opts]
-  (let [delta   (- start-position (margin zloc))
-        max-gap (:max-column-alignment-gap opts)]
+(defn- count-spaces [zloc]
+  (if (space? zloc) (node-str-length zloc) 0))
+
+(defn- pad-to-position [zloc start-position {max-gap :max-column-alignment-gap}]
+  {:pre [(or (nil? max-gap) (pos-int? max-gap))]}
+  (let [delta (- start-position (margin zloc))]
     (if max-gap
-      (let [left (z/left* zloc)
-            s    (if (space? left) (node-str-length left) 0)
-            gap  (+ delta s -1)]
-        (pad-node zloc (if (> gap max-gap) (- 1 s) delta)))
+      (let [old-gap (count-spaces (z/left* zloc))
+            new-gap (+ old-gap delta)]
+        (pad-node zloc (if (> new-gap max-gap) (- 1 old-gap) delta)))
       (pad-node zloc delta))))
 
 (defn- edit-column [zloc column f]

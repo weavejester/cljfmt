@@ -3040,14 +3040,30 @@
           " :keys                         [direct values]"
           " :as                           everything}"]
          {:align-map-columns? true})))
-  (testing "gap of 0 resets all alignment to 1 space"
+  (testing "gap of 1 resets all alignment to 1 space"
     (is (reformats-to?
          ["{:x      1"
           " :longer 2}"]
          ["{:x 1"
           " :longer 2}"]
          {:align-map-columns?       true
-          :max-column-alignment-gap 0}))))
+          :max-column-alignment-gap 1})))
+  (testing "gap limit: aligns when new-gap equals limit"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x      1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 6})))
+  (testing "gap limit: falls back when new-gap exceeds limit by 1"
+    (is (reformats-to?
+         ["{:x 1"
+          " :longer 2}"]
+         ["{:x 1"
+          " :longer 2}"]
+         {:align-map-columns?       true
+          :max-column-alignment-gap 5}))))
 
 (deftest test-realign-form
   (is (= "
