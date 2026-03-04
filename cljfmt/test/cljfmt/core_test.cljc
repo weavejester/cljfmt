@@ -3024,9 +3024,11 @@
   (testing "outlier key falls back to 1 space; others stay aligned"
     (is (reformats-to?
          ["{{:keys [several things here]} :sub-map"
+          " {:keys [several things]} :sub-map2"
           " :keys                         [direct values]"
           " :as                           everything}"]
          ["{{:keys [several things here]} :sub-map"
+          " {:keys [several things]}      :sub-map2"
           " :keys [direct values]"
           " :as everything}"]
          {:align-map-columns?       true
