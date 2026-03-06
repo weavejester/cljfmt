@@ -41,6 +41,9 @@
     :validate [#{:community :cursive :zprint}
                "Must be one of community, cursive, or zprint"]
     :id :function-arguments-indentation]
+   [nil "--[no-]ignore-lines-with-only-uneval-tags"
+    :default (:ignore-lines-with-only-uneval-tags? defaults)
+    :id :ignore-lines-with-only-uneval-tags?]
    [nil "--[no-]indentation"
     :default (:indentation? defaults)
     :id :indentation?]

@@ -61,18 +61,22 @@
 (defn- comment? [zloc]
   (some-> zloc z/node n/comment?))
 
-(defn- surrounding-whitespace? [zloc]
+(defn- uneval? [zloc]
+  (= (z/tag zloc) :uneval))
+
+(defn- surrounding-whitespace? [zloc opts]
   (and (not (top? zloc))
        (clojure-whitespace? zloc)
+       (not (and (:ignore-lines-with-only-uneval-tags? opts)
+                 (z/linebreak? zloc)
+                 (nil? (z/left* zloc))
+                 (uneval? (z/up* zloc))))
        (or (and (nil? (z/left* zloc))
                 ;; don't convert ~ @ to ~@
                 (not (unquote-deref? (z/right* zloc)))
                 ;; ignore space before comments
                 (not (comment? (z/right* zloc))))
            (nil? (z/skip z/right* clojure-whitespace? zloc)))))
-
-(defn remove-surrounding-whitespace [form]
-  (transform form edit-all surrounding-whitespace? z/remove*))
 
 (defn- element? [zloc]
   (and zloc (not (z/whitespace-or-comment? zloc))))
@@ -209,9 +213,6 @@
 (defn- coll-indent [zloc]
   (-> zloc z/leftmost* margin))
 
-(defn- uneval? [zloc]
-  (= (z/tag zloc) :uneval))
-
 (defn- index-of [zloc]
   (->> (iterate z/left zloc)
        (remove uneval?)
@@ -236,11 +237,24 @@
     :cursive (cursive-two-space-list-indent? zloc)
     :zprint (zprint-two-space-list-indent? zloc)))
 
+(defn- first-form-in-line? [zloc]
+  (if-let [zloc (z/left* zloc)]
+    (if (space? zloc)
+      (recur zloc)
+      (or (z/linebreak? zloc) (comment? zloc)))
+    true))
+
 (defn- list-indent [zloc context]
-  (if (> (index-of zloc) 1)
-    (-> zloc z/leftmost* z/right margin)
-    (cond-> (coll-indent zloc)
-      (two-space-list-indent? zloc context) inc)))
+  (let [idx (index-of zloc)
+        has-uneval-before? #(and (= idx 1) (-> zloc z/left* uneval?))]
+    (if (or (> idx 1) (has-uneval-before?))
+      (let [first-arg (-> zloc z/leftmost* z/right)]
+        (cond-> (margin first-arg)
+          (not (or (not (uneval? first-arg)) (first-form-in-line? first-arg)))
+          inc))
+      (cond-> (coll-indent zloc)
+        (two-space-list-indent? zloc context)
+        inc))))
 
 (def indent-size 2)
 
@@ -346,14 +360,6 @@
           (z/leftmost zloc)
           (repeat n z/right)))
 
-(defn- first-form-in-line? [zloc]
-  (and (some? zloc)
-       (if-let [zloc (z/left* zloc)]
-         (if (space? zloc)
-           (recur zloc)
-           (or (z/linebreak? zloc) (comment? zloc)))
-         true)))
-
 (defn- block-indent [zloc key idx context]
   (when (form-matches-key? zloc key context)
     (let [zloc-after-idx (some-> zloc (nth-form (inc idx)))]
@@ -385,6 +391,7 @@
    :extra-blank-line-forms                {}
    :extra-indents                         {}
    :function-arguments-indentation        :community
+   :ignore-lines-with-only-uneval-tags?   true
    :indent-line-comments?                 false
    :indentation?                          true
    :indents                               default-indents
@@ -411,6 +418,12 @@
   (fn [zloc]
     (when (form-matches-key? zloc sym context)
       (list-indent zloc context))))
+
+(defn remove-surrounding-whitespace
+  ([form]
+   (remove-surrounding-whitespace form default-options))
+  ([form opts]
+   (transform form edit-all #(surrounding-whitespace? % opts) z/remove*)))
 
 (defn- make-indenter [[key opts] context]
   (apply some-fn (map (partial indenter-fn key context) opts)))
@@ -440,6 +453,8 @@
       (reader-conditional? gp) (coll-indent zloc)
       (#{:list :fn} tag)       (custom-indent zloc indents context)
       (= :meta tag)            (indent-amount (z/up zloc) indents context)
+      (= :uneval tag)          (cond-> (margin (z/up zloc))
+                                 (not (first-form-in-line? (z/up zloc))) inc)
       :else                    (coll-indent zloc))))
 
 (defn- indent-line [zloc indents context]
@@ -880,7 +895,7 @@
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
          (cond-> (:remove-surrounding-whitespace? opts)
-           remove-surrounding-whitespace)
+           (remove-surrounding-whitespace opts))
          (cond-> (:insert-missing-whitespace? opts)
            insert-missing-whitespace)
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
