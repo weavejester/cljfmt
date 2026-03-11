@@ -424,26 +424,21 @@
                      (pattern? key)          2)]
     [(- max-depth) key-order (str key)]))
 
-(defn- custom-indent [zloc indents context]
-  (if (empty? indents)
-    (list-indent zloc context)
-    (let [indenter (->> indents
-                        (map #(make-indenter % context))
-                        (apply some-fn))]
-      (or (indenter zloc)
-          (list-indent zloc context)))))
+(defn- custom-indent [zloc indenter context]
+  (or (when indenter (indenter zloc))
+      (list-indent zloc context)))
 
-(defn- indent-amount [zloc indents context]
+(defn- indent-amount [zloc indenter context]
   (let [tag (-> zloc z/up z/tag)
         gp  (-> zloc z/up z/up)]
     (cond
       (reader-conditional? gp) (coll-indent zloc)
-      (#{:list :fn} tag)       (custom-indent zloc indents context)
-      (= :meta tag)            (indent-amount (z/up zloc) indents context)
+      (#{:list :fn} tag)       (custom-indent zloc indenter context)
+      (= :meta tag)            (indent-amount (z/up zloc) indenter context)
       :else                    (coll-indent zloc))))
 
-(defn- indent-line [zloc indents context]
-  (let [width (indent-amount zloc indents context)]
+(defn- indent-line [zloc indenter context]
+  (let [width (indent-amount zloc indenter context)]
     (if (> width 0)
       (z/insert-right* zloc (whitespace width))
       zloc)))
@@ -461,9 +456,12 @@
          sorted-indents (sort-by indent-order indents)
          context (merge (select-keys opts [:function-arguments-indentation
                                            :alias-map :refer-map])
-                        {:ns-name ns-name})]
+                        {:ns-name ns-name})
+         indenter (some->> (seq sorted-indents)
+                           (map #(make-indenter % context))
+                           (apply some-fn))]
      (transform form edit-all #(should-indent? % opts)
-                #(indent-line % sorted-indents context)))))
+                #(indent-line % indenter context)))))
 
 (defn- map-key? [zloc]
   (and (z/map? (z/up zloc))
