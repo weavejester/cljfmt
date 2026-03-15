@@ -430,7 +430,7 @@ In order to load the standard configuration file from Leiningen, add the
 
 ## License
 
-Copyright © 2025 James Reeves
+Copyright © 2026 James Reeves
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
