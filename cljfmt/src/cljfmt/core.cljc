@@ -453,7 +453,7 @@
   ([form indents]
    (indent form indents default-options))
   ([form indents opts]
-   (let [ns-name (find-namespace (z/of-node form))
+   (let [ns-name (or (::ns-name opts) (find-namespace (z/of-node form)))
          sorted-indents (sort-by indent-order indents)
          context (merge (select-keys opts [:function-arguments-indentation
                                            :alias-map :refer-map])
@@ -750,7 +750,7 @@
        (some #(matching-form-index? zloc % context) form-indexes)))
 
 (defn align-form-columns [form aligned-forms opts]
-  (let [ns-name  (find-namespace (z/of-node form))
+  (let [ns-name  (or (::ns-name opts) (find-namespace (z/of-node form)))
         context  {:alias-map (:alias-map opts)
                   :refer-map (:refer-map opts)
                   :ns-name ns-name}
@@ -785,7 +785,7 @@
   (z/replace zloc (n/newline-node "\n")))
 
 (defn remove-blank-lines-in-forms [form blank-line-forms opts]
-  (let [ns-name     (find-namespace (z/of-node form))
+  (let [ns-name     (or (::ns-name opts) (find-namespace (z/of-node form)))
         context     {:alias-map (:alias-map opts)
                      :refer-map (:refer-map opts)
                      :ns-name ns-name}
@@ -880,7 +880,9 @@
          refer-map #?(:clj  (merge (refer-map-for-form form)
                                    (stringify-map (:refer-map opts)))
                       :cljs (stringify-map (:refer-map opts)))
-         opts      (assoc opts :refer-map refer-map :alias-map alias-map)]
+         ns-name   (find-namespace (z/of-node form))
+         opts      (assoc opts :refer-map refer-map :alias-map alias-map
+                          ::ns-name ns-name)]
      (-> form
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
