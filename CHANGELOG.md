@@ -1,3 +1,8 @@
+## 0.16.2 (2026-03-15)
+
+- Added `:max-column-alignment-gap` option (#398)
+- Improved indentation performance (#401)
+
 ## 0.16.1 (2026-03-02)
 
 - Added `:refer-map` for recognizing referred symbols (#368)
