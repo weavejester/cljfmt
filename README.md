@@ -202,7 +202,7 @@ you define in your `bb.edn` file like so:
 {:deps  {dev.weavejester/cljfmt {:mvn/version "0.16.3"}}
  :tasks {fmt {:doc "Check formatting with cljfmt"
               :requires ([cljfmt.tool :as fmt])
-              :task (fmt/check {})}}
+              :task (fmt/check {})}}}
 ```
 
 [babashka]: https://babashka.org/
