@@ -193,6 +193,20 @@ Or to recursively fix paths:
 (fmt/fix {:paths ["/path/to/fix"], :report report/clojure})
 ```
 
+### Babashka
+
+cljfmt can also be used from [Babashka][], either as a library or as a tool that
+you define in your `bb.edn` file like so:
+
+```edn
+{:deps  {dev.weavejester/cljfmt {:mvn/version "0.16.2"}}
+ :tasks {fmt {:doc "Check formatting with cljfmt"
+              :requires ([cljfmt.tool :as fmt])
+              :task (fmt/check {})}}
+```
+
+[babashka]: https://babashka.org/
+
 ### Editor Integration
 
 You can also use cljfmt via your editor. Several Clojure editing
