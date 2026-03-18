@@ -9,7 +9,7 @@
   (merge cljfmt/default-options
          {:project-root "."
           :paths        ["src" "test" "project.clj"]
-          :file-pattern #"\.clj[csx]?$"
+          :file-pattern #"\.(?:clj[csx]?|bb)$"
           :ansi?        true
           :parallel?    false}))
 

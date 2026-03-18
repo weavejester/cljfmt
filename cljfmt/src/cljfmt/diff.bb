@@ -1,13 +1,18 @@
-(ns cljfmt.diff)
-
-(defn throw-not-implemented []
-  (throw (ex-info "Not implemented in the babashka version of cljfmt yet" {})))
+(ns cljfmt.diff
+  (:require [borkdude.text-diff :as td]))
 
 (defn unified-diff
-  ([_filename _original _revised]
-   (throw-not-implemented))
-  ([_filename _original _revised _context]
-   (throw-not-implemented)))
+  ([filename original revised]
+   (unified-diff filename original revised 3))
+  ([filename original revised context]
+   (td/unified-diff original revised {:filename filename :context context})))
 
-(defn colorize-diff [_diff-text]
-  (throw-not-implemented))
+(defn- ansi-colors? []
+  (and (System/console)
+       (System/getenv "TERM")
+       (not (System/getenv "NO_COLOR"))))
+
+(defn colorize-diff [diff-text]
+  (if (ansi-colors?)
+    (td/colorize-unified-diff diff-text)
+    diff-text))
