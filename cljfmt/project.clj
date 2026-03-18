@@ -8,6 +8,7 @@
                  [org.clojure/tools.cli "1.2.245"]
                  [org.clojure/tools.reader "1.5.2"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
+                 [io.github.borkdude/text-diff "0.1.0"]
                  [rewrite-clj "1.2.50"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [io.taylorwood/lein-native-image "0.3.1"]]
