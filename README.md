@@ -228,7 +228,7 @@ files in the current and parent directories:
 
 The configuration file should contain a map of options.
 
-Since 0.16.3, only `.edn` configuration files are loaded by default.
+Since 0.16.0, only `.edn` configuration files are loaded by default.
 You can enable reading of `.clj` configuration files with the
 `--read-clj-config-files` flag:
 
