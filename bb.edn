@@ -1,4 +1,4 @@
-{:deps {cljfmt/cljfmt {:local/root "."}}
+{:deps {dev.weavejester/cljfmt {:local/root "."}}
  :paths ["scripts"]
  :tasks
  {fmt  {:doc "Run cljfmt"
@@ -7,6 +7,9 @@
         :task (shell "clj-kondo --lint cljfmt/src cljfmt/test lein-cljfmt/src")}
   smoke {:doc "Run smoke tests"
          :task smoke-test/-main}
+  bbfmt {:doc "Run cljfmt via Babashka"
+         :requires ([cljfmt.tool :as cljfmt])
+         :task (cljfmt/check {})}
   test {:doc "Run babashka tests"
         :extra-deps {eftest/eftest {:mvn/version "0.6.0"}}
         :extra-paths ["cljfmt/test"]
