@@ -1,3 +1,8 @@
+## 0.16.3 (2026-03-18)
+
+- Added support for diffs in Babashka (#404)
+- Improved performance of `find-namespace` (#402)
+
 ## 0.16.2 (2026-03-15)
 
 - Added `:max-column-alignment-gap` option (#398)
