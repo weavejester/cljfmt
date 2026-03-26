@@ -1,6 +1,30 @@
 (ns cljfmt.config-test
   (:require [cljfmt.config :as config]
+            [clojure.edn :as edn]
+            [clojure.spec.alpha :as s]
             [clojure.test :refer [deftest is testing]]))
+
+(deftest test-validate-config
+  (testing "rejects EDN quoted symbols"
+    (let [edn-key (ffirst (edn/read-string "{'let #{0}}"))]
+      (is (not (s/valid? ::config/config {:blank-line-forms {edn-key #{0}}})))))
+  (testing "rejects CLJ quoted forms"
+    (let [clj-key (-> (read-string "{'let #{0}}") ffirst)]
+      (is (not (s/valid? ::config/config {:blank-line-forms {clj-key #{0}}})))))
+  (testing "valid bare symbols are accepted"
+    (is (s/valid? ::config/config {:blank-line-forms {'cond :all 'let #{0}}})))
+  (testing "valid keys pass through for all symbol-keyed config maps"
+    (is (s/valid? ::config/config {:extra-blank-line-forms {'cond :all}}))
+    (is (s/valid? ::config/config {:aligned-forms {'let #{0}}}))
+    (is (s/valid? ::config/config {:extra-aligned-forms {'let #{0}}}))
+    (is (s/valid? ::config/config {:indents {'defn [[:inner 0]]}}))
+    (is (s/valid? ::config/config {:extra-indents {'defn [[:inner 0]]}})))
+  (testing "valid regex pattern keys are accepted"
+    (is (s/valid? ::config/config {:indents {#"^def" [[:inner 0]]}}))
+    (is (s/valid? ::config/config {:indents {[#"clojure.core" #"^def"] [[:inner 0]]}})))
+  (testing "handles nil and missing values"
+    (is (s/valid? ::config/config {}))
+    (is (not (s/valid? ::config/config nil)))))
 
 (deftest test-convert-legacy-keys
   (is (= {:indents {'foo [[:inner 0]]}}
