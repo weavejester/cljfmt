@@ -270,7 +270,7 @@ In order to load the standard configuration file from Leiningen, add the
 
 * `:aligned-forms` -
   a map of symbols to indexes that tell cljfmt where to expect forms it
-  should align. For example, `{'let #{0}}` indicates that the first
+  should align. For example, `{let #{0}}` indicates that the first
   argument of let (the binding vector) should be aligned. This option
   will **replace** the default aligned forms. Used by
   `:align-form-columns?`. **Experimental.**
@@ -326,9 +326,9 @@ In order to load the standard configuration file from Leiningen, add the
   a map of symbols that tell cljfmt which forms are allowed to have
   blank lines inside of them. The value may be either `:all`, which
   means blank lines are allowed between all elements in the form, e.g.
-  `{'cond :all}` to allow blank lines between any of the elements
+  `{cond :all}` to allow blank lines between any of the elements
   inside `cond`; or it may be a set of element indexes that are allowed
-  to have blank lines, e.g. `{'let #{0}}`, to allow blank lines in the
+  to have blank lines, e.g. `{let #{0}}`, to allow blank lines in the
   binding of a `let` form. This option will **replace** the default
   blank line forms; use `:extra-blank-line` forms to add additional
   ones. Used by `:remove-blank-lines-in-forms?`. **Experimental.**
