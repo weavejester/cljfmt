@@ -316,7 +316,7 @@ In order to load the standard configuration file from Leiningen, add the
    :as everything}                          ;; 27 spaces, falls back to 1 space
   ```
 
-* `blank-lines-separate-alignment` -
+* `:blank-lines-separate-alignment?` -
   true if cljfmt should treat blank lines as separators when aligning
   columns. When enabled, alignment groups are separated by blank lines,
   allowing independent alignment within each group. Defaults to false.
