@@ -3,6 +3,7 @@
             [cljfmt.report :as report]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]))
 
 (def default-config
@@ -28,6 +29,29 @@
     (case (filename-ext file)
       "clj" (read-string contents)
       "edn" (edn/read-string {:readers {'re re-pattern}} contents))))
+
+(defn- valid-symbol? [sym]
+  (and (symbol? sym) (not (str/starts-with? (name sym) "'"))))
+
+(defn- re-pattern? [x]
+  (instance? java.util.regex.Pattern x))
+
+(s/def ::one-indent-key (s/or :symbol valid-symbol? :pattern re-pattern?))
+(s/def ::vec-indent-key (s/tuple ::one-indent-key ::one-indent-key))
+(s/def ::form-key       (s/or :one ::one-indent-key :vec ::vec-indent-key))
+
+(s/def ::indents                (s/map-of ::form-key any?))
+(s/def ::extra-indents          (s/map-of ::form-key any?))
+(s/def ::blank-line-forms       (s/map-of ::one-indent-key any?))
+(s/def ::extra-blank-line-forms (s/map-of ::one-indent-key any?))
+(s/def ::aligned-forms          (s/map-of ::one-indent-key any?))
+(s/def ::extra-aligned-forms    (s/map-of ::one-indent-key any?))
+
+(s/def ::config (s/keys :opt-un [::indents ::extra-indents
+                                 ::blank-line-forms ::extra-blank-line-forms
+                                 ::aligned-forms ::extra-aligned-forms]))
+
+(s/check-asserts true)
 
 (defn convert-legacy-keys [config]
   (cond-> config
@@ -80,7 +104,7 @@
   ([path opts]
    (let [path (if (directory? path)
                 (find-config-file path opts)
-                path)]
-     (->> (some-> path read-config)
-          (merge default-config)
-          (convert-legacy-keys)))))
+                path)
+         custom-config (some-> path read-config)]
+     (when custom-config (s/assert ::config custom-config))
+     (convert-legacy-keys (merge default-config custom-config)))))
