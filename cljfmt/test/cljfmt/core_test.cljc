@@ -2713,6 +2713,19 @@
           " (fn [a b c d e]"
           "   (+ a b c d e))"
           " :key  3}"]
+         {:align-map-columns? true}))
+
+    (is (reformats-to?
+         ["{:key-one 1"
+          " :key3 3"
+          " :key2"
+          " (fn [a b c d e]"
+          "   (+ a b c d e))}"]
+         ["{:key-one 1"
+          " :key3    3"
+          " :key2"
+          " (fn [a b c d e]"
+          "   (+ a b c d e))}"]
          {:align-map-columns? true})))
   (testing "let with wrapped value - :align-single-column-lines? false (default) compact alignment"
     (is (reformats-to?
