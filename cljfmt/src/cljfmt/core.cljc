@@ -479,7 +479,7 @@
       (recur (z/left* previous)))))
 
 (defn- map-key-without-line-break? [zloc]
-  (and (map-key? zloc) (not (preceded-by-line-break? zloc))))
+  (and (map-key? zloc) (z/left zloc) (not (preceded-by-line-break? zloc))))
 
 (defn- insert-newline-left [zloc]
   (z/insert-left* zloc (n/newlines 1)))

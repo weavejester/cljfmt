@@ -1728,6 +1728,41 @@
         " :three four}"]
        {:split-keypairs-over-multiple-lines? true}))
   (is (reformats-to?
+       ["{:name \"Alice\" :age 30}"]
+       ["{:name \"Alice\""
+        " :age 30}"]
+       {:split-keypairs-over-multiple-lines? true
+        :remove-surrounding-whitespace? false})
+      "First key stays on same line as { even without remove-surrounding-whitespace")
+  (is (reformats-to?
+       ["(defn send-notification"
+        "  [to subject body attachment"
+        "   & [{:keys [content-type]"
+        "       :or {content-type"
+        "            \"text/plain; charset=UTF-8\"}}]]"
+        "  (deliver {:from    sender"
+        "            :to      to"
+        "            :subject subject"
+        "            :body    [{:type    content-type"
+        "                       :content body}"
+        "                      (attach attachment)]}))"]
+       ["(defn send-notification"
+        "  [to subject body attachment"
+        "   & [{:keys [content-type]"
+        "       :or   {content-type"
+        "              \"text/plain; charset=UTF-8\"}}]]"
+        "  (deliver {:from    sender"
+        "            :to      to"
+        "            :subject subject"
+        "            :body    [{:type    content-type"
+        "                       :content body}"
+        "                      (attach attachment)]}))"]
+       {:split-keypairs-over-multiple-lines? true
+        :align-map-columns? true
+        :align-form-columns? true
+        :remove-surrounding-whitespace? false})
+      "First key in nested/destructuring maps should not be split from {")
+  (is (reformats-to?
        ["(with-timezone (java.time.OffsetDateTime.)"
         "\"US/Pacific\")"]
        ["(with-timezone (java.time.OffsetDateTime.)"
