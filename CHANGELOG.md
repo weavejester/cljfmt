@@ -1,3 +1,9 @@
+## 0.16.4 (2026-04-13)
+
+* Added validation of user configuration (#406)
+* Fixed `:split-keypairs-over-multiple-lines` on first map key (#409)
+* Fixed `:align-single-column-lines?` for last elements (#411)
+
 ## 0.16.3 (2026-03-18)
 
 - Added support for diffs in Babashka (#404)

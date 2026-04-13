@@ -88,7 +88,7 @@ Use `--help` for a list of all the command-line options.
 For persistent configuration, you can use a [configuration file][].
 
 [homebrew]: https://brew.sh/
-[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.16.3/cljfmt-0.16.3-win-amd64.zip
+[zipped up binary]: https://github.com/weavejester/cljfmt/releases/download/0.16.4/cljfmt-0.16.4-win-amd64.zip
 [configuration file]: #configuration
 
 ### Clojure Tools
@@ -97,7 +97,7 @@ The official Clojure CLI supports installation of thirdparty [tools][].
 To install cljfmt as a tool, run:
 
 ```bash
-clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.16.3"}' :as cljfmt
+clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.16.4"}' :as cljfmt
 ```
 
 To use the tool to check for formatting errors in your project, run:
@@ -120,7 +120,7 @@ clj -Tcljfmt fix
 Leiningen, add the following plugin to your `project.clj` file:
 
 ```clojure
-:plugins [[dev.weavejester/lein-cljfmt "0.16.3"]]
+:plugins [[dev.weavejester/lein-cljfmt "0.16.4"]]
 ```
 
 To use the plugin to check code for formatting errors, run:
@@ -148,7 +148,7 @@ recursively checks / fixes paths like the CLI tool.
 First, add the dependency:
 
 ```edn
-{:deps {dev.weavejester/cljfmt {:mvn/version "0.16.3"}}}
+{:deps {dev.weavejester/cljfmt {:mvn/version "0.16.4"}}}
 ```
 
 Then use the library:
@@ -199,7 +199,7 @@ cljfmt can also be used from [Babashka][], either as a library or as a tool that
 you define in your `bb.edn` file like so:
 
 ```edn
-{:deps  {dev.weavejester/cljfmt {:mvn/version "0.16.3"}}
+{:deps  {dev.weavejester/cljfmt {:mvn/version "0.16.4"}}
  :tasks {fmt {:doc "Check formatting with cljfmt"
               :requires ([cljfmt.tool :as fmt])
               :task (fmt/check {})}}}
