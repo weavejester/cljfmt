@@ -30,6 +30,12 @@
     :default (:max-column-alignment-gap defaults)
     :parse-fn #(cond-> % (string? %) parse-long)
     :id :max-column-alignment-gap]
+   [nil "--max-line-length"
+    :default (:max-line-length defaults)
+    :parse-fn #(cond-> % (string? %) parse-long)
+    :validate [#(or (nil? %) (pos-int? %))
+               "Must be a positive integer when set"]
+    :id :max-line-length]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]
