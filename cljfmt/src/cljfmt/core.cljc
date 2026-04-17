@@ -278,6 +278,12 @@
 (defn- reader-conditional? [zloc]
   (and (reader-macro? zloc) (#{"?" "?@"} (-> zloc z/down token-value str))))
 
+(defn- structural-wrap-under-forbidden-reader-macro? [zloc]
+  (some (fn [a]
+          (and (reader-macro? a)
+               (not (reader-conditional? a))))
+        (take-while some? (iterate z/up* (z/up* zloc)))))
+
 (defn- find-next-keyword [zloc]
   (z/find zloc z/right #(n/keyword-node? (z/node %))))
 
@@ -397,7 +403,8 @@
    :remove-surrounding-whitespace?        true
    :remove-trailing-whitespace?           true
    :sort-ns-references?                   false
-   :split-keypairs-over-multiple-lines?   false})
+   :split-keypairs-over-multiple-lines?   false
+   :max-line-length                       nil})
 
 (defmulti ^:private indenter-fn
   (fn [_sym _context [type & _args]] type))
@@ -483,9 +490,6 @@
 
 (defn- insert-newline-left [zloc]
   (z/insert-left* zloc (n/newlines 1)))
-
-(defn split-keypairs-over-multiple-lines [form]
-  (transform form edit-all map-key-without-line-break? insert-newline-left))
 
 (defn reindent
   ([form]
@@ -630,6 +634,108 @@
                      (map count))
                max 0 (str/split lines #"\r?\n"))))
 
+(defn- map-key-needs-split-for-layout? [zloc opts]
+  (when (map-key-without-line-break? zloc)
+    (let [split? (:split-keypairs-over-multiple-lines? opts)
+          max-len (:max-line-length opts)
+          max-on? (pos-int? max-len)]
+      (cond
+        (and split? (not max-on?)) true
+        max-on? (> (node-end-position zloc) max-len)
+        :else false))))
+
+(defn- split-map-keypairs-for-layout [form opts]
+  (transform form edit-all
+             #(map-key-needs-split-for-layout? % opts)
+             insert-newline-left))
+
+(defn split-keypairs-over-multiple-lines [form]
+  (split-map-keypairs-for-layout form {:split-keypairs-over-multiple-lines? true}))
+
+(defn- ns-import-or-use-list-zloc? [zloc]
+  (and (ns-reference? zloc)
+       (#{:import :use}
+        (try (first (z/sexpr zloc))
+             (catch #?(:clj Exception :cljs :default) _ nil)))))
+
+(defn- ns-require-libspec-vector-zloc? [zloc]
+  (and (z/vector? zloc)
+       (ns-reference? (z/up zloc))
+       (= :require (try (first (z/sexpr (z/up zloc)))
+                        (catch #?(:clj Exception :cljs :default) _ nil)))))
+
+(defn- max-len-structural-wrap-target? [zloc]
+  (and (not (ns-require-libspec-vector-zloc? zloc))
+       (or (#{:vector :map :set :fn} (z/tag zloc))
+           (= :namespaced-map (z/tag zloc))
+           (and (z/list? zloc)
+                (or (not (ns-reference? zloc))
+                    (ns-import-or-use-list-zloc? zloc))))))
+
+(defn- single-line-direct-children? [zloc]
+  (when zloc
+    (loop [c (z/down zloc)]
+      (cond
+        (nil? c)       true
+        (z/linebreak? c) false
+        :else          (recur (z/right* c))))))
+
+(defn- libspec-vector-not-first-after-require? [zloc]
+  (when (ns-require-libspec-vector-zloc? zloc)
+    (loop [p (z/left* zloc)]
+      (cond
+        (nil? p) false
+        (z/whitespace-or-comment? p) (recur (z/left* p))
+        (and (token? p) (= :require (z/sexpr p))) false
+        :else true))))
+
+(defn- wrap-ns-require-libspec-rows-to-max-length [form max-len]
+  (transform form edit-all
+             (fn [zloc]
+               (and (libspec-vector-not-first-after-require? zloc)
+                    (single-line-direct-children? (z/up zloc))
+                    (> (node-end-position zloc) max-len)))
+             insert-newline-left))
+
+(defn- wrap-max-line-length-at-child-boundaries [zloc max-len]
+  (cond
+    (= :namespaced-map (z/tag zloc))
+    (if-let [inner (some-> zloc z/down z/right)]
+      (if (= :map (z/tag inner))
+        (let [wrapped (wrap-max-line-length-at-child-boundaries inner max-len)]
+          (or (some-> wrapped z/up) zloc))
+        zloc)
+      zloc)
+    (not (max-len-structural-wrap-target? zloc))
+    zloc
+    (not (single-line-direct-children? zloc))
+    zloc
+    :else
+    (let [first-el (-> zloc z/down (skip-whitespace-and-commas z/right*))]
+      (if-not first-el
+        zloc
+        (let [last-zloc
+              (loop [current first-el]
+                (if-some [nxt (-> current z/right* (skip-whitespace-and-commas z/right*))]
+                  (recur (if (> (node-end-position nxt) max-len)
+                           (insert-newline-left nxt)
+                           nxt))
+                  current))]
+          (z/up last-zloc))))))
+
+(defn- apply-max-line-length-structural-wrap [form opts]
+  (let [max-len (:max-line-length opts)]
+    (if (pos-int? max-len)
+      (-> form
+          (wrap-ns-require-libspec-rows-to-max-length max-len)
+          (transform edit-all
+                     (fn [zloc]
+                       (and (max-len-structural-wrap-target? zloc)
+                            (single-line-direct-children? zloc)
+                            (not (structural-wrap-under-forbidden-reader-macro? zloc))))
+                     #(wrap-max-line-length-at-child-boundaries % max-len)))
+      form)))
+
 (defn- single-column-line? [zloc]
   (and (let [zloc (skip-whitespace-and-commas (z/right* zloc) z/right*)]
          (or (nil? zloc) (line-break? zloc)))
@@ -661,8 +767,8 @@
     zloc))
 
 (defn- pad-node [zloc padding]
-  (-> (update-space-left zloc padding)
-      (z/subedit-> (pad-inside-node padding))))
+  (z/subedit-node (update-space-left zloc padding)
+                  #(pad-inside-node % padding)))
 
 (defn- count-spaces [zloc]
   (if (space? zloc) (node-str-length zloc) 0))
@@ -887,8 +993,11 @@
      (-> form
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
-         (cond-> (:split-keypairs-over-multiple-lines? opts)
-           split-keypairs-over-multiple-lines)
+         (cond-> (or (:split-keypairs-over-multiple-lines? opts)
+                     (pos-int? (:max-line-length opts)))
+           (split-map-keypairs-for-layout opts))
+         (cond-> (pos-int? (:max-line-length opts))
+           (apply-max-line-length-structural-wrap opts))
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
          (cond-> (:remove-surrounding-whitespace? opts)

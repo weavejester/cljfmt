@@ -1838,6 +1838,143 @@
             'another.lib/overridden [[:block 1]] ;; As this one overrides.
             'some.lib/block2        [[:block 2]]}}))))
 
+(deftest test-max-line-length
+  (testing "disabled by default"
+    (is (reformats-to?
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         {})))
+  (testing "wraps single-line list when a line would exceed limit"
+    (is (reformats-to?
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "   bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         {:max-line-length 40})))
+  (testing "wraps single-line vector"
+    (is (reformats-to?
+         ["[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]"]
+         ["[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          " bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]"]
+         {:max-line-length 40})))
+  (testing "wraps single-line map when a line would exceed limit"
+    (is (reformats-to?
+         ["{:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 :b 2}"]
+         ["{:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1"
+          " :b 2}"]
+         {:max-line-length 40})))
+  (testing "cannot split when only one element exceeds limit"
+    (is (reformats-to?
+         ["(fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo)"]
+         ["(fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo)"]
+         {:max-line-length 40})))
+  (testing "nested single-line lists wrap inner collection"
+    (is (reformats-to?
+         ["((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))"]
+         ["((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))"]
+         {:max-line-length 40})))
+  (testing "does not modify collections that already contain line breaks"
+    (is (reformats-to?
+         ["(f"
+          "  a"
+          "  b)"]
+         ["(f"
+          "  a"
+          "  b)"]
+         {:max-line-length 10
+          :indentation? false})))
+  (testing "idempotent second pass"
+    (let [s    "(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"
+          opts {:max-line-length 40}
+          once (reformat-string s opts)]
+      (is (= once (reformat-string once opts)))))
+  (testing "stable with align-map-columns when both enabled"
+    (is (reformats-to?
+         ["{:x 1}"
+          "(ffffffffffffffffffffffffffffff gggggggggggggggggggggggggggggg)"]
+         ["{:x 1}"
+          "(ffffffffffffffffffffffffffffff"
+          " gggggggggggggggggggggggggggggg)"]
+         {:max-line-length    30
+          :align-map-columns? true})))
+  (testing "with :split-keypairs-over-multiple-lines? and :max-line-length, map keypair breaks are width-gated"
+    (is (reformats-to?
+         ["(x {:a 1 :bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 2} yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy)"]
+         ["(x"
+          " {:a 1 :bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 2}"
+          " yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy)"]
+         {:split-keypairs-over-multiple-lines? true
+          :max-line-length                      55})))
+  (testing "with :sort-ns-references? require vector may reflow after sorting"
+    (is (reformats-to?
+         ["(ns foo (:require [bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb :as b] [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :as a]))"]
+         ["(ns foo"
+          "  (:require [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :as a]"
+          "            [bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb :as b]))"]
+         {:sort-ns-references? true
+          :max-line-length      50})))
+  (testing "with :insert-missing-whitespace? false wrapping still applies"
+    (is (reformats-to?
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         ["(f aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "   bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         {:max-line-length               40
+          :insert-missing-whitespace? false})))
+  (testing "namespaced map wraps inner entries like a map"
+    (is (reformats-to?
+         ["#:foo{:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 :b 2}"]
+         ["#:foo{:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1"
+          "      :b 2}"]
+         {:max-line-length 40})))
+  (testing "set and function literal wrap like other collections"
+    (is (reformats-to?
+         ["#{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}"]
+         ["#{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}"]
+         {:max-line-length 40}))
+    (is (reformats-to?
+         ["#(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         ["#(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"]
+         {:max-line-length 40})))
+  (testing "reader conditional allows wrapping inner collection"
+    (is (reformats-to?
+         ["#?(:clj [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb])"]
+         ["#?(:clj"
+          "   [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb])"]
+         {:max-line-length 40})))
+  (testing ":max-line-length without split does not break short map keypairs"
+    (is (reformats-to?
+         ["{:a 1 :b 2}"]
+         ["{:a 1 :b 2}"]
+         {:max-line-length 20})))
+  #?(:clj
+     (testing "non-conditional reader macro does not structurally wrap inner vector"
+       (is (reformats-to?
+            ["#foo/bar [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]"]
+            ["#foo/bar [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]"]
+            {:max-line-length 40}))))
+  #?(:clj
+     (testing "ns :import list wraps long single-line import forms"
+       (is (reformats-to?
+            ["(ns com.example.core"
+             "  (:import [java.time LocalDate LocalDateTime Instant ZoneOffset Clock]))"]
+            ["(ns com.example.core"
+             "  (:import"
+             "   [java.time LocalDate LocalDateTime Instant"
+             "    ZoneOffset Clock]))"]
+            {:max-line-length 50}))))
+  #?(:clj
+     (testing "ns :require breaks between top-level libspec vectors only"
+       (is (reformats-to?
+            ["(ns com.example.core"
+             "  (:require [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :as a] [bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb :as b]))"]
+            ["(ns com.example.core"
+             "  (:require [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :as a]"
+             "            [bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb :as b]))"]
+            {:max-line-length 50})))))
+
 (deftest test-parsing
   (is (reformats-to?
        [";foo"]
