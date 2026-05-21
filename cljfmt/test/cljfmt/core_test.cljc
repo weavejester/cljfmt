@@ -7,6 +7,7 @@
                                  replace-newlines wrap-normalize-newlines
                                  realign-form unalign-form]]
             [cljfmt.test-util.common]
+            [clojure.string :as str]
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p])
   #?(:cljs (:require-macros [cljfmt.test-util.cljs])))
@@ -323,24 +324,36 @@
                           "#_:clj-kondo/ignore "
                           "^tag "
                           "#_old-thing "]
-              ns-vec-str [(str ignore-str "[thing.core :as t]")
-                          (str ignore-str "[thing [core :as t]]")
-                          (str ignore-str "(thing [core :as t])")
-                          (str "[" ignore-str "thing.core :as t]")
-                          (str ignore-str " [" ignore-str "thing.core :as t]")]
-              :let [ns-str (str "(ns example (:require " ns-vec-str "))")]]
-        (testing ns-str
+              require-str ["<>[<>thing.core :as <>t :refer <>[<>my-defn]]"
+                           "<>[<>thing <>[<>core :as <>t :refer <>[<>my-defn]]]"]
+              :let [ns-str (str "(ns my-namespace (:require " require-str "))")]
+              ns-str [ns-str
+                      (-> ns-str
+                          (str/replace #"\[" "(")
+                          (str/replace #"\]" ")"))]
+              ns-str [(str/replace ns-str #"<>" ignore-str)
+                      (str/replace ns-str #"<>" (str ignore-str ignore-str))]]
+        (testing (str \newline (pr-str ns-str))
           (is (reformats-to?
                [ns-str
                 ""
                 "(t/defn foo [x]"
+                "(+ x 1))"
+                ""
+                "(my-defn foo [x]"
                 "(+ x 1))"]
                [ns-str
                 ""
                 "(t/defn foo [x]"
+                "  (+ x 1))"
+                ""
+                "(my-defn foo [x]"
                 "  (+ x 1))"]
-               {:indents {'ns [[:block 1]], 'thing.core/defn [[:inner 0]]}
-                #?@(:cljs [:alias-map {"t" "thing.core"}])})))))
+               {:indents {'ns                 [[:block 1]]
+                          'thing.core/defn    [[:inner 0]]
+                          'thing.core/my-defn [[:inner 0]]}
+                #?@(:cljs [:alias-map {"t" "thing.core"}
+                           :refer-map {"my-defn" "thing.core"}])})))))
     (is (reformats-to?
          ["(comment)"
           "(ns thing.core)"

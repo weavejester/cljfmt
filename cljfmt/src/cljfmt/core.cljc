@@ -219,9 +219,12 @@
        (count)
        (dec)))
 
+(defn- meta? [zloc]
+  (#{:meta :meta*} (z/tag zloc)))
+
 (defn- skip-meta [zloc]
-  (if (#{:meta :meta*} (z/tag zloc))
-    (-> zloc z/down z/right)
+  (if (meta? zloc)
+    (-> zloc z/down z/right recur)
     zloc))
 
 (defn- cursive-two-space-list-indent? [zloc]
@@ -829,13 +832,18 @@
 
 #?(:clj
    (defn- refer-zloc->refer-mapping [refer-zloc]
-     (let [refer-vec         (some-> refer-zloc z/right z/sexpr)
-           current-ns        (some-> refer-zloc leftmost-symbol z/sexpr)
-           grandparent-node  (some-> refer-zloc z/up z/up)
-           parent-ns         (ns-require-form-parent grandparent-node)]
-       (when (and (vector? refer-vec) (symbol? current-ns))
+     (let [refers           (some-> refer-zloc
+                                    (z/find-next (comp skip-meta z/right)
+                                                 (some-fn z/vector? z/list?))
+                                    z/sexpr)
+           current-ns       (some-> refer-zloc leftmost-symbol z/sexpr)
+           grandparent-node (some-> refer-zloc
+                                    (z/find-next z/up (complement meta?))
+                                    (z/find-next z/up (complement meta?)))
+           parent-ns        (ns-require-form-parent grandparent-node)]
+       (when (and (sequential? refers) (symbol? current-ns))
          (let [ns-str (join-ns-str parent-ns current-ns)]
-           (->> refer-vec (map (fn [sym] [(str sym) ns-str])) (into {})))))))
+           (->> refers (map (fn [sym] [(str sym) ns-str])) (into {})))))))
 
 #?(:clj (defn- refer-map-for-form [form]
           (when-let [req-zloc (-> form z/of-node (z/find z/next ns-require-form?))]
@@ -845,10 +853,15 @@
 
 #?(:clj
    (defn- as-zloc->alias-mapping [as-zloc]
-     (let [alias             (some-> as-zloc z/right z/sexpr)
-           current-ns        (some-> as-zloc leftmost-symbol z/sexpr)
-           grandparent-node  (some-> as-zloc z/up z/up)
-           parent-ns         (ns-require-form-parent grandparent-node)]
+     (let [alias            (some-> as-zloc
+                                    (z/find-next (comp skip-meta z/right)
+                                                 symbol-node?)
+                                    z/sexpr)
+           current-ns       (some-> as-zloc leftmost-symbol z/sexpr)
+           grandparent-node (some-> as-zloc
+                                    (z/find-next z/up (complement meta?))
+                                    (z/find-next z/up (complement meta?)))
+           parent-ns        (ns-require-form-parent grandparent-node)]
        (when (and (symbol? alias) (symbol? current-ns))
          {(str alias) (join-ns-str parent-ns current-ns)}))))
 
