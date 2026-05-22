@@ -820,7 +820,10 @@
           (when-not (ns-require-form? grandparent-node)
             (when (or (z/vector? grandparent-node)
                       (z/list? grandparent-node))
-              (first (z/child-sexprs grandparent-node))))))
+              (some-> (z/find (-> grandparent-node z/down skip-meta)
+                              (comp skip-meta z/right)
+                              symbol-node?)
+                      z/sexpr)))))
 
 #?(:clj (defn- join-ns-str [parent-namespace current-ns]
           (if parent-namespace
