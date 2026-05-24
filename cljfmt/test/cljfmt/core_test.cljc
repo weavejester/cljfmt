@@ -918,7 +918,56 @@
               "  (method [this x]"
               "    \"This is a docstring for a protocol method.\"))"]
              opts)
-            "only :cljs; skip metadata in front of symbol"))))
+            "only :cljs; skip metadata in front of symbol")))
+    (testing "reader conditionals in ns (:require ...) should be handled correctly"
+      (let [opts '{:remove-blank-lines-in-forms? true
+                   :extra-blank-line-forms       {potemkin/defprotocol+ :all}
+                   :extra-indents                {potemkin/defprotocol+ [[:block 1] [:inner 1]]}
+                   #?@(:cljs [:alias-map {"p" "potemkin"}])}]
+        (is (reformats-to?
+             ["(ns x"
+              "(:require"
+              "#?@(:clj [[potemkin :as p]])))"
+              ""
+              "(#?(:clj p/defprotocol+ :cljs defprotocol) Protocol"
+              "(my-method [_this]"
+              "\"This is a great method.\")"
+              ""
+              "(another-method [_this]"
+              "\"Another nice method.\"))"]
+             ["(ns x"
+              "  (:require"
+              "   #?@(:clj [[potemkin :as p]])))"
+              ""
+              "(#?(:clj p/defprotocol+ :cljs defprotocol) Protocol"
+              "  (my-method [_this]"
+              "    \"This is a great method.\")"
+              ""
+              "  (another-method [_this]"
+              "    \"Another nice method.\"))"]
+             opts))
+        (is (reformats-to?
+             ["(ns x"
+              "(:require"
+              "#?(:clj [potemkin :as p])))"
+              ""
+              "(#?(:clj p/defprotocol+ :cljs defprotocol) Protocol"
+              "(my-method [_this]"
+              "\"This is a great method.\")"
+              ""
+              "(another-method [_this]"
+              "\"Another nice method.\"))"]
+             ["(ns x"
+              "  (:require"
+              "   #?(:clj [potemkin :as p])))"
+              ""
+              "(#?(:clj p/defprotocol+ :cljs defprotocol) Protocol"
+              "  (my-method [_this]"
+              "    \"This is a great method.\")"
+              ""
+              "  (another-method [_this]"
+              "    \"Another nice method.\"))"]
+             opts)))))
 
   (testing "namespaced maps"
     (is (reformats-to?
