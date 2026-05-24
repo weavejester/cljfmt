@@ -413,6 +413,40 @@ In order to load the standard configuration file from Leiningen, add the
   true if cljfmt should break hashmaps onto multiple lines. This will
   convert `{:a 1 :b 2}` to `{:a 1\n:b 2}`. Defaults to false.
 
+* `:max-line-length` -
+  when set to a **positive integer** (for example `80`), cljfmt runs a
+  **structural max line length** pass: on certain **single-line** forms it
+  inserts newlines only at **safe boundaries** between **direct children**,
+  using the same width accounting as the rest of the formatter. Eligible
+  shapes include lists (including `ns` `:import` / `:use` lists), vectors,
+  maps, sets, function literals `#()`, namespaced maps `#:prefix{:a 1}`,
+  and inner collections inside **reader conditionals** `#?` / `#?@`.
+  **Tagged reader literals** (for example `#foo/bar [...]`) are not
+  rewritten inside the tag. In `ns` forms, top-level `:require` **libspec**
+  vectors (each standard require entry as a vector, for example
+  `[my.ns :as m]` or `[my.ns :refer [f]]`) are only broken **between** whole
+  vectors (never inside one such vector). `nil` (the default) disables this pass.
+
+  **Map keypairs and `:max-line-length`:** if only
+  `:split-keypairs-over-multiple-lines?` is true, every qualifying map key
+  still gets a newline before it (unchanged). If `:max-line-length` is set,
+  keypair breaks are **width-gated** (a newline is inserted before a key
+  only when the line would exceed the limit). When **both** are true,
+  keypair behavior follows the width-gated rule so short maps are not
+  over-split.
+
+  **Non-goals (experimental):** it does not reflow strings, docstrings, or
+  `;;` comments; it does not split a single token that alone exceeds the
+  limit; it skips forms that already contain line breaks among direct
+  children. **Alignment** (`:align-map-columns?` / `:align-form-columns?`)
+  runs afterward and may add spaces so some lines can still be longer than
+  `:max-line-length`. Order in `reformat-form` is
+  `:sort-ns-references?` → keypair / map layout (split and/or width-gated) →
+  structural `:max-line-length` → indentation and the rest. On the
+  standalone `cljfmt` CLI, pass the limit with `=`, for example
+  `--max-line-length=80` (same as `--max-column-alignment-gap=` and other
+  numeric CLI flags).
+
 [indents.md]: docs/INDENTS.md
 [community style recommendation]: https://guide.clojure.style/#one-space-indent
 [no-blank-lines]: https://guide.clojure.style/#no-blank-lines-within-def-forms
