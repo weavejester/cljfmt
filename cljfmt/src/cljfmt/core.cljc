@@ -743,14 +743,17 @@
 
 (defn- matching-form-index? [zloc [k indexes] context]
   (if (= :all indexes)
-    (and (z/list? zloc)
+    (and (or (z/list? zloc)
+             (= (z/tag zloc) :fn))
          (form-matches-key? (z/down zloc) k context))
     (and (z/list? (z/up zloc))
          (form-matches-key? zloc k context)
          (contains? (set indexes) (dec (index-of zloc))))))
 
 (defn- matching-form? [zloc form-indexes context]
-  (and (or (z/list? zloc) (z/list? (z/up zloc)))
+  (and (or (z/list? zloc)
+           (= (z/tag zloc) :fn)
+           (z/list? (z/up zloc)))
        (some #(matching-form-index? zloc % context) form-indexes)))
 
 (defn align-form-columns [form aligned-forms opts]

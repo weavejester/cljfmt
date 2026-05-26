@@ -1422,6 +1422,22 @@
                   "  (sequential? x)"
                   "  :seq)"]]
         (is (reformats-to? form form {:remove-blank-lines-in-forms? true}))))
+    (testing "Handle #() function literals"
+      (let [form ["(defn increase [y]"
+                  "  (let [f #(cond"
+                  "             (pos? y)"
+                  "             (inc %)"
+                  ""
+                  "             (neg? y)"
+                  "             (dec %)"
+                  ""
+                  "             :else"
+                  "             %)]"
+                  "    (f y)))"]]
+        (is (reformats-to?
+             form
+             form
+             {:remove-blank-lines-in-forms? true}))))
     (testing (str ":blank-line-forms :all should only exempt the immediate"
                   " children of the form")
       (is (reformats-to?
