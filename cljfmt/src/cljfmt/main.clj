@@ -111,7 +111,7 @@
 (defn- find-config-file [args]
   (let [opts (cli/parse-opts args (cli-options config/default-config))]
     (or (some-> opts :options :config jio/file)
-        (config/find-config-file "" opts))))
+        (config/find-config-file "" (:options opts)))))
 
 (defn -main [& args]
   (let [config-file   (find-config-file args)
