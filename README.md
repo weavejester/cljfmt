@@ -316,6 +316,29 @@ In order to load the standard configuration file from Leiningen, add the
    :as everything}                          ;; 27 spaces, falls back to 1 space
   ```
 
+* `:max-column-alignment-width` -
+  a positive integer that limits which keys participate in column
+  alignment. Keys whose end column is at or within N are aligned
+  together; keys that end past column N are not padded and receive a
+  single space before their value. Defaults to nil (no limit).
+  **Experimental.**
+
+  ```clojure
+  ;; Input:
+  {:a 1
+   :abcde 2
+   :abcdefg 3
+   :long-name 4}
+
+  ;; With :align-map-columns? true and :max-column-alignment-width 7:
+  ;; :a and :abcde end at or within column 7 and align together;
+  ;; :abcdefg and :long-name end past column 7 and are not padded
+  {:a     1      ;; ends within column 7, padded to value column
+   :abcde 2      ;; ends at column 7, sets the value column
+   :abcdefg 3    ;; ends past column 7, 1 space
+   :long-name 4} ;; ends past column 7, 1 space
+  ```
+
 * `:blank-lines-separate-alignment?` -
   true if cljfmt should treat blank lines as separators when aligning
   columns. When enabled, alignment groups are separated by blank lines,

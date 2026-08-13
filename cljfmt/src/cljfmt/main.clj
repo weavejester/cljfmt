@@ -30,6 +30,10 @@
     :default (:max-column-alignment-gap defaults)
     :parse-fn #(cond-> % (string? %) parse-long)
     :id :max-column-alignment-gap]
+   [nil "--max-column-alignment-width"
+    :default (:max-column-alignment-width defaults)
+    :parse-fn #(cond-> % (string? %) parse-long)
+    :id :max-column-alignment-width]
    [nil "--[no-]ansi"
     :default (:ansi? defaults)
     :id :ansi?]

@@ -3301,6 +3301,47 @@
          {:align-map-columns?       true
           :max-column-alignment-gap 5}))))
 
+(deftest test-max-column-alignment-width
+  (testing "form: anchor demoted until all keys fit within width"
+    (is (reformats-to?
+         ["(let [a 1"
+          "      abcde 2"
+          "      abcdefg 3"
+          "      long-name 4]"
+          "  [a abcde abcdefg long-name])"]
+         ["(let [a     1"
+          "      abcde 2"
+          "      abcdefg 3"
+          "      long-name 4]"
+          "  [a abcde abcdefg long-name])"]
+         {:align-form-columns?        true
+          :max-column-alignment-width 11})))
+  (testing "map: anchor demoted until all keys fit within width"
+    (is (reformats-to?
+         ["{:a \"x\""
+          " :abcde \"y\""
+          " :abcdefg \"z\""
+          " :long-key \"w\"}"]
+         ["{:a     \"x\""
+          " :abcde \"y\""
+          " :abcdefg \"z\""
+          " :long-key \"w\"}"]
+         {:align-map-columns?         true
+          :max-column-alignment-width 7})))
+  (testing "composing both flags refines alignment further"
+    (is (reformats-to?
+         ["{:x \"a\""
+          " :abc \"b\""
+          " :abcde \"c\""
+          " :long-key \"d\"}"]
+         ["{:x \"a\""
+          " :abc   \"b\""
+          " :abcde \"c\""
+          " :long-key \"d\"}"]
+         {:align-map-columns?         true
+          :max-column-alignment-width 7
+          :max-column-alignment-gap   3}))))
+
 (deftest test-realign-form
   (is (= "
 {:x   1
