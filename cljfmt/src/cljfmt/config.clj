@@ -47,9 +47,19 @@
 (s/def ::aligned-forms          (s/map-of ::one-indent-key any?))
 (s/def ::extra-aligned-forms    (s/map-of ::one-indent-key any?))
 
+(s/def ::break-vector pos-int?)
+(s/def ::break-each   pos-int?)
+(s/def ::doc-strings  pos-int?)
+(s/def ::comments     pos-int?)
+(s/def ::defn-params  (s/keys :opt-un [::break-vector ::break-each]))
+(s/def ::binding-forms (s/keys :opt-un [::break-vector ::break-each]))
+(s/def ::break-on     (s/keys :opt-un [::doc-strings ::comments
+                                       ::defn-params ::binding-forms]))
+
 (s/def ::config (s/keys :opt-un [::indents ::extra-indents
                                  ::blank-line-forms ::extra-blank-line-forms
-                                 ::aligned-forms ::extra-aligned-forms]))
+                                 ::aligned-forms ::extra-aligned-forms
+                                 ::break-on]))
 
 (s/check-asserts true)
 

@@ -322,6 +322,69 @@ In order to load the standard configuration file from Leiningen, add the
   allowing independent alignment within each group. Defaults to false.
   **Experimental.**
 
+* `:break-on` -
+  a map that enables breaking of long lines at word boundaries. Each
+  entry takes a line length limit (number of characters); lines that
+  exceed the limit are wrapped. Defaults to nil (disabled).
+
+  * `:doc-strings` - a line length limit for docstrings in
+    `defn`/`defn-`/`defmacro` forms. Docstrings longer than the limit
+    are wrapped at word boundaries, with continuation lines indented to
+    match the docstring:
+
+    ```clojure
+    ;; With :break-on {:doc-strings 40}:
+    (defn foo
+      "AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF
+      GGGGG"
+      [x]
+      x)
+    ```
+
+  * `:comments` - a line length limit for `;;` comments. Comments
+    longer than the limit are wrapped at word boundaries, with
+    continuation lines starting with `;;`:
+
+    ```clojure
+    ;; With :break-on {:comments 40}:
+    ;; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF
+    ;; GGGGG HHHHH
+    ```
+
+  * `:defn-params` - a map of limits for `defn`/`defn-`/`defmacro`
+    forms. May contain `:break-vector`, which moves the parameter
+    vector (and body) onto their own lines when a `defn` line exceeds
+    the limit, and `:break-each`, which breaks each parameter onto its
+    own line:
+
+    ```clojure
+    ;; With :break-on {:defn-params {:break-vector 40 :break-each 20}}:
+    (defn f
+      [alpha
+       beta
+       gamma
+       delta
+       epsilon]
+      body)
+    ```
+
+  * `:binding-forms` - a map of limits for binding forms such as
+    `fn`, `let`, `loop`, `for` and `if-let`. May contain
+    `:break-vector`, which moves the body onto its own line when the
+    form line exceeds the limit, and `:break-each`, which breaks each
+    parameter (for `fn`-like forms) or each binding pair (for
+    `let`-like forms) onto its own line:
+
+    ```clojure
+    ;; With :break-on {:binding-forms {:break-vector 30 :break-each 15}}:
+    (fn [alpha
+         beta
+         gamma
+         delta
+         epsilon]
+      body)
+    ```
+
 * `:blank-line-forms` -
   a map of symbols that tell cljfmt which forms are allowed to have
   blank lines inside of them. The value may be either `:all`, which

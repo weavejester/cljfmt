@@ -385,6 +385,7 @@
    :max-column-alignment-gap              nil
    :blank-line-forms                      blank-line-forms
    :blank-lines-separate-alignment?       false
+   :break-on                              {}
    :extra-aligned-forms                   {}
    :extra-blank-line-forms                {}
    :extra-indents                         {}
@@ -522,6 +523,233 @@
 
 (defn remove-multiple-non-indenting-spaces [form]
   (transform form edit-all non-indenting-whitespace? replace-with-one-space))
+
+(defn- string-token? [zloc]
+  (and zloc (= (z/tag zloc) :token) (string? (z/sexpr zloc))))
+
+(defn- current-line-width [zloc]
+  (transduce (map count) max 0
+             (str/split (str (prior-line-string zloc) (z/string zloc))
+                        #"\r?\n")))
+
+(def ^:private def-docstring-symbols #{'defn 'defn- 'defmacro})
+
+(defn- docstring? [zloc]
+  (and (string-token? zloc)
+       (when-let [parent (z/up* zloc)]
+         (and (z/list? parent)
+              (contains? def-docstring-symbols (z/sexpr (z/down parent)))
+              (#{2 3} (index-of zloc))))))
+
+(defn- pack-words
+  "Greedily pack a sequence of words into lines of at most `budget` characters."
+  [words budget]
+  (loop [words words, lines [], cur []]
+    (if (seq words)
+      (let [word  (first words)
+            width (count (str/join " " (conj cur word)))]
+        (if (and (seq cur) (> width budget))
+          (recur (rest words) (conj lines cur) [word])
+          (recur (rest words) lines (conj cur word))))
+      (conj lines cur))))
+
+(defn- wrap-docstring [zloc limit]
+  (let [src    (z/string zloc)
+        margin (margin zloc)
+        inner  (subs src 1 (dec (count src)))
+        budget (- limit margin 1)
+        lines  (pack-words (str/split inner #"\s+") budget)]
+    (if (> (count lines) 1)
+      (z/replace* zloc
+        (n/string-node
+          (map-indexed (fn [i words]
+                         (str (when (pos? i)
+                                (str/join (repeat margin " ")))
+                              (str/join " " words)))
+                       lines)))
+      zloc)))
+
+(defn- break-doc-strings [form limit]
+  (transform form edit-all
+             #(and (docstring? %) (>= (current-line-width %) limit))
+             #(wrap-docstring % limit)))
+
+(defn- wrap-comment [zloc limit]
+  (let [s      (z/string zloc)
+        nl?    (re-find #"\r?\n$" s)
+        m      (margin zloc)
+        body   (-> s (str/replace #"^;;+" "") (str/replace #"\r?\n$" "") str/trim)
+        budget (- limit m)
+        lines  (pack-words (str/split body #"\s+") budget)]
+    (if (> (count lines) 1)
+      (let [[first-line & rest] lines
+            zloc' (z/replace* zloc (n/comment-node (str "; " (str/join " " first-line))))
+            last' (reduce (fn [z line]
+                            (-> z
+                                (z/insert-right* (n/newlines 1))
+                                z/right*
+                                (z/insert-right* (whitespace m))
+                                z/right*
+                                (z/insert-right* (n/comment-node (str "; " (str/join " " line))))
+                                z/right*))
+                          zloc' rest)]
+        (if nl?
+          (z/insert-right* last' (n/newlines 1))
+          last'))
+      zloc)))
+
+(defn- break-comments [form limit]
+  (z/root (edit-all (z/of-node* form)
+                    #(and (comment? %) (>= (current-line-width %) limit))
+                    #(wrap-comment % limit))))
+
+(def ^:private param-binding-symbols
+  #{'fn 'fn* 'bound-fn})
+
+(def ^:private pair-binding-symbols
+  #{'let 'let* 'loop 'loop* 'for 'doseq 'dotimes
+    'if-let 'when-let 'if-some 'when-some 'binding
+    'with-open 'with-local-vars 'with-redefs})
+
+(defn- defn-form? [zloc]
+  (and (z/list? zloc)
+       (contains? def-docstring-symbols (z/sexpr (z/down zloc)))))
+
+(defn- binding-form? [zloc]
+  (and (z/list? zloc)
+       (contains? (into param-binding-symbols pair-binding-symbols)
+                  (z/sexpr (z/down zloc)))))
+
+(defn- line-start? [zloc]
+  (-> zloc prior-line-string last-line-in-string str/blank?))
+
+(defn- arity-list? [zloc]
+  (and (z/list? zloc)
+       (when-let [gp (z/up* zloc)]
+         (and (defn-form? gp)
+              (> (index-of zloc) 1)
+              (z/vector? (z/down zloc))))))
+
+(defn- params-vector? [zloc]
+  (and (z/vector? zloc)
+       (let [parent (z/up* zloc)
+             i      (index-of zloc)]
+         (if (defn-form? parent)
+           (or (= i 2)
+               (and (= i 3)
+                    (string-token? (-> parent z/down z/right z/right))))
+           (and (arity-list? parent) (= i 0))))))
+
+(defn- arity-body? [zloc]
+  (and (= (index-of zloc) 1)
+       (arity-list? (z/up* zloc))))
+
+(defn- single-arity-body? [zloc]
+  (when-let [parent (z/up* zloc)]
+    (let [after-name (-> parent z/down z/right z/right)
+          doc?       (string-token? after-name)
+          i          (index-of zloc)]
+      (and (defn-form? parent)
+           (z/vector? (if doc? (z/right after-name) after-name))
+           (or (and (not doc?) (= i 3))
+               (and doc? (= i 4)))))))
+
+(defn- binding-vector? [zloc]
+  (and (z/vector? zloc)
+       (when-let [parent (z/up* zloc)]
+         (and (binding-form? parent) (= (index-of zloc) 1)))))
+
+(defn- binding-body? [zloc]
+  (and (= (index-of zloc) 2)
+       (binding-form? (z/up* zloc))))
+
+(defn- break-before [zloc]
+  (let [left (z/left* zloc)]
+    (if (z/whitespace? left)
+      (z/replace* left (n/newlines 1))
+      (z/insert-left* zloc (n/newlines 1)))))
+
+(defn- break-defn-vector [form limit]
+  (-> form
+      (transform edit-all
+                 (fn [zloc]
+                   (and (arity-body? zloc)
+                        (>= (current-line-width (z/up* zloc)) limit)
+                        (not (line-start? zloc))))
+                 break-before)
+      (transform edit-all
+                 (fn [zloc]
+                   (and (single-arity-body? zloc)
+                        (not (str/includes? (z/string (z/up* zloc)) "\n"))
+                        (>= (current-line-width zloc) limit)))
+                 break-before)
+      (transform edit-all
+                 (fn [zloc]
+                   (and (params-vector? zloc)
+                        (>= (current-line-width zloc) limit)
+                        (not (line-start? zloc))))
+                 break-before)))
+
+(defn- break-each-vector [zloc group-size]
+  (loop [z (z/down zloc)
+         in-group 0]
+    (if z
+      (if (z/whitespace? z)
+        (recur (z/right* z) in-group)
+        (let [next (inc in-group)
+              nxt  (z/right* z)]
+          (if (or (nil? nxt)
+                  (and (z/whitespace? nxt) (nil? (z/right nxt))))
+            z
+            (if (= next group-size)
+              (let [sep (z/right* z)
+                    z   (if (z/whitespace? sep)
+                          (z/replace* sep (n/newlines 1))
+                          (z/insert-left* sep (n/newlines 1)))]
+                (recur (if (z/whitespace? sep) (z/right* z) z) 0))
+              (recur (z/right* z) next)))))
+      z)))
+
+(defn- break-defn-each [form limit]
+  (transform form edit-all
+             #(and (params-vector? %) (>= (count (z/string %)) limit))
+             #(break-each-vector % 1)))
+
+(defn- break-binding-vector [form limit]
+  (transform form edit-all
+             (fn [zloc]
+               (and (binding-body? zloc)
+                    (>= (current-line-width (z/up* zloc)) limit)
+                    (not (line-start? zloc))))
+             break-before))
+
+(defn- break-binding-each [form limit]
+  (transform form edit-all
+             (fn [zloc]
+               (and (binding-vector? zloc)
+                    (>= (count (z/string zloc)) limit)))
+             (fn [zloc]
+               (let [form-sym (-> zloc z/up* z/down z/sexpr)]
+                 (break-each-vector zloc (if (contains? param-binding-symbols form-sym) 1 2))))))
+
+(defn- break-defn-params [form {:keys [break-vector break-each]}]
+  (-> form
+      (cond-> break-vector (break-defn-vector break-vector))
+      (cond-> break-each    (break-defn-each break-each))))
+
+(defn- break-binding-forms [form {:keys [break-vector break-each]}]
+  (-> form
+      (cond-> break-vector (break-binding-vector break-vector))
+      (cond-> break-each    (break-binding-each break-each))))
+
+(defn- break-long-lines [form opts]
+  (let [{:keys [doc-strings comments defn-params binding-forms]}
+        (:break-on opts)]
+    (-> form
+        (cond-> doc-strings  (break-doc-strings doc-strings))
+        (cond-> comments     (break-comments comments))
+        (cond-> defn-params  (break-defn-params defn-params))
+        (cond-> binding-forms (break-binding-forms binding-forms)))))
 
 (def ^:private ns-reference-symbols
   #{:import :require :require-macros :use})
@@ -917,6 +1145,8 @@
            insert-missing-whitespace)
          (cond-> (:remove-multiple-non-indenting-spaces? opts)
            remove-multiple-non-indenting-spaces)
+         (cond-> (seq (:break-on opts))
+           (break-long-lines opts))
          (cond-> (:indentation? opts)
            (reindent indents opts))
          (cond-> (:align-map-columns? opts)

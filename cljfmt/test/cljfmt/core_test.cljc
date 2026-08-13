@@ -3301,6 +3301,195 @@
          {:align-map-columns?       true
           :max-column-alignment-gap 5}))))
 
+(deftest test-break-long-lines
+  (testing "doc strings"
+    (testing "breaks long doc string at word boundary"
+      (is (reformats-to?
+           ["(defn foo"
+            "  \"AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG\""
+            "  [x]"
+            "  x)"]
+           ["(defn foo"
+            "  \"AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF"
+            "  GGGGG\""
+            "  [x]"
+            "  x)"]
+            {:break-on {:doc-strings 40}})))
+    (testing "short doc string not broken"
+      (is (reformats-to?
+           ["(defn foo"
+            "  \"short\""
+            "  [x]"
+            "  x)"]
+           ["(defn foo"
+            "  \"short\""
+            "  [x]"
+            "  x)"]
+            {:break-on {:doc-strings 40}})))
+    (testing "disabled without :doc-strings"
+      (is (reformats-to?
+           ["(defn foo"
+            "  \"AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG\""
+            "  [x]"
+            "  x)"]
+           ["(defn foo"
+            "  \"AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG\""
+            "  [x]"
+            "  x)"]
+           {:break-on {}}))))
+
+  (testing "comments"
+    (testing "breaks long comment at word boundary"
+      (is (reformats-to?
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH"]
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF"
+            ";; GGGGG HHHHH"]
+            {:break-on {:comments 40}})))
+    (testing "breaks comment preceding a form"
+      (is (reformats-to?
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH"
+            "(defn foo [x] x)"]
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF"
+            ";; GGGGG HHHHH"
+            "(defn foo [x] x)"]
+            {:break-on {:comments 40}})))
+    (testing "breaks indented comment without losing following code"
+      (is (reformats-to?
+           ["(defn foo"
+            "  (let [x 1]"
+            "    ;; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH"
+            "    x))"]
+           ["(defn foo"
+            "  (let [x 1]"
+            "    ;; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF"
+            "    ;; GGGGG HHHHH"
+            "    x))"]
+            {:break-on {:comments 40}})))
+    (testing "breaks long comment over multiple continuation lines"
+      (is (reformats-to?
+           ["(defn foo"
+            "  ;; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH IIIII"
+            "  x)"]
+           ["(defn foo"
+            "  ;; AAAAA BBBBB CCCCC DDDDD"
+            "  ;; EEEEE FFFFF GGGGG HHHHH"
+            "  ;; IIIII"
+            "  x)"]
+            {:break-on {:comments 25}})))
+    (testing "short comment not broken"
+      (is (reformats-to?
+           [";; short"]
+           [";; short"]
+            {:break-on {:comments 40}})))
+    (testing "disabled without :comments"
+      (is (reformats-to?
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH"]
+           [";; AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH"]
+           {:break-on {}}))))
+
+  (testing "defn params"
+    (testing "break-vector moves [] to its own line when line exceeds limit"
+      (is (reformats-to?
+           ["(defn my-long-function [alpha beta gamma delta]"
+            "  body)"]
+           ["(defn my-long-function"
+            "  [alpha beta gamma delta]"
+            "  body)"]
+            {:break-on {:defn-params {:break-vector 40}}})))
+    (testing "already on own line: no change"
+      (is (reformats-to?
+           ["(defn my-long-function"
+            "  [alpha beta gamma delta]"
+            "  body)"]
+           ["(defn my-long-function"
+            "  [alpha beta gamma delta]"
+            "  body)"]
+            {:break-on {:defn-params {:break-vector 40}}})))
+    (testing "within limit: no change"
+      (is (reformats-to?
+           ["(defn f [x] body)"]
+           ["(defn f [x] body)"]
+            {:break-on {:defn-params {:break-vector 40}}})))
+    (testing "break-each breaks params to individual lines"
+      (is (reformats-to?
+           ["(defn f [alpha beta gamma delta epsilon]"
+            "  body)"]
+           ["(defn f"
+            "  [alpha"
+            "   beta"
+            "   gamma"
+            "   delta"
+            "   epsilon]"
+            "  body)"]
+            {:break-on {:defn-params {:break-vector 40
+                                       :break-each 20}}})))
+    (testing "multi-arity: breaks all arities"
+      (is (reformats-to?
+           ["(defn foo"
+            "  ([alpha beta] body)"
+            "  ([alpha beta gamma delta epsilon] body2))"]
+           ["(defn foo"
+            "  ([alpha beta] body)"
+            "  ([alpha beta gamma delta epsilon]"
+            "   body2))"]
+            {:break-on {:defn-params {:break-vector 40}}})))
+    (testing "defn- params broken"
+      (is (reformats-to?
+           ["(defn- my-longer-name [alpha beta gamma delta] body)"]
+           ["(defn- my-longer-name"
+            "  [alpha beta gamma delta]"
+            "  body)"]
+            {:break-on {:defn-params {:break-vector 40}}}))))
+
+
+  (testing "binding forms"
+    (testing "fn break-vector moves body to new line"
+      (is (reformats-to?
+           ["(fn [alpha beta gamma delta] (+ alpha beta gamma delta))"]
+           ["(fn [alpha beta gamma delta]"
+            "  (+ alpha beta gamma delta))"]
+            {:break-on {:binding-forms {:break-vector 30}}})))
+    (testing "fn break-each breaks params to individual lines"
+      (is (reformats-to?
+           ["(fn [alpha beta gamma delta epsilon] body)"]
+           ["(fn [alpha"
+            "     beta"
+            "     gamma"
+            "     delta"
+            "     epsilon]"
+            "  body)"]
+            {:break-on {:binding-forms {:break-vector 30
+                                        :break-each 15}}})))
+    (testing "let break-vector moves body to new line"
+      (is (reformats-to?
+           ["(let [alpha 1 beta 2 gamma 3] (+ alpha beta gamma))"]
+           ["(let [alpha 1 beta 2 gamma 3]"
+            "  (+ alpha beta gamma))"]
+            {:break-on {:binding-forms {:break-vector 30}}})))
+    (testing "let break-each breaks pairs to individual lines"
+      (is (reformats-to?
+           ["(let [alpha 1 beta 2 gamma 3] body)"]
+           ["(let [alpha 1"
+            "      beta 2"
+            "      gamma 3]"
+            "  body)"]
+            {:break-on {:binding-forms {:break-vector 30
+                                        :break-each 15}}})))
+    (testing "within limit: no change"
+      (is (reformats-to?
+           ["(fn [x] x)"]
+           ["(fn [x] x)"]
+            {:break-on {:binding-forms {:break-vector 40}}}))))
+
+
+  (testing "disabled when no break-on keys match"
+    (is (reformats-to?
+         ["(defn my-long-function-name [alpha beta gamma delta epsilon zeta]"
+          "  body)"]
+         ["(defn my-long-function-name [alpha beta gamma delta epsilon zeta]"
+          "  body)"]
+         {:break-on {:doc-strings 40}}))))
+
 (deftest test-realign-form
   (is (= "
 {:x   1
