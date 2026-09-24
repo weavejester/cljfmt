@@ -1,3 +1,8 @@
+## 0.16.6 (2026-09-24)
+
+* Added `:max-column-alignment-width` option (#425)
+* Fixed `:align-single-column-lines?` for first elements (#424)
+
 ## 0.16.5 (2026-07-14)
 
 * Fixed parsing of `ns` require vectors with `#_` comments (#416)
