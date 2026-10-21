@@ -1,5 +1,6 @@
 (ns cljfmt.config-test
   (:require [cljfmt.config :as config]
+            [cljfmt.report :as report]
             [clojure.edn :as edn]
             [clojure.spec.alpha :as s]
             [clojure.test :refer [deftest is testing]]))
@@ -22,6 +23,22 @@
   (testing "valid regex pattern keys are accepted"
     (is (s/valid? ::config/config {:indents {#"^def" [[:inner 0]]}}))
     (is (s/valid? ::config/config {:indents {[#"clojure.core" #"^def"] [[:inner 0]]}})))
+  (testing "accepts every split-keypairs mode"
+    (is (s/valid? ::config/config {:split-keypairs-over-multiple-lines nil}))
+    (is (s/valid? ::config/config
+                  {:split-keypairs-over-multiple-lines :none}))
+    (is (s/valid? ::config/config
+                  {:split-keypairs-over-multiple-lines :all}))
+    (is (s/valid? ::config/config
+                  {:split-keypairs-over-multiple-lines :only-multiline})))
+  (testing "accepts booleans for split-keypairs for backwards compatibility"
+    (is (s/valid? ::config/config {:split-keypairs-over-multiple-lines true}))
+    (is (s/valid? ::config/config {:split-keypairs-over-multiple-lines false})))
+  (testing "rejects an unknown split-keypairs mode"
+    (is (not (s/valid? ::config/config
+                       {:split-keypairs-over-multiple-lines :mixd})))
+    (is (not (s/valid? ::config/config
+                       {:split-keypairs-over-multiple-lines "always"}))))
   (testing "handles nil and missing values"
     (is (s/valid? ::config/config {}))
     (is (not (s/valid? ::config/config nil)))))
@@ -31,7 +48,19 @@
          (config/convert-legacy-keys {:indents {'foo [[:inner 0]]}})))
   (is (= {:extra-indents {'foo [[:inner 0]]}}
          (config/convert-legacy-keys {:legacy/merge-indents? true
-                                      :indents {'foo [[:inner 0]]}}))))
+                                      :indents {'foo [[:inner 0]]}})))
+  (testing "converts the legacy split-keypairs flag into a mode"
+    (binding [report/*no-output* true]
+      (is (= {:split-keypairs-over-multiple-lines :all}
+             (config/convert-legacy-keys
+              {:split-keypairs-over-multiple-lines? true})))
+      (is (= {}
+             (config/convert-legacy-keys
+              {:split-keypairs-over-multiple-lines? false})))))
+  (testing "leaves an explicit mode alone"
+    (is (= {:split-keypairs-over-multiple-lines :only-multiline}
+           (config/convert-legacy-keys
+            {:split-keypairs-over-multiple-lines :only-multiline})))))
 
 (deftest read-config-test
   (testing "Ensure that reading .clj config files works for valid data"
