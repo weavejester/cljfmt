@@ -401,7 +401,7 @@
    :remove-surrounding-whitespace?        true
    :remove-trailing-whitespace?           true
    :sort-ns-references?                   false
-   :split-keypairs-over-multiple-lines?   false})
+   :split-keypairs-over-multiple-lines    nil})
 
 (defmulti ^:private indenter-fn
   (fn [_sym _context [type & _args]] type))
@@ -468,12 +468,6 @@
      (transform form edit-all #(should-indent? % opts)
                 #(indent-line % indenter context)))))
 
-(defn- map-key? [zloc]
-  (and (z/map? (z/up zloc))
-       (even? (index-of zloc))
-       (not (uneval? zloc))
-       (not (z/whitespace-or-comment? zloc))))
-
 (defn- preceded-by-line-break? [zloc]
   (loop [previous (z/left* zloc)]
     (cond
@@ -482,14 +476,43 @@
       (z/whitespace-or-comment? previous)
       (recur (z/left* previous)))))
 
-(defn- map-key-without-line-break? [zloc]
-  (and (map-key? zloc) (z/left zloc) (not (preceded-by-line-break? zloc))))
-
 (defn- insert-newline-left [zloc]
   (z/insert-left* zloc (n/newlines 1)))
 
-(defn split-keypairs-over-multiple-lines [form]
-  (transform form edit-all map-key-without-line-break? insert-newline-left))
+(defn- multiline? [zloc]
+  (includes? (z/string zloc) "\n"))
+
+(defn- split-map-keypairs? [mode zloc]
+  (and (z/map? zloc)
+       (or (= mode :all)
+           (and (= mode :only-multiline) (multiline? zloc)))))
+
+(defn- split-map-keypairs [zloc]
+  (if-some [child (z/down* zloc)]
+    (loop [child child, key? true]
+      (let [sexpr? (z/sexpr-able? child)
+            child  (cond-> child
+                     (and sexpr? key? (z/left child)
+                          (not (preceded-by-line-break? child)))
+                     insert-newline-left)]
+        (if-some [right (z/right* child)]
+          (recur right (cond-> key? sexpr? not))
+          (z/up child))))
+    zloc))
+
+(defn split-keypairs-over-multiple-lines
+  ([form]
+   (split-keypairs-over-multiple-lines form :all))
+  ([form mode]
+   (transform form edit-all #(split-map-keypairs? mode %) split-map-keypairs)))
+
+(defn- keypair-split-mode [opts]
+  (let [mode (or (:split-keypairs-over-multiple-lines opts)
+                 (:split-keypairs-over-multiple-lines? opts))]
+    (case mode
+      true  :all
+      :none nil
+      mode)))
 
 (defn reindent
   ([form]
@@ -914,13 +937,14 @@
                                    (stringify-map (:refer-map opts)))
                       :cljs (stringify-map (:refer-map opts)))
          ns-name   (find-namespace (z/of-node form))
+         keypairs  (keypair-split-mode opts)
          opts      (assoc opts :refer-map refer-map :alias-map alias-map
                           ::ns-name ns-name)]
      (-> form
          (cond-> (:sort-ns-references? opts)
            sort-ns-references)
-         (cond-> (:split-keypairs-over-multiple-lines? opts)
-           split-keypairs-over-multiple-lines)
+         (cond-> keypairs
+           (split-keypairs-over-multiple-lines keypairs))
          (cond-> (:remove-consecutive-blank-lines? opts)
            remove-consecutive-blank-lines)
          (cond-> (:remove-surrounding-whitespace? opts)

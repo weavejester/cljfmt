@@ -3425,3 +3425,275 @@
              p/parse-string-all
              unalign-form
              n/string))))
+
+(deftest test-split-keypairs
+  (testing "off by default"
+    (are [form] (reformats-to? form form {})
+      ["{:a 1 :b 2}"]
+      ["{:a 22222222222222 :b 2"
+       " :c 3}"]
+      ["{:a 22222222222222 :b 2"
+       " :c 3              :d 4}"]
+      ["{:a [1"
+       "     2] :b 2"
+       " :c 3   :d 4}"]
+      ["{:a {:x 2"
+       "     :y 777777} :b 2"
+       " :c 3           :d 4}"]))
+  (testing "true means :all"
+    (are [opts] (reformats-to?
+                 ["{:a 1 :b 2}"]
+                 ["{:a 1"
+                  " :b 2}"]
+                 opts)
+      {:split-keypairs-over-multiple-lines true}
+      {:split-keypairs-over-multiple-lines? true})
+    (are [opts] (reformats-to?
+                 ["{:a 1 :b 2}"]
+                 ["{:a 1 :b 2}"]
+                 opts)
+      {:split-keypairs-over-multiple-lines false}
+      {:split-keypairs-over-multiple-lines? false}))
+  (testing ":all"
+    (is (reformats-to?
+         ["{:a 1 :b 2}"]
+         ["{:a 1"
+          " :b 2}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:a 22222222222222 :b 2"
+          " :c 3}"]
+         ["{:a 22222222222222"
+          " :b 2"
+          " :c 3}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:a 22222222222222 :b 2"
+          " :c 3              :d 4}"]
+         ["{:a 22222222222222"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:a [1"
+          "     2] :b 2"
+          " :c 3   :d 4}"]
+         ["{:a [1"
+          "     2]"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:a [1"
+          "     2] :b 2 :c 3 :d 4}"]
+         ["{:a [1"
+          "     2]"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :all})
+        "the remaining pairs split however they were arranged")
+    (is (reformats-to?
+         ["{:a {:x 2"
+          "     :y 777777} :b 2"
+          " :c 3           :d 4}"]
+         ["{:a {:x 2"
+          "     :y 777777}"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["(defn f [{:keys [aaa"
+          "                 bbb"
+          "                 ccc] :as p}])"]
+         ["(defn f [{:keys [aaa"
+          "                 bbb"
+          "                 ccc]"
+          "          :as p}])"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:a 1"
+          " :b {:x 1 :y 2}}"]
+         ["{:a 1"
+          " :b {:x 1"
+          "     :y 2}}"]
+         {:split-keypairs-over-multiple-lines :all})
+        "inline nested maps are split too")
+    (are [form] (reformats-to? form form {:split-keypairs-over-multiple-lines :all})
+      ["{:a {:x 1"
+       "     :y 2}"
+       " :b 2}"]
+      ["{:a [1"
+       "     2]}"]))
+  (testing ":only-multiline"
+    (are [form] (reformats-to? form form {:split-keypairs-over-multiple-lines :only-multiline})
+      ["{:a 1 :b 2}"]
+      ["{:a {:x 1"
+       "     :y 2}"
+       " :b 2}"]
+      ["{:a [1"
+       "     2]}"])
+    (is (reformats-to?
+         ["{:a 1"
+          " :b {:x 1 :y 2}}"]
+         ["{:a 1"
+          " :b {:x 1 :y 2}}"]
+         {:split-keypairs-over-multiple-lines :only-multiline})
+        "an inline map inside a multi-line map stays inline")
+    (is (reformats-to?
+         ["{:a 22222222222222 :b 2"
+          " :c 3}"]
+         ["{:a 22222222222222"
+          " :b 2"
+          " :c 3}"]
+         {:split-keypairs-over-multiple-lines :only-multiline}))
+    (is (reformats-to?
+         ["{:a 22222222222222 :b 2"
+          " :c 3              :d 4}"]
+         ["{:a 22222222222222"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :only-multiline}))
+    (is (reformats-to?
+         ["{:a [1"
+          "     2] :b 2"
+          " :c 3   :d 4}"]
+         ["{:a [1"
+          "     2]"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :only-multiline}))
+    (is (reformats-to?
+         ["{:a [1"
+          "     2] :b 2 :c 3 :d 4}"]
+         ["{:a [1"
+          "     2]"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :only-multiline})
+        "the remaining pairs split however they were arranged")
+    (is (reformats-to?
+         ["{:a {:x 2"
+          "     :y 777777} :b 2"
+          " :c 3           :d 4}"]
+         ["{:a {:x 2"
+          "     :y 777777}"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :only-multiline}))
+    (is (reformats-to?
+         ["(defn f [{:keys [aaa"
+          "                 bbb"
+          "                 ccc] :as p}])"]
+         ["(defn f [{:keys [aaa"
+          "                 bbb"
+          "                 ccc]"
+          "          :as p}])"]
+         {:split-keypairs-over-multiple-lines :only-multiline})))
+  (testing "multi-line keys are left alone"
+    (are [mode] (reformats-to?
+                 ["{{:a 1"
+                  "  :b 2} 3"
+                  " :c 5}"]
+                 ["{{:a 1"
+                  "  :b 2} 3"
+                  " :c 5}"]
+                 {:split-keypairs-over-multiple-lines mode})
+      :all
+      :only-multiline))
+  (testing "comments and unevals"
+    (is (reformats-to?
+         ["{:one two #_comment :three four}"]
+         ["{:one two #_comment"
+          " :three four}"]
+         {:split-keypairs-over-multiple-lines :all}))
+    (is (reformats-to?
+         ["{:one two #_comment :three four}"]
+         ["{:one two #_comment :three four}"]
+         {:split-keypairs-over-multiple-lines :only-multiline})
+        "an uneval does not make the map multi-line")
+    (is (reformats-to?
+         ["{:one two ;comment"
+          ":three four}"]
+         ["{:one two ;comment"
+          " :three four}"]
+         {:split-keypairs-over-multiple-lines :only-multiline})
+        "a key already preceded by a comment line is not split again")
+    (is (reformats-to?
+         ["{;comment"
+          ":one two :three four}"]
+         ["{;comment"
+          " :one two"
+          " :three four}"]
+         {:split-keypairs-over-multiple-lines :only-multiline}))
+    (is (reformats-to?
+         ["{:a 1 #_{:x 1"
+          "         :y 2} :b 2}"]
+         ["{:a 1 #_{:x 1"
+          "         :y 2}"
+          " :b 2}"]
+         {:split-keypairs-over-multiple-lines :only-multiline})
+        "an uneval'd multi-line form is not a keypair")
+    (testing "a comment between a key and its value leaves the pair split"
+      (are [mode] (reformats-to?
+                   ["{:a ;; note"
+                    " 1 :b 2}"]
+                   ["{:a ;; note"
+                    " 1"
+                    " :b 2}"]
+                   {:split-keypairs-over-multiple-lines mode})
+        :all
+        :only-multiline)))
+  (testing "idempotency"
+    (are [mode form] (reformats-to? form form {:split-keypairs-over-multiple-lines mode})
+      :all ["{:a 1"
+            " :b 2}"]
+      :all ["{:a 22222222222222"
+            " :b 2"
+            " :c 3"
+            " :d 4}"]
+      :only-multiline ["{:a 1"
+                       " :b 2}"]
+      :only-multiline ["{:a [1"
+                       "     2]"
+                       " :b 2"
+                       " :c 3"
+                       " :d 4}"]
+      :only-multiline ["{:a {:x 2"
+                       "     :y 777777}"
+                       " :b 2"
+                       " :c 3"
+                       " :d 4}"]
+      :only-multiline ["(defn f [{:keys [aaa"
+                       "                 bbb"
+                       "                 ccc]"
+                       "          :as p}])"]))
+  (testing "with column alignment"
+    (is (reformats-to?
+         ["(defn f"
+          "  [{:keys [first-option"
+          "           second-option-longer"
+          "           last?] :as opts}])"]
+         ["(defn f"
+          "  [{:keys [first-option"
+          "           second-option-longer"
+          "           last?]"
+          "    :as   opts}])"]
+         {:split-keypairs-over-multiple-lines :only-multiline
+          :align-map-columns? true}))
+    (is (reformats-to?
+         ["{:a 22222222222222 :b 2"
+          " :c 3              :d 4}"]
+         ["{:a 22222222222222"
+          " :b 2"
+          " :c 3"
+          " :d 4}"]
+         {:split-keypairs-over-multiple-lines :only-multiline
+          :align-map-columns? true}))))

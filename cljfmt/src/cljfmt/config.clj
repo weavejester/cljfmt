@@ -47,18 +47,39 @@
 (s/def ::aligned-forms          (s/map-of ::one-indent-key any?))
 (s/def ::extra-aligned-forms    (s/map-of ::one-indent-key any?))
 
+(s/def ::split-keypairs-over-multiple-lines
+  (s/or :mode    #{:all :only-multiline :none}
+        :boolean boolean?
+        :nil     nil?))
+
 (s/def ::config (s/keys :opt-un [::indents ::extra-indents
                                  ::blank-line-forms ::extra-blank-line-forms
-                                 ::aligned-forms ::extra-aligned-forms]))
+                                 ::aligned-forms ::extra-aligned-forms
+                                 ::split-keypairs-over-multiple-lines]))
 
 (s/check-asserts true)
+
+(def ^:private legacy-keypairs-warning-message
+  (str "Warning: the ':split-keypairs-over-multiple-lines?' option is "
+       "deprecated. Use ':split-keypairs-over-multiple-lines' with a value of "
+       ":all or :only-multiline instead."))
+
+(defn- convert-legacy-keypairs [config]
+  (report/warn legacy-keypairs-warning-message)
+  (-> config
+      (cond-> (:split-keypairs-over-multiple-lines? config)
+        (assoc :split-keypairs-over-multiple-lines :all))
+      (dissoc :split-keypairs-over-multiple-lines?)))
 
 (defn convert-legacy-keys [config]
   (cond-> config
     (:legacy/merge-indents? config)
     (-> (assoc :extra-indents (:indents config))
         (dissoc :legacy/merge-indents?
-                :indents))))
+                :indents))
+
+    (contains? config :split-keypairs-over-multiple-lines?)
+    (convert-legacy-keypairs)))
 
 (defn- parent-dirs [^String root]
   (->> (.getAbsoluteFile (io/file root))

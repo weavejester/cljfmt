@@ -10,6 +10,20 @@
 
 (def ^:const VERSION "0.16.6")
 
+(def ^:private optional-mode-flags
+  {"--split-keypairs-over-multiple-lines"
+   {:modes #{"all" "only-multiline" "none"} :bare "all"}})
+
+;; tools.cli has no optional arguments, so supply the assumed mode up front
+(defn- expand-optional-modes [args]
+  (mapv (fn [arg next-arg]
+          (let [{:keys [modes bare]} (optional-mode-flags arg)]
+            (cond-> arg
+              (and bare (not (modes next-arg)))
+              (str "=" bare))))
+        args
+        (concat (rest args) [nil])))
+
 (defn- cli-options [defaults]
   [["-h" "--help"]
    [nil "--version"]
@@ -81,9 +95,16 @@
    [nil "--[no-]sort-ns-references"
     :default (:sort-ns-references? defaults)
     :id :sort-ns-references?]
-   [nil "--[no-]split-keypairs-over-multiple-lines"
-    :default (:split-keypairs-over-multiple-lines? defaults)
-    :id :split-keypairs-over-multiple-lines?]
+   [nil "--split-keypairs-over-multiple-lines MODE"
+    "MODE may be all, only-multiline, or none"
+    :default (:split-keypairs-over-multiple-lines defaults)
+    :parse-fn keyword
+    :validate [#{:all :only-multiline :none}
+               "Must be one of all, only-multiline, or none"]
+    :id :split-keypairs-over-multiple-lines]
+   [nil "--no-split-keypairs-over-multiple-lines"
+    :update-fn (constantly nil)
+    :id :split-keypairs-over-multiple-lines]
    [nil "--[no-]read-clj-config-files"
     :default (:read-clj-config-files? defaults)
     :id :read-clj-config-files?]])
@@ -118,7 +139,8 @@
         (config/find-config-file "" (:options opts)))))
 
 (defn -main [& args]
-  (let [config-file   (find-config-file args)
+  (let [args          (expand-optional-modes args)
+        config-file   (find-config-file args)
         base-opts     (config/load-config config-file)
         parsed-opts   (cli/parse-opts args (cli-options base-opts))
         [cmd & paths] (:arguments parsed-opts)
